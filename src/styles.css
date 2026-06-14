@@ -242,6 +242,28 @@
   animation: blink 1s steps(1) infinite;
 }
 
+/* PCB-inspection scan line */
+@keyframes scanline-sweep {
+  0% { transform: translateY(-4px); }
+  100% { transform: translateY(300px); }
+}
+.scanline-wrap {
+  position: relative;
+}
+.scanline-wrap::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--mark), transparent);
+  opacity: 0.3;
+  pointer-events: none;
+  animation: scanline-sweep 3s linear infinite;
+  z-index: 2;
+}
+
 /* PCB trace divider: hairline with a square pad on each end */
 @utility pcb-divider {
   position: relative;
