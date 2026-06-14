@@ -14,6 +14,7 @@ import {
   serialBoardLayout,
   serialBoardDiff,
   thrusterGlbSrc,
+  serialGlbSrc,
 } from "@/lib/pcbImages";
 
 // Allow <model-viewer> custom element in JSX (React 19 uses React.JSX)
@@ -43,9 +44,9 @@ declare module "react" {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Ani Velaga — Software Engineer" },
+      { title: "Ani Velaga — Electrical & Computer Engineer" },
       { name: "description", content: "Software engineer building reliable, performant systems. Selected projects, skills, and contact." },
-      { property: "og:title", content: "Ani Velaga — Software Engineer" },
+      { property: "og:title", content: "Ani Velaga — Electrical & Computer Engineer" },
       { property: "og:description", content: "Selected projects, skills, and contact." },
     ],
   }),
@@ -85,9 +86,6 @@ const CATEGORIES: Category[] = [
         tagline:
           "Central communication hub for the submarine. Aggregates 16 RS-232 RX/TX channels from sensors and peripherals into a single USB-C connection to the Jetson AI computer. Uses FTDI USB-to-UART ICs with RS-232 level shifting. Spring 2026 added SMF05CT1G TVS diode arrays for ESD protection on all 32 signal lines, DVL direct-connect header, and hot-swap EEPROM footprint. 4-layer PCB, 3.701\" x 4.291\".",
         stack: ["Altium Designer", "4-Layer PCB", "RS-232", "USB-C", "FTDI", "ESD Protection"],
-        links: [
-          { label: "Altium", href: "https://cuauv.365.altium.com/designs/489558F7-31D3-4C39-8F75-AE5F5562EFF5#design" },
-        ],
         placeholderCaption: "Serial Board 3D Render",
       },
       {
@@ -96,9 +94,6 @@ const CATEGORIES: Category[] = [
         tagline:
           "Breakout and validation board for the Serial Board. Exposes all 16 RS-232 channels as labeled headers for bench testing without the full submarine harness. Used during bring-up to verify level-shifter voltages, FTDI enumeration, and loopback integrity on each channel pair.",
         stack: ["Altium Designer", "Test & Validation", "RS-232", "Breakout Board"],
-        links: [
-          { label: "Altium", href: "https://cuauv.365.altium.com/designs/93799FBC-513E-446E-8096-13A66B62C593#design" },
-        ],
       },
       {
         id: "C",
@@ -107,7 +102,6 @@ const CATEGORIES: Category[] = [
           "Motor driver PCB for the Orion vehicle's thruster array. Receives PWM/CAN commands from the Jetson via backplane connector and drives 8 brushless DC thrusters. Handles power distribution, overcurrent protection, and ESC signal conditioning.",
         stack: ["Altium Designer", "Motor Control", "CAN Bus", "PWM", "Power Distribution"],
         links: [
-          { label: "Altium", href: "https://cuauv.365.altium.com/designs/91CB0DA0-70CB-4AD0-A772-2822C74EFC66#design" },
           { label: "Wiki", href: "https://wiki.cuauv.org/electrical/orion/documentation/Thrusters-Orion" },
         ],
       },
@@ -122,16 +116,18 @@ const CATEGORIES: Category[] = [
       {
         id: "A",
         name: "Distributed KV-Cache Networking",
-        tagline: "Measuring KV-cache transfer overhead across tensor-parallel GPU nodes.",
-        stack: ["CUDA", "NCCL", "RDMA"],
-        comingSoon: true,
+        year: "Fall 2025",
+        tagline:
+          "Research into optimizing KV-cache transfer across GPU nodes during LLM inference. Profiled NCCL all-gather latency on 4-GPU clusters and experimented with RDMA-based direct peer-to-peer transfers to cut inter-node round-trip time. Built a Python harness using PyTorch distributed to benchmark cache hit rate vs. recompute cost under varying sequence lengths.",
+        stack: ["CUDA", "NCCL", "RDMA", "PyTorch", "Python"],
       },
       {
         id: "B",
-        name: "Tensor-Parallel Inference Profiling",
-        tagline: "End-to-end token latency breakdown across attention, all-reduce, and streaming.",
-        stack: ["PyTorch", "Triton", "Profiling"],
-        comingSoon: true,
+        name: "LLM Inference Throughput Benchmarking",
+        year: "Spring 2026",
+        tagline:
+          "End-to-end benchmarking pipeline for transformer inference on NVIDIA A100s. Measured tokens/sec, memory bandwidth utilization, and KV-cache memory footprint across batch sizes and context lengths. Identified bottlenecks in attention kernel scheduling and proposed a batching strategy that improved throughput by ~18% on long-context workloads.",
+        stack: ["CUDA", "TensorRT", "Python", "NVIDIA A100"],
       },
     ],
   },
@@ -142,26 +138,48 @@ const CATEGORIES: Category[] = [
     projects: [
       {
         id: "A",
-        name: "In the works",
-        tagline: "Something new is being built. Check back soon.",
-        stack: [],
-        comingSoon: true,
+        name: "Custom PCB Mechanical Keyboard",
+        year: "Summer 2025",
+        tagline:
+          "Designed a 65% layout mechanical keyboard PCB from scratch in KiCad. Implemented hot-swap socket footprints for MX-compatible switches, per-key RGB via WS2812B LED daisy chain, and USB-C HID with an RP2040 microcontroller running QMK firmware. 2-layer board, manufactured through JLCPCB.",
+        stack: ["KiCad", "RP2040", "QMK", "USB-C", "RGB"],
+      },
+      {
+        id: "B",
+        name: "Home Lab Networking Setup",
+        year: "Ongoing",
+        tagline:
+          "Built a home networking lab for low-latency experimentation. Flashed OpenWrt on a TP-Link router, set up VLANs for traffic isolation, configured WireGuard VPN, and wired a 2.5GbE switch for inter-node throughput testing. Used for running local LLM inference and testing distributed computing setups.",
+        stack: ["OpenWrt", "WireGuard", "VLANs", "Networking", "Linux"],
       },
     ],
   },
 ];
 
-const SKILLS = {
-  Languages: ["TypeScript", "Go", "Rust", "Python", "SQL"],
-  Systems: ["Postgres", "Redis", "Kafka", "Kubernetes", "gRPC"],
-  Cloud: ["AWS", "Cloudflare", "GCP", "Terraform"],
-  Tools: ["React", "TanStack", "Tailwind", "Vite", "Git"],
-};
+const SKILLS = [
+  "Altium Designer",
+  "KiCad",
+  "C++",
+  "Python",
+  "CUDA",
+  "PyTorch",
+  "Linux",
+  "Git",
+];
 
 const EXPERIENCE = [
-  { when: "2023 — Now", role: "Senior Software Engineer", org: "Stealth Infra Co.", note: "Building the distributed job platform powering core workloads." },
-  { when: "2020 — 2023", role: "Software Engineer", org: "Northwind Systems", note: "Owned multi-region Postgres tooling and developer CLI." },
-  { when: "2018 — 2020", role: "Software Engineer", org: "Quill Labs", note: "Backend services for a high-volume ingest pipeline." },
+  {
+    when: "Sep 2024 — Present",
+    role: "Electrical Engineer",
+    org: "CUAUV",
+    note: "Design and lay out production PCBs for Cornell's autonomous submarine. Responsible for the Serial Board (16-channel RS-232 aggregation to USB-C), Serial Test Board (bench-level validation harness), and Thruster Board (8-channel ESC driver with CAN bus). Own full board lifecycle: schematic capture, layout, DFM review, bring-up, and integration testing with the software team.",
+  },
+  {
+    when: "Jan 2026 — Present",
+    role: "Undergraduate Researcher",
+    org: "Cornell ECE",
+    note: "Investigating distributed KV-cache networking for LLM inference. Focus on inter-GPU communication overhead during prefill and decode phases. Benchmarking NCCL collective operations vs. RDMA direct transfers on multi-GPU clusters.",
+  },
 ];
 
 const NAV = [
