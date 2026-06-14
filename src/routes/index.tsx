@@ -548,7 +548,7 @@ function CategoryBlock({ category: c }: { category: Category }) {
                       className="lg:w-1/2"
                       style={{ borderLeft: "1px solid rgba(255,255,255,0.06)" }}
                     >
-                      <InlineSerialModel embedded src={THRUSTER_INLINE_GLB} />
+                      <InlineSerialModel embedded src={THRUSTER_INLINE_GLB} idleElevation={15} />
                     </div>
                   </div>
                 </div>
