@@ -235,12 +235,12 @@ function TopBar() {
 
 function Hero() {
   return (
-    <section id="top" className="mx-auto max-w-6xl px-6 pb-28 pt-24 sm:px-10 sm:pb-40 sm:pt-36">
-      <div className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.28em] text-ink-dim">
-        <span className="size-1.5 rounded-full bg-mark" />
-        Available for new work — 2026
-      </div>
-      <h1 className="font-display mt-10 text-[clamp(3.5rem,12vw,11rem)] font-black uppercase">
+    <section
+      id="top"
+      data-section="00"
+      className="relative mx-auto flex h-screen max-w-6xl flex-col justify-center px-6 sm:px-10"
+    >
+      <h1 className="font-display text-[clamp(3.5rem,12vw,11rem)] font-black uppercase">
         Ani
         <br />
         Velaga<span className="text-mark">.</span>
@@ -251,6 +251,10 @@ function Hero() {
           hardware at the board level, then push it through the networking stack into LLM
           inference systems. Currently on CUAUV building PCBs for an autonomous submarine.
         </p>
+      </div>
+      <div className="absolute inset-x-0 bottom-8 flex items-center justify-center gap-3 px-6 font-mono text-xs uppercase tracking-[0.28em] text-ink-dim sm:px-10">
+        <span className="size-1.5 rounded-full bg-mark" />
+        Available for new work — 2026
       </div>
     </section>
   );
@@ -263,7 +267,7 @@ function Ticker({ reverse = false }: { reverse?: boolean }) {
   ).join("  /  ");
   const content = `${segment}  /  ${segment}`;
   return (
-    <div className="border-y border-border bg-secondary/40 overflow-hidden">
+    <div className="overflow-hidden border-y border-border" style={{ background: "#050505" }}>
       <div
         className="ticker-track flex whitespace-nowrap py-3 font-mono text-[11px] tracking-widest text-ink-faint"
         style={reverse ? { animationDirection: "reverse" } : undefined}
@@ -274,6 +278,51 @@ function Ticker({ reverse = false }: { reverse?: boolean }) {
         </span>
       </div>
     </div>
+  );
+}
+
+function PcbDivider() {
+  return (
+    <div className="mx-auto max-w-6xl px-6 sm:px-10">
+      <div className="pcb-divider" />
+    </div>
+  );
+}
+
+function SideRail() {
+  const [active, setActive] = useState("01");
+  useEffect(() => {
+    const ids: Array<[string, string]> = [
+      ["work", "01"],
+      ["about", "02"],
+      ["experience", "03"],
+      ["contact", "04"],
+    ];
+    const onScroll = () => {
+      const y = window.scrollY + window.innerHeight * 0.35;
+      let current = "01";
+      for (const [id, num] of ids) {
+        const el = document.getElementById(id);
+        if (el && el.offsetTop <= y) current = num;
+      }
+      setActive(current);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  return (
+    <aside
+      aria-hidden
+      className="pointer-events-none fixed inset-y-0 left-0 z-20 hidden w-10 items-center justify-center border-r border-border lg:flex"
+    >
+      <span
+        className="font-mono text-[11px] uppercase tracking-[0.35em] text-ink-faint"
+        style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
+      >
+        SECTION <span className="text-mark">{active}</span>
+      </span>
+    </aside>
   );
 }
 
