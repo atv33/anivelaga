@@ -198,15 +198,17 @@ function ProjectRow({ project: p }: { project: (typeof PROJECTS)[number] }) {
         </div>
       </div>
       <div className="col-span-12 flex gap-6 text-sm sm:col-span-3 sm:justify-end">
-        <a
-          href={p.github}
-          target="_blank"
-          rel="noreferrer"
-          className="group/link inline-flex items-center gap-1.5 text-foreground transition hover:text-mark"
-        >
-          <span className="underline decoration-rule underline-offset-4 group-hover/link:decoration-mark">GitHub</span>
-          <span className="transition-transform group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5">↗</span>
-        </a>
+        {p.github ? (
+          <a
+            href={p.github}
+            target="_blank"
+            rel="noreferrer"
+            className="group/link inline-flex items-center gap-1.5 text-foreground transition hover:text-mark"
+          >
+            <span className="underline decoration-rule underline-offset-4 group-hover/link:decoration-mark">GitHub</span>
+            <span className="transition-transform group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5">↗</span>
+          </a>
+        ) : null}
         {p.demo ? (
           <a
             href={p.demo}
@@ -217,9 +219,8 @@ function ProjectRow({ project: p }: { project: (typeof PROJECTS)[number] }) {
             <span className="underline decoration-rule underline-offset-4 group-hover/link:decoration-mark">Live</span>
             <span className="transition-transform group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5">↗</span>
           </a>
-        ) : (
-          <span className="text-ink-faint">— Live n/a</span>
-        )}
+        ) : null}
+        {!p.github && !p.demo ? <span className="text-ink-faint">— Internal project</span> : null}
       </div>
     </article>
   );
