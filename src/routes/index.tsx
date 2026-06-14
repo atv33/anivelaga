@@ -435,45 +435,63 @@ function CategoryBlock({ category: c }: { category: Category }) {
         </div>
       </div>
       <ul className="mt-12 divide-y divide-border border-y border-border">
-        {c.projects.map((p, i) => (
-          <Reveal as="li" key={p.id} delay={i * 70}>
-            {c.id === "01" && (p.id === "A" || p.id === "B") ? (
-              <div
-                className="my-6 overflow-hidden flex flex-col lg:flex-row"
-                style={{
-                  background: "#111111",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: 2,
-                  minHeight: 350,
-                }}
-              >
-                <div className="lg:w-1/2">
-                  <ProjectRow
-                    project={p}
-                    categoryId={c.id}
-                    onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
-                    bare
-                  />
-                </div>
+        {c.projects.map((p, i) => {
+          // Serial Test Board (01.B) is rendered as a sub-project inside the Serial Board (01.A) card.
+          if (c.id === "01" && p.id === "B") return null;
+
+          const testBoard =
+            c.id === "01" && p.id === "A"
+              ? c.projects.find((x) => x.id === "B") ?? null
+              : null;
+
+          return (
+            <Reveal as="li" key={p.id} delay={i * 70}>
+              {c.id === "01" && p.id === "A" ? (
                 <div
-                  className="lg:w-1/2"
-                  style={{ borderLeft: "1px solid rgba(255,255,255,0.06)" }}
+                  className="my-6 overflow-hidden"
+                  style={{
+                    background: "#111111",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: 2,
+                  }}
                 >
-                  <InlineSerialModel
-                    embedded
-                    src={p.id === "A" ? SERIAL_INLINE_GLB : SERIAL_TEST_INLINE_GLB}
-                  />
+                  <div className="flex flex-col lg:flex-row" style={{ minHeight: 350 }}>
+                    <div className="lg:w-1/2">
+                      <ProjectRow
+                        project={p}
+                        categoryId={c.id}
+                        onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
+                        bare
+                      />
+                    </div>
+                    <div
+                      className="lg:w-1/2"
+                      style={{ borderLeft: "1px solid rgba(255,255,255,0.06)" }}
+                    >
+                      <InlineSerialModel embedded src={SERIAL_INLINE_GLB} />
+                    </div>
+                  </div>
+                  {testBoard ? (
+                    <SubProjectRow
+                      project={testBoard}
+                      categoryId={c.id}
+                      onOpen={
+                        testBoard.comingSoon ? undefined : () => setOpenId(testBoard.id)
+                      }
+                      modelSrc={SERIAL_TEST_INLINE_GLB}
+                    />
+                  ) : null}
                 </div>
-              </div>
-            ) : (
-              <ProjectRow
-                project={p}
-                categoryId={c.id}
-                onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
-              />
-            )}
-          </Reveal>
-        ))}
+              ) : (
+                <ProjectRow
+                  project={p}
+                  categoryId={c.id}
+                  onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
+                />
+              )}
+            </Reveal>
+          );
+        })}
       </ul>
       <Sheet open={!!openProject} onOpenChange={(o) => !o && setOpenId(null)}>
         <SheetContent
@@ -578,6 +596,84 @@ function ProjectRow({
         ) : null}
       </div>
     </article>
+  );
+}
+
+function SubProjectRow({
+  project: p,
+  categoryId,
+  onOpen,
+  modelSrc,
+}: {
+  project: Project;
+  categoryId: string;
+  onOpen?: () => void;
+  modelSrc: string;
+}) {
+  const clickable = !!onOpen;
+  return (
+    <div
+      style={{
+        background: "#161616",
+        borderTop: "1px solid rgba(255,255,255,0.06)",
+        borderLeft: "2px solid rgba(255,255,255,0.12)",
+      }}
+      className="flex flex-col lg:flex-row"
+    >
+      <div
+        onClick={onOpen}
+        role={clickable ? "button" : undefined}
+        tabIndex={clickable ? 0 : undefined}
+        onKeyDown={
+          clickable
+            ? (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onOpen?.();
+                }
+              }
+            : undefined
+        }
+        className={`lg:w-1/2 px-6 py-5 ${clickable ? "cursor-pointer" : ""}`}
+      >
+        <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-ink-faint">
+          ↳ Sub-project &nbsp;·&nbsp; {categoryId}.{p.id}
+        </div>
+        <h5 className="mt-2 font-display text-sm font-bold tracking-tight text-foreground sm:text-base">
+          {p.name}
+        </h5>
+        <p className="mt-1.5 max-w-md text-xs leading-relaxed text-ink-dim">
+          {p.tagline.split(".")[0]}.
+        </p>
+        {clickable ? (
+          <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.25em] text-ink-faint hover:text-mark">
+            → View details
+          </div>
+        ) : null}
+      </div>
+      <div
+        className="lg:w-1/2"
+        style={{ borderLeft: "1px solid rgba(255,255,255,0.06)", minHeight: 200 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ backgroundColor: "#161616", width: "100%", height: "100%", minHeight: 200 }} className="overflow-hidden">
+          <model-viewer
+            src={modelSrc}
+            alt={`${p.name} 3D model`}
+            auto-rotate
+            camera-controls
+            rotation-per-second="20deg"
+            interaction-prompt="none"
+            shadow-intensity="0"
+            exposure="0.4"
+            environment-image="neutral"
+            loading="eager"
+            reveal="auto"
+            style={{ width: "100%", height: "100%", minHeight: 200, backgroundColor: "#161616" } as React.CSSProperties}
+          />
+        </div>
+      </div>
+    </div>
   );
 }
 
