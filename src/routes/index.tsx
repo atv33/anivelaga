@@ -1,5 +1,38 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  serialBoard3d,
+  serialBoardFront,
+  serialBoardLayout,
+  serialBoardDiff,
+  thrusterGlbSrc,
+} from "@/lib/pcbImages";
+
+// Allow <model-viewer> custom element in JSX
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace JSX {
+    interface IntrinsicElements {
+      "model-viewer": React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement> & {
+          src?: string;
+          alt?: string;
+          "auto-rotate"?: boolean;
+          "camera-controls"?: boolean;
+        },
+        HTMLElement
+      >;
+    }
+  }
+}
 
 export const Route = createFileRoute("/")({
   head: () => ({
