@@ -599,6 +599,84 @@ function ProjectRow({
   );
 }
 
+function SubProjectRow({
+  project: p,
+  categoryId,
+  onOpen,
+  modelSrc,
+}: {
+  project: Project;
+  categoryId: string;
+  onOpen?: () => void;
+  modelSrc: string;
+}) {
+  const clickable = !!onOpen;
+  return (
+    <div
+      style={{
+        background: "#161616",
+        borderTop: "1px solid rgba(255,255,255,0.06)",
+        borderLeft: "2px solid rgba(255,255,255,0.12)",
+      }}
+      className="flex flex-col lg:flex-row"
+    >
+      <div
+        onClick={onOpen}
+        role={clickable ? "button" : undefined}
+        tabIndex={clickable ? 0 : undefined}
+        onKeyDown={
+          clickable
+            ? (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onOpen?.();
+                }
+              }
+            : undefined
+        }
+        className={`lg:w-1/2 px-6 py-5 ${clickable ? "cursor-pointer" : ""}`}
+      >
+        <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-ink-faint">
+          ↳ Sub-project &nbsp;·&nbsp; {categoryId}.{p.id}
+        </div>
+        <h5 className="mt-2 font-display text-sm font-bold tracking-tight text-foreground sm:text-base">
+          {p.name}
+        </h5>
+        <p className="mt-1.5 max-w-md text-xs leading-relaxed text-ink-dim">
+          {p.tagline.split(".")[0]}.
+        </p>
+        {clickable ? (
+          <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.25em] text-ink-faint hover:text-mark">
+            → View details
+          </div>
+        ) : null}
+      </div>
+      <div
+        className="lg:w-1/2"
+        style={{ borderLeft: "1px solid rgba(255,255,255,0.06)", minHeight: 200 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ backgroundColor: "#161616", width: "100%", height: "100%", minHeight: 200 }} className="overflow-hidden">
+          <model-viewer
+            src={modelSrc}
+            alt={`${p.name} 3D model`}
+            auto-rotate
+            camera-controls
+            rotation-per-second="20deg"
+            interaction-prompt="none"
+            shadow-intensity="0"
+            exposure="0.4"
+            environment-image="neutral"
+            loading="eager"
+            reveal="auto"
+            style={{ width: "100%", height: "100%", minHeight: 200, backgroundColor: "#161616" } as React.CSSProperties}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ProjectDetails({
   project: p,
   categoryId,
