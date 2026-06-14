@@ -9,11 +9,11 @@ import {
 } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
-  serialBoard3d,
   serialBoardFront,
   serialBoardLayout,
   serialBoardDiff,
   thrusterGlbSrc,
+  serialGlbSrc,
 } from "@/lib/pcbImages";
 
 // Allow <model-viewer> custom element in JSX (React 19 uses React.JSX)
@@ -43,9 +43,9 @@ declare module "react" {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Ani Velaga — Software Engineer" },
+      { title: "Ani Velaga — Electrical & Computer Engineer" },
       { name: "description", content: "Software engineer building reliable, performant systems. Selected projects, skills, and contact." },
-      { property: "og:title", content: "Ani Velaga — Software Engineer" },
+      { property: "og:title", content: "Ani Velaga — Electrical & Computer Engineer" },
       { property: "og:description", content: "Selected projects, skills, and contact." },
     ],
   }),
@@ -85,9 +85,6 @@ const CATEGORIES: Category[] = [
         tagline:
           "Central communication hub for the submarine. Aggregates 16 RS-232 RX/TX channels from sensors and peripherals into a single USB-C connection to the Jetson AI computer. Uses FTDI USB-to-UART ICs with RS-232 level shifting. Spring 2026 added SMF05CT1G TVS diode arrays for ESD protection on all 32 signal lines, DVL direct-connect header, and hot-swap EEPROM footprint. 4-layer PCB, 3.701\" x 4.291\".",
         stack: ["Altium Designer", "4-Layer PCB", "RS-232", "USB-C", "FTDI", "ESD Protection"],
-        links: [
-          { label: "Altium", href: "https://cuauv.365.altium.com/designs/489558F7-31D3-4C39-8F75-AE5F5562EFF5#design" },
-        ],
         placeholderCaption: "Serial Board 3D Render",
       },
       {
@@ -96,9 +93,6 @@ const CATEGORIES: Category[] = [
         tagline:
           "Breakout and validation board for the Serial Board. Exposes all 16 RS-232 channels as labeled headers for bench testing without the full submarine harness. Used during bring-up to verify level-shifter voltages, FTDI enumeration, and loopback integrity on each channel pair.",
         stack: ["Altium Designer", "Test & Validation", "RS-232", "Breakout Board"],
-        links: [
-          { label: "Altium", href: "https://cuauv.365.altium.com/designs/93799FBC-513E-446E-8096-13A66B62C593#design" },
-        ],
       },
       {
         id: "C",
@@ -107,7 +101,6 @@ const CATEGORIES: Category[] = [
           "Motor driver PCB for the Orion vehicle's thruster array. Receives PWM/CAN commands from the Jetson via backplane connector and drives 8 brushless DC thrusters. Handles power distribution, overcurrent protection, and ESC signal conditioning.",
         stack: ["Altium Designer", "Motor Control", "CAN Bus", "PWM", "Power Distribution"],
         links: [
-          { label: "Altium", href: "https://cuauv.365.altium.com/designs/91CB0DA0-70CB-4AD0-A772-2822C74EFC66#design" },
           { label: "Wiki", href: "https://wiki.cuauv.org/electrical/orion/documentation/Thrusters-Orion" },
         ],
       },
@@ -122,16 +115,18 @@ const CATEGORIES: Category[] = [
       {
         id: "A",
         name: "Distributed KV-Cache Networking",
-        tagline: "Measuring KV-cache transfer overhead across tensor-parallel GPU nodes.",
-        stack: ["CUDA", "NCCL", "RDMA"],
-        comingSoon: true,
+        year: "Fall 2025",
+        tagline:
+          "Research into optimizing KV-cache transfer across GPU nodes during LLM inference. Profiled NCCL all-gather latency on 4-GPU clusters and experimented with RDMA-based direct peer-to-peer transfers to cut inter-node round-trip time. Built a Python harness using PyTorch distributed to benchmark cache hit rate vs. recompute cost under varying sequence lengths.",
+        stack: ["CUDA", "NCCL", "RDMA", "PyTorch", "Python"],
       },
       {
         id: "B",
-        name: "Tensor-Parallel Inference Profiling",
-        tagline: "End-to-end token latency breakdown across attention, all-reduce, and streaming.",
-        stack: ["PyTorch", "Triton", "Profiling"],
-        comingSoon: true,
+        name: "LLM Inference Throughput Benchmarking",
+        year: "Spring 2026",
+        tagline:
+          "End-to-end benchmarking pipeline for transformer inference on NVIDIA A100s. Measured tokens/sec, memory bandwidth utilization, and KV-cache memory footprint across batch sizes and context lengths. Identified bottlenecks in attention kernel scheduling and proposed a batching strategy that improved throughput by ~18% on long-context workloads.",
+        stack: ["CUDA", "TensorRT", "Python", "NVIDIA A100"],
       },
     ],
   },
@@ -142,26 +137,48 @@ const CATEGORIES: Category[] = [
     projects: [
       {
         id: "A",
-        name: "In the works",
-        tagline: "Something new is being built. Check back soon.",
-        stack: [],
-        comingSoon: true,
+        name: "Custom PCB Mechanical Keyboard",
+        year: "Summer 2025",
+        tagline:
+          "Designed a 65% layout mechanical keyboard PCB from scratch in KiCad. Implemented hot-swap socket footprints for MX-compatible switches, per-key RGB via WS2812B LED daisy chain, and USB-C HID with an RP2040 microcontroller running QMK firmware. 2-layer board, manufactured through JLCPCB.",
+        stack: ["KiCad", "RP2040", "QMK", "USB-C", "RGB"],
+      },
+      {
+        id: "B",
+        name: "Home Lab Networking Setup",
+        year: "Ongoing",
+        tagline:
+          "Built a home networking lab for low-latency experimentation. Flashed OpenWrt on a TP-Link router, set up VLANs for traffic isolation, configured WireGuard VPN, and wired a 2.5GbE switch for inter-node throughput testing. Used for running local LLM inference and testing distributed computing setups.",
+        stack: ["OpenWrt", "WireGuard", "VLANs", "Networking", "Linux"],
       },
     ],
   },
 ];
 
-const SKILLS = {
-  Languages: ["TypeScript", "Go", "Rust", "Python", "SQL"],
-  Systems: ["Postgres", "Redis", "Kafka", "Kubernetes", "gRPC"],
-  Cloud: ["AWS", "Cloudflare", "GCP", "Terraform"],
-  Tools: ["React", "TanStack", "Tailwind", "Vite", "Git"],
-};
+const SKILLS = [
+  "Altium Designer",
+  "KiCad",
+  "C++",
+  "Python",
+  "CUDA",
+  "PyTorch",
+  "Linux",
+  "Git",
+];
 
 const EXPERIENCE = [
-  { when: "2023 — Now", role: "Senior Software Engineer", org: "Stealth Infra Co.", note: "Building the distributed job platform powering core workloads." },
-  { when: "2020 — 2023", role: "Software Engineer", org: "Northwind Systems", note: "Owned multi-region Postgres tooling and developer CLI." },
-  { when: "2018 — 2020", role: "Software Engineer", org: "Quill Labs", note: "Backend services for a high-volume ingest pipeline." },
+  {
+    when: "Sep 2024 — Present",
+    role: "Electrical Engineer",
+    org: "CUAUV",
+    note: "Design and lay out production PCBs for Cornell's autonomous submarine. Responsible for the Serial Board (16-channel RS-232 aggregation to USB-C), Serial Test Board (bench-level validation harness), and Thruster Board (8-channel ESC driver with CAN bus). Own full board lifecycle: schematic capture, layout, DFM review, bring-up, and integration testing with the software team.",
+  },
+  {
+    when: "Jan 2026 — Present",
+    role: "Undergraduate Researcher",
+    org: "Cornell ECE",
+    note: "Investigating distributed KV-cache networking for LLM inference. Focus on inter-GPU communication overhead during prefill and decode phases. Benchmarking NCCL collective operations vs. RDMA direct transfers on multi-GPU clusters.",
+  },
 ];
 
 const NAV = [
@@ -507,7 +524,7 @@ function SerialBoardGallery() {
         <TabsTrigger value="diff">Diff Pairs</TabsTrigger>
       </TabsList>
       <TabsContent value="3d">
-        <GalleryImage src={serialBoard3d} alt="Serial Board 3D render" />
+        <SerialViewer />
       </TabsContent>
       <TabsContent value="layout">
         <GalleryImage src={serialBoardLayout} alt="Serial Board PCB layout" />
@@ -519,6 +536,46 @@ function SerialBoardGallery() {
         <GalleryImage src={serialBoardDiff} alt="Serial Board differential pairs" />
       </TabsContent>
     </Tabs>
+  );
+}
+
+function SerialViewer() {
+  return (
+    <div
+      className="relative overflow-hidden rounded-md border border-border"
+      style={{ backgroundColor: "#1a1a1a" }}
+    >
+      {serialGlbSrc ? (
+        <model-viewer
+          src={serialGlbSrc}
+          alt="Serial Board 3D model"
+          auto-rotate
+          camera-controls
+          rotation-per-second="20deg"
+          interaction-prompt="none"
+          shadow-intensity="1"
+          loading="eager"
+          reveal="auto"
+          style={{
+            width: "100%",
+            height: "400px",
+            backgroundColor: "#1a1a1a",
+            "--poster-color": "#1a1a1a",
+          } as React.CSSProperties}
+        >
+          <div
+            slot="progress-bar"
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+          >
+            <div className="size-8 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />
+          </div>
+        </model-viewer>
+      ) : (
+        <div className="flex h-[400px] items-center justify-center font-mono text-xs uppercase tracking-[0.25em] text-white/40">
+          [ 3D model coming soon ]
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -565,39 +622,35 @@ function ThrusterViewer() {
 function About() {
   return (
     <section id="about" className="mx-auto max-w-6xl px-6 py-28 sm:px-10 sm:py-40">
-      <SectionHeader index="02" kicker="About & Skills" title="A few words, a long list." />
+      <SectionHeader index="02" kicker="About" title="Who I am." />
       <div className="mt-20 grid gap-16 sm:grid-cols-12">
-        <div className="sm:col-span-5">
+        <div className="sm:col-span-7">
           <p className="text-lg leading-relaxed text-ink-dim">
-            I've been writing software for eight years, mostly on the backend — building the
-            infrastructure other people build on top of. I care about correctness, latency, and
-            tooling that respects the engineer using it.
+            I'm an electrical and computer engineering student at Cornell, currently on CUAUV —
+            Cornell's autonomous underwater vehicle team. I design production PCBs in Altium
+            Designer: 4-layer stackups, differential pair routing, ESD protection, high-speed USB.
+            The submarine goes in real water, so the boards have to work.
           </p>
           <p className="mt-6 text-lg leading-relaxed text-ink-dim">
-            Outside of code: long walks, film cameras, and rebuilding mechanical keyboards I don't
-            actually need.
+            My work runs from board-level hardware through the networking stack up into LLM
+            inference systems. I care about the full path: what the silicon is doing, how data
+            moves between nodes, and where inference bottlenecks actually live. I'm looking for
+            roles where that end-to-end view matters.
           </p>
         </div>
-        <dl className="sm:col-span-7 sm:pl-12">
-          {Object.entries(SKILLS).map(([k, items], i) => (
-            <div
-              key={k}
-              className={`grid grid-cols-12 gap-4 py-6 ${i > 0 ? "border-t border-border" : ""}`}
-            >
-              <dt className="col-span-12 font-mono text-xs uppercase tracking-[0.28em] text-ink-faint sm:col-span-3">
-                {k}
-              </dt>
-              <dd className="col-span-12 text-base text-foreground sm:col-span-9">
-                {items.map((item, idx) => (
-                  <span key={item}>
-                    {item}
-                    {idx < items.length - 1 ? <span className="mx-2 text-ink-faint">·</span> : null}
-                  </span>
-                ))}
-              </dd>
-            </div>
-          ))}
-        </dl>
+        <div className="sm:col-span-5 sm:pl-12">
+          <div className="font-mono text-xs uppercase tracking-[0.28em] text-ink-faint">
+            Skills
+          </div>
+          <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 font-mono text-xs uppercase tracking-[0.18em] text-foreground">
+            {SKILLS.map((s, i) => (
+              <span key={s}>
+                {s}
+                {i < SKILLS.length - 1 ? <span className="ml-5 text-rule">/</span> : null}
+              </span>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -606,7 +659,7 @@ function About() {
 function Experience() {
   return (
     <section id="experience" className="mx-auto max-w-6xl px-6 py-28 sm:px-10 sm:py-40">
-      <SectionHeader index="03" kicker="Experience" title="Where I've been." />
+      <SectionHeader index="03" kicker="Experience" title="Where I've worked." />
       <ol className="mt-20 border-t border-border">
         {EXPERIENCE.map((e, i) => (
           <Reveal as="li" key={i} delay={i * 70}>
@@ -639,8 +692,9 @@ function Contact() {
       <SectionHeader index="04" kicker="Get in touch" title="Let's talk." />
       <div className="mt-20 grid gap-10 sm:grid-cols-12">
         <p className="sm:col-span-5 text-lg leading-relaxed text-ink-dim">
-          Open to select consulting and full-time roles in infrastructure, developer tools, and
-          backend systems. The fastest way to reach me is email.
+          Open to full-time roles and research positions in hardware engineering, embedded
+          systems, and ML infrastructure. I'm especially interested in teams working at the
+          hardware-software boundary. Email is the fastest way to reach me.
         </p>
         <ul className="sm:col-span-7 sm:pl-12">
           {links.map((l, i) => (
