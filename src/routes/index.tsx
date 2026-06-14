@@ -26,6 +26,13 @@ declare module "react" {
           alt?: string;
           "auto-rotate"?: boolean;
           "camera-controls"?: boolean;
+          "auto-rotate-delay"?: string | number;
+          "rotation-per-second"?: string;
+          "interaction-prompt"?: string;
+          "shadow-intensity"?: string | number;
+          loading?: string;
+          reveal?: string;
+          ar?: boolean;
         },
         HTMLElement
       >;
