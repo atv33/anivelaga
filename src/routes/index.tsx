@@ -268,6 +268,63 @@ function Hero() {
   );
 }
 
+function HeroCircuits() {
+  // Vertical traces with junction nodes that travel downward and fade out.
+  // Stagger durations + delays so it feels organic.
+  const traces = [
+    { x: 8, len: 120, dur: 6.5, delay: 0 },
+    { x: 17, len: 80, dur: 8.2, delay: 1.8 },
+    { x: 26, len: 160, dur: 7.4, delay: 3.1 },
+    { x: 34, len: 90, dur: 9.1, delay: 0.6 },
+    { x: 43, len: 140, dur: 6.8, delay: 2.4 },
+    { x: 52, len: 70, dur: 10.2, delay: 4.0 },
+    { x: 61, len: 130, dur: 7.9, delay: 1.2 },
+    { x: 70, len: 100, dur: 8.6, delay: 3.7 },
+    { x: 79, len: 150, dur: 7.1, delay: 0.9 },
+    { x: 88, len: 85, dur: 9.4, delay: 2.7 },
+    { x: 95, len: 110, dur: 6.9, delay: 4.5 },
+  ];
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
+      style={{
+        WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
+        maskImage: "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
+      }}
+    >
+      <svg
+        width="100%"
+        height="100%"
+        preserveAspectRatio="none"
+        style={{ position: "absolute", inset: 0 }}
+      >
+        {traces.map((t, i) => (
+          <g
+            key={i}
+            className="hero-trace"
+            style={{
+              animation: `hero-trace-fall ${t.dur}s linear ${t.delay}s infinite`,
+              transformBox: "fill-box",
+            }}
+          >
+            <line
+              x1={`${t.x}%`}
+              y1={-t.len}
+              x2={`${t.x}%`}
+              y2={0}
+              stroke="white"
+              strokeWidth="1"
+              strokeOpacity="0.15"
+            />
+            <circle cx={`${t.x}%`} cy={0} r="2" fill="white" fillOpacity="0.18" />
+          </g>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
 const SERIAL_INLINE_GLB = "https://files.catbox.moe/tgly0l.glb";
 const SERIAL_TEST_INLINE_GLB = "https://files.catbox.moe/dpd9ku.glb";
 const THRUSTER_INLINE_GLB = "https://files.catbox.moe/x54j79.glb";
