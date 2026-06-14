@@ -280,250 +280,330 @@ function HeroCircuits() {
     let H = 0;
     let raf = 0;
 
-    type Dir = "down" | "left" | "right";
-    const DVEC: Record<Dir, [number, number]> = {
-      down: [0, 1],
-      left: [-1, 0],
-      right: [1, 0],
-    };
+    const G = 28;
+    const MAX_OPACITY = 0.12;
+    const SPEED = 600; // px / second
+    const STAGGER = 200; // ms between routes
+    const FADE_END = 0.8;
+    const IC_SIZE = 56;
+    const PIN_LEN = 14;
+    const PIN_OFFSETS = [7, 21, 35, 49] as const;
 
-    type Seg = {
-      sx: number;
-      sy: number;
-      dir: Dir;
-      length: number;
-      depth: number;
-      startedAt: number;
-      headDist: number;
-      hasComponent: boolean;
-      gapStart: number;
-      gapEnd: number;
-      compDrawn: boolean;
-      terminal: boolean;
-      segIndex: number; // 1-based count of segments along this lineage
-    };
-
-    const STROKE = 1.5;
-    const MAX_OPACITY = 0.08;
-    const SEG_MIN = 80;
-    const SEG_MAX = 180;
-    const SEG_DUR = 1200;
-    const MAX_DEPTH = 3;
-    const ACTIVE_CAP = 12;
-    const FADE_END_FRAC = 0.75;
-    const COMP_LEN = 14; // along trace
-    const COMP_WID = 6; // perpendicular to trace
-
-    let segs: Seg[] = [];
+    const snap = (v: number) => Math.round(v / G) * G;
 
     const fadeForY = (y: number) => {
-      const limit = H * FADE_END_FRAC;
+      const limit = H * FADE_END;
       if (y >= limit) return 0;
       return Math.max(0, 1 - y / limit);
     };
+    const alphaAt = (y: number) => MAX_OPACITY * fadeForY(y);
 
-    const strokeLine = (x1: number, y1: number, x2: number, y2: number, alpha: number) => {
-      if (alpha < 0.003) return;
-      ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
-      ctx.lineWidth = STROKE;
+    const sLine = (x1: number, y1: number, x2: number, y2: number, a: number) => {
+      if (a < 0.003) return;
+      ctx.strokeStyle = `rgba(255,255,255,${a})`;
+      ctx.lineWidth = 1.5;
       ctx.lineCap = "butt";
       ctx.beginPath();
       ctx.moveTo(Math.round(x1) + 0.5, Math.round(y1) + 0.5);
       ctx.lineTo(Math.round(x2) + 0.5, Math.round(y2) + 0.5);
       ctx.stroke();
     };
-
-    const fillRect = (x: number, y: number, w: number, h: number, alpha: number) => {
-      if (alpha < 0.003) return;
-      ctx.fillStyle = `rgba(255,255,255,${alpha})`;
-      ctx.fillRect(Math.round(x), Math.round(y), w, h);
-    };
-
-    const strokeRect = (x: number, y: number, w: number, h: number, alpha: number) => {
-      if (alpha < 0.003) return;
-      ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
+    const sRect = (x: number, y: number, w: number, h: number, a: number) => {
+      if (a < 0.003) return;
+      ctx.strokeStyle = `rgba(255,255,255,${a})`;
       ctx.lineWidth = 1;
       ctx.strokeRect(Math.round(x) + 0.5, Math.round(y) + 0.5, w, h);
     };
-
-    const fillCircle = (x: number, y: number, r: number, alpha: number) => {
-      if (alpha < 0.003) return;
-      ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+    const fRect = (x: number, y: number, w: number, h: number, a: number) => {
+      if (a < 0.003) return;
+      ctx.fillStyle = `rgba(255,255,255,${a})`;
+      ctx.fillRect(Math.round(x), Math.round(y), w, h);
+    };
+    const fCircle = (x: number, y: number, r: number, a: number) => {
+      if (a < 0.003) return;
+      ctx.fillStyle = `rgba(255,255,255,${a})`;
       ctx.beginPath();
       ctx.arc(x, y, r, 0, Math.PI * 2);
       ctx.fill();
     };
 
-    const makeSegment = (
-      sx: number,
-      sy: number,
-      dir: Dir,
-      depth: number,
-      segIndex: number,
-    ): Seg | null => {
-      const limit = H * FADE_END_FRAC;
-      if (sy >= limit) return null;
-      let length = SEG_MIN + Math.random() * (SEG_MAX - SEG_MIN);
-      const [vx, vy] = DVEC[dir];
-      let ex = sx + vx * length;
-      let ey = sy + vy * length;
-      let terminal = false;
-
-      if (dir === "down" && ey > limit) {
-        ey = limit;
-        length = ey - sy;
-        terminal = true;
-      } else if (dir === "left" && ex < 4) {
-        ex = 4;
-        length = sx - ex;
-        terminal = true;
-      } else if (dir === "right" && ex > W - 4) {
-        ex = W - 4;
-        length = ex - sx;
-        terminal = true;
-      }
-
-      if (length < 24) return null;
-
-      let gapStart = -1;
-      let gapEnd = -1;
-      const placeComponent = segIndex > 0 && segIndex % 3 === 0;
-      if (placeComponent && length > COMP_LEN + 30) {
-        const center = length / 2;
-        gapStart = center - COMP_LEN / 2;
-        gapEnd = center + COMP_LEN / 2;
-      }
-
-      return {
-        sx,
-        sy,
-        dir,
-        length,
-        depth,
-        startedAt: performance.now(),
-        headDist: 0,
-        hasComponent: gapStart >= 0,
-        gapStart,
-        gapEnd,
-        compDrawn: false,
-        terminal,
-        segIndex,
+    type IC = {
+      x: number;
+      y: number;
+      pins: {
+        top: [number, number][];
+        bottom: [number, number][];
+        left: [number, number][];
+        right: [number, number][];
       };
     };
-
-    const drawSubSegment = (s: Seg, from: number, to: number) => {
-      const [vx, vy] = DVEC[s.dir];
-      const drawRange = (a: number, b: number) => {
-        if (b <= a) return;
-        const x1 = s.sx + vx * a;
-        const y1 = s.sy + vy * a;
-        const x2 = s.sx + vx * b;
-        const y2 = s.sy + vy * b;
-        const midY = (y1 + y2) / 2;
-        strokeLine(x1, y1, x2, y2, MAX_OPACITY * fadeForY(midY));
+    const makeIC = (cx: number, cy: number): IC => {
+      const x = cx - IC_SIZE / 2;
+      const y = cy - IC_SIZE / 2;
+      return {
+        x,
+        y,
+        pins: {
+          top: PIN_OFFSETS.map((o) => [x + o, y - PIN_LEN] as [number, number]),
+          bottom: PIN_OFFSETS.map(
+            (o) => [x + o, y + IC_SIZE + PIN_LEN] as [number, number],
+          ),
+          left: PIN_OFFSETS.map((o) => [x - PIN_LEN, y + o] as [number, number]),
+          right: PIN_OFFSETS.map(
+            (o) => [x + IC_SIZE + PIN_LEN, y + o] as [number, number],
+          ),
+        },
       };
+    };
+    const drawIC = (ic: IC) => {
+      const a = alphaAt(ic.y + IC_SIZE / 2);
+      sRect(ic.x, ic.y, IC_SIZE, IC_SIZE, a);
+      for (const o of PIN_OFFSETS) {
+        sLine(ic.x + o, ic.y - PIN_LEN, ic.x + o, ic.y, a);
+        sLine(ic.x + o, ic.y + IC_SIZE, ic.x + o, ic.y + IC_SIZE + PIN_LEN, a);
+        sLine(ic.x - PIN_LEN, ic.y + o, ic.x, ic.y + o, a);
+        sLine(ic.x + IC_SIZE, ic.y + o, ic.x + IC_SIZE + PIN_LEN, ic.y + o, a);
+      }
+    };
 
-      if (!s.hasComponent) {
-        drawRange(from, to);
+    type Seg = {
+      x1: number;
+      y1: number;
+      x2: number;
+      y2: number;
+      length: number;
+      horiz: boolean;
+      hasComp: boolean;
+      gapStart: number;
+      gapEnd: number;
+      compDrawn: boolean;
+    };
+    type Route = {
+      segments: Seg[];
+      totalLength: number;
+      startDelay: number;
+      drawnDist: number;
+    };
+
+    let routes: Route[] = [];
+    let vias: [number, number][] = [];
+    let viasDrawn = false;
+    let startTime = 0;
+
+    const buildRoute = (
+      waypoints: [number, number][],
+      componentSegIdx: number | null,
+      delayIdx: number,
+    ): Route => {
+      const segments: Seg[] = [];
+      for (let i = 0; i < waypoints.length - 1; i++) {
+        const [x1, y1] = waypoints[i];
+        const [x2, y2] = waypoints[i + 1];
+        const horiz = y1 === y2;
+        const length = Math.abs(horiz ? x2 - x1 : y2 - y1);
+        const hasComp = componentSegIdx === i && length > 50;
+        let gapStart = -1;
+        let gapEnd = -1;
+        if (hasComp) {
+          const compLen = 20;
+          const mid = length / 2;
+          gapStart = mid - compLen / 2;
+          gapEnd = mid + compLen / 2;
+        }
+        segments.push({
+          x1, y1, x2, y2,
+          length, horiz, hasComp, gapStart, gapEnd, compDrawn: false,
+        });
+      }
+      const totalLength = segments.reduce((s, sg) => s + sg.length, 0);
+      return { segments, totalLength, startDelay: delayIdx * STAGGER, drawnDist: 0 };
+    };
+
+    const drawSegmentRange = (s: Seg, from: number, to: number) => {
+      const len = s.length;
+      if (len === 0) return;
+      const ux = (s.x2 - s.x1) / len;
+      const uy = (s.y2 - s.y1) / len;
+      const draw = (a: number, b: number) => {
+        if (b <= a) return;
+        const px1 = s.x1 + ux * a;
+        const py1 = s.y1 + uy * a;
+        const px2 = s.x1 + ux * b;
+        const py2 = s.y1 + uy * b;
+        sLine(px1, py1, px2, py2, alphaAt((py1 + py2) / 2));
+      };
+      if (!s.hasComp) {
+        draw(from, to);
         return;
       }
-
       const g1 = s.gapStart;
       const g2 = s.gapEnd;
-
-      if (from < g1) drawRange(from, Math.min(to, g1));
-      if (to > g2) drawRange(Math.max(from, g2), to);
-
+      if (from < g1) draw(from, Math.min(to, g1));
+      if (to > g2) draw(Math.max(from, g2), to);
       if (!s.compDrawn && to >= g1) {
-        const cx = s.sx + vx * ((g1 + g2) / 2);
-        const cy = s.sy + vy * ((g1 + g2) / 2);
-        const horiz = s.dir !== "down";
-        const w = horiz ? COMP_LEN : COMP_WID;
-        const h = horiz ? COMP_WID : COMP_LEN;
-        const alpha = MAX_OPACITY * fadeForY(cy);
-        strokeRect(cx - w / 2, cy - h / 2, w, h, alpha);
-        // 3x3 pads on each end, touching the trace
-        if (horiz) {
-          fillRect(cx - w / 2 - 3, cy - 1.5, 3, 3, alpha);
-          fillRect(cx + w / 2, cy - 1.5, 3, 3, alpha);
+        const cmid = (g1 + g2) / 2;
+        const cx = s.x1 + ux * cmid;
+        const cy = s.y1 + uy * cmid;
+        const a = alphaAt(cy);
+        const w = s.horiz ? 20 : 8;
+        const h = s.horiz ? 8 : 20;
+        sRect(cx - w / 2, cy - h / 2, w, h, a);
+        if (s.horiz) {
+          fRect(cx - w / 2 - 4, cy - 2, 4, 4, a);
+          fRect(cx + w / 2, cy - 2, 4, 4, a);
         } else {
-          fillRect(cx - 1.5, cy - h / 2 - 3, 3, 3, alpha);
-          fillRect(cx - 1.5, cy + h / 2, 3, 3, alpha);
+          fRect(cx - 2, cy - h / 2 - 4, 4, 4, a);
+          fRect(cx - 2, cy + h / 2, 4, 4, a);
         }
         s.compDrawn = true;
       }
     };
 
-    const continuationChoices = (dir: Dir): Dir[] => {
-      // parent's next segment: keep going or 90° turn, never upward
-      if (dir === "down") return ["down", "down", "down", "left", "right"];
-      if (dir === "left") return ["left", "left", "down", "down"];
-      return ["right", "right", "down", "down"];
-    };
+    const setupLayout = () => {
+      ctx.clearRect(0, 0, W, H);
 
-    const perpendicular = (dir: Dir): Dir[] => {
-      if (dir === "down") return ["left", "right"];
-      return ["down"];
-    };
+      const ic1 = makeIC(snap(W * 0.20), snap(H * 0.12));
+      const ic2 = makeIC(snap(W * 0.68), snap(H * 0.18));
+      drawIC(ic1);
+      drawIC(ic2);
 
-    const onSegmentFinished = (s: Seg) => {
-      if (s.terminal) return;
-      const [vx, vy] = DVEC[s.dir];
-      const ex = s.sx + vx * s.length;
-      const ey = s.sy + vy * s.length;
+      const sx = (frac: number) => snap(W * frac);
+      const sy = (frac: number) => snap(H * frac);
 
-      // parent continues
-      if (segs.length < ACTIVE_CAP) {
-        const choices = continuationChoices(s.dir);
-        const pd = choices[Math.floor(Math.random() * choices.length)];
-        const next = makeSegment(ex, ey, pd, s.depth, s.segIndex + 1);
-        if (next) segs.push(next);
-      }
+      routes = [
+        // 1) IC1 right -> IC2 left (mid)
+        buildRoute(
+          [
+            ic1.pins.right[1],
+            [sx(0.42), ic1.pins.right[1][1]],
+            [sx(0.42), ic2.pins.left[1][1]],
+            ic2.pins.left[1],
+          ],
+          1,
+          0,
+        ),
+        // 2) IC1 bottom -> down then right then down again
+        buildRoute(
+          [
+            ic1.pins.bottom[2],
+            [ic1.pins.bottom[2][0], sy(0.42)],
+            [sx(0.50), sy(0.42)],
+            [sx(0.50), sy(0.58)],
+          ],
+          0,
+          1,
+        ),
+        // 3) IC1 top -> up and across to top-right
+        buildRoute(
+          [
+            ic1.pins.top[0],
+            [ic1.pins.top[0][0], sy(0.04)],
+            [sx(0.90), sy(0.04)],
+          ],
+          1,
+          2,
+        ),
+        // 4) IC1 left -> left edge then down
+        buildRoute(
+          [
+            ic1.pins.left[2],
+            [sx(0.06), ic1.pins.left[2][1]],
+            [sx(0.06), sy(0.46)],
+          ],
+          0,
+          3,
+        ),
+        // 5) IC2 right -> right edge then down
+        buildRoute(
+          [
+            ic2.pins.right[1],
+            [sx(0.94), ic2.pins.right[1][1]],
+            [sx(0.94), sy(0.50)],
+          ],
+          1,
+          4,
+        ),
+        // 6) IC2 bottom -> down, left, down
+        buildRoute(
+          [
+            ic2.pins.bottom[1],
+            [ic2.pins.bottom[1][0], sy(0.48)],
+            [sx(0.56), sy(0.48)],
+            [sx(0.56), sy(0.62)],
+          ],
+          0,
+          5,
+        ),
+        // 7) IC2 top -> up and across to top-center, then down
+        buildRoute(
+          [
+            ic2.pins.top[3],
+            [ic2.pins.top[3][0], sy(0.06)],
+            [sx(0.46), sy(0.06)],
+            [sx(0.46), sy(0.18)],
+          ],
+          1,
+          6,
+        ),
+        // 8) IC2 bottom -> down, far right, down
+        buildRoute(
+          [
+            ic2.pins.bottom[3],
+            [ic2.pins.bottom[3][0], sy(0.34)],
+            [sx(0.82), sy(0.34)],
+            [sx(0.82), sy(0.56)],
+          ],
+          0,
+          7,
+        ),
+      ];
 
-      // 20% chance to spawn one perpendicular child
-      if (
-        Math.random() < 0.2 &&
-        s.depth < MAX_DEPTH &&
-        segs.length < ACTIVE_CAP
-      ) {
-        const perps = perpendicular(s.dir);
-        const cd = perps[Math.floor(Math.random() * perps.length)];
-        const child = makeSegment(ex, ey, cd, s.depth + 1, 1);
-        if (child) {
-          segs.push(child);
-          fillCircle(ex, ey, 3, MAX_OPACITY * fadeForY(ey));
-        }
-      }
-    };
-
-    const spawn = () => {
-      segs = [];
-      const count = 4;
-      for (let i = 0; i < count; i++) {
-        const slot = (i + 0.5) / count;
-        const sx = Math.round(W * slot);
-        const s = makeSegment(sx, 0, "down", 0, 1);
-        if (s) segs.push(s);
-      }
+      vias = [
+        // pre-chosen waypoint meet / cross points
+        [sx(0.42), ic1.pins.right[1][1]],
+        [sx(0.42), ic2.pins.left[1][1]],
+        [sx(0.50), sy(0.42)],
+        [sx(0.94), ic2.pins.right[1][1]],
+        [sx(0.46), sy(0.06)],
+        [sx(0.82), sy(0.34)],
+      ];
+      viasDrawn = false;
+      startTime = performance.now();
     };
 
     const tick = () => {
       const now = performance.now();
-      const finished: Seg[] = [];
-      for (const s of segs) {
-        const elapsed = now - s.startedAt;
-        const newHead = Math.min(s.length, (elapsed / SEG_DUR) * s.length);
-        if (newHead > s.headDist) {
-          drawSubSegment(s, s.headDist, newHead);
-          s.headDist = newHead;
+      let anyActive = false;
+      for (const r of routes) {
+        const elapsed = now - startTime - r.startDelay;
+        if (elapsed <= 0) {
+          anyActive = true;
+          continue;
         }
-        if (s.headDist >= s.length) finished.push(s);
+        const target = Math.min(r.totalLength, (elapsed / 1000) * SPEED);
+        if (target > r.drawnDist) {
+          let cursor = 0;
+          for (const seg of r.segments) {
+            const segStart = cursor;
+            const segEnd = cursor + seg.length;
+            if (target > segStart && r.drawnDist < segEnd) {
+              const from = Math.max(0, r.drawnDist - segStart);
+              const to = Math.min(seg.length, target - segStart);
+              drawSegmentRange(seg, from, to);
+            }
+            cursor = segEnd;
+          }
+          r.drawnDist = target;
+        }
+        if (r.drawnDist < r.totalLength) anyActive = true;
       }
-      if (finished.length) {
-        segs = segs.filter((s) => !finished.includes(s));
-        for (const s of finished) onSegmentFinished(s);
+      if (!anyActive && !viasDrawn) {
+        for (const [vx, vy] of vias) {
+          fCircle(vx, vy, 4, alphaAt(vy));
+        }
+        viasDrawn = true;
       }
-      if (segs.length > 0) {
+      if (anyActive) {
         raf = requestAnimationFrame(tick);
       }
     };
@@ -535,8 +615,7 @@ function HeroCircuits() {
       canvas.width = Math.max(1, Math.floor(W * dpr));
       canvas.height = Math.max(1, Math.floor(H * dpr));
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, W, H);
-      spawn();
+      setupLayout();
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(tick);
     };
