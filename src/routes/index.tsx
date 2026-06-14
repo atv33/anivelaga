@@ -104,7 +104,6 @@ const CATEGORIES: Category[] = [
           { label: "Altium", href: "https://cuauv.365.altium.com/designs/91CB0DA0-70CB-4AD0-A772-2822C74EFC66#design" },
           { label: "Wiki", href: "https://wiki.cuauv.org/electrical/orion/documentation/Thrusters-Orion" },
         ],
-        embedUrl: "https://cuauv.365.altium.com/designs/91CB0DA0-70CB-4AD0-A772-2822C74EFC66#design",
       },
     ],
   },
