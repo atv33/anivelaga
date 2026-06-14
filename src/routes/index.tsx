@@ -380,6 +380,8 @@ function HeroCircuits() {
       canvas.height = Math.max(1, Math.floor(H * dpr));
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       seed();
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(tick);
     };
 
     // Per-frame step distance for each alive branch (pixels)
