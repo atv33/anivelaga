@@ -16,6 +16,9 @@ import {
   serialGlbSrc,
 } from "@/lib/pcbImages";
 import headshotAsset from "@/assets/headshot.jpg.asset.json";
+import serialLayoutAsset from "@/assets/serial-layout.png.asset.json";
+import serialFrontAsset from "@/assets/serial-front.png.asset.json";
+import serialBackAsset from "@/assets/serial-back.png.asset.json";
 
 // Allow <model-viewer> custom element in JSX (React 19 uses React.JSX)
 declare module "react" {
@@ -779,27 +782,51 @@ function GalleryImage({ src, alt }: { src: string; alt: string }) {
 }
 
 function SerialBoardGallery() {
+  const images = [
+    { id: "layout", label: "2D Layout", src: serialLayoutAsset.url, alt: "Serial Board 2D PCB schematic layout" },
+    { id: "front", label: "3D Front", src: serialFrontAsset.url, alt: "Serial Board 3D front render" },
+    { id: "back", label: "3D Back", src: serialBackAsset.url, alt: "Serial Board 3D back render" },
+  ];
+  const [active, setActive] = useState(images[0].id);
+  const current = images.find((i) => i.id === active) ?? images[0];
   return (
-    <Tabs defaultValue="3d" className="w-full">
-      <TabsList className="flex w-full flex-wrap justify-start gap-1 bg-secondary/60">
-        <TabsTrigger value="3d">3D View</TabsTrigger>
-        <TabsTrigger value="layout">PCB Layout</TabsTrigger>
-        <TabsTrigger value="front">Front View</TabsTrigger>
-        <TabsTrigger value="diff">Diff Pairs</TabsTrigger>
-      </TabsList>
-      <TabsContent value="3d">
-        <SerialViewer />
-      </TabsContent>
-      <TabsContent value="layout">
-        <GalleryImage src={serialBoardLayout} alt="Serial Board PCB layout" />
-      </TabsContent>
-      <TabsContent value="front">
-        <GalleryImage src={serialBoardFront} alt="Serial Board front view" />
-      </TabsContent>
-      <TabsContent value="diff">
-        <GalleryImage src={serialBoardDiff} alt="Serial Board differential pairs" />
-      </TabsContent>
-    </Tabs>
+    <div className="w-full">
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md border border-border" style={{ backgroundColor: "#1a1a1a" }}>
+        <img
+          src={current.src}
+          alt={current.alt}
+          className="absolute inset-0 h-full w-full object-contain"
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/40" />
+        <div className="absolute inset-x-0 bottom-0 p-4">
+          <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-mark">
+            {String(images.findIndex((i) => i.id === active) + 1).padStart(2, "0")} / {String(images.length).padStart(2, "0")}
+          </div>
+          <div className="mt-1 font-mono text-xs uppercase tracking-[0.22em] text-foreground">
+            {current.label}
+          </div>
+        </div>
+      </div>
+      <div className="mt-3 flex gap-2">
+        {images.map((img) => (
+          <button
+            key={img.id}
+            type="button"
+            onClick={() => setActive(img.id)}
+            className={`relative aspect-[4/3] flex-1 overflow-hidden rounded-sm border transition ${
+              active === img.id ? "border-mark" : "border-border opacity-60 hover:opacity-100"
+            }`}
+            style={{ backgroundColor: "#1a1a1a" }}
+          >
+            <img src={img.src} alt={img.alt} className="absolute inset-0 h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-black/40" />
+            <div className="absolute inset-x-0 bottom-0 p-1.5 font-mono text-[9px] uppercase tracking-[0.2em] text-foreground">
+              {img.label}
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 
