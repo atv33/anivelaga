@@ -3,4 +3,4 @@ export const serialBoardFront = "";
 export const serialBoardLayout = "";
 export const serialBoardDiff = "";
 
-export const thrusterGlbSrc = "";
+export const thrusterGlbSrc = "https://files.catbox.moe/03r1s1.glb";
