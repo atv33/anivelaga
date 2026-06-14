@@ -614,9 +614,7 @@ function SubProjectRow({
   return (
     <div
       style={{
-        background: "#161616",
         borderTop: "1px solid rgba(255,255,255,0.06)",
-        borderLeft: "2px solid rgba(255,255,255,0.12)",
       }}
       className="flex flex-col lg:flex-row"
     >
@@ -656,7 +654,7 @@ function SubProjectRow({
         style={{ borderLeft: "1px solid rgba(255,255,255,0.06)", minHeight: 200 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ backgroundColor: "#161616", width: "100%", height: "100%", minHeight: 200 }} className="overflow-hidden">
+        <div style={{ width: "100%", height: "100%", minHeight: 200 }} className="overflow-hidden">
           <model-viewer
             src={modelSrc}
             alt={`${p.name} 3D model`}
@@ -668,7 +666,7 @@ function SubProjectRow({
             environment-image="neutral"
             loading="eager"
             reveal="auto"
-            style={{ width: "100%", height: "100%", minHeight: 200, backgroundColor: "#161616" } as React.CSSProperties}
+            style={{ width: "100%", height: "100%", minHeight: 200, backgroundColor: "transparent" } as React.CSSProperties}
           />
         </div>
       </div>
