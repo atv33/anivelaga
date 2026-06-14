@@ -267,7 +267,7 @@ function Hero() {
   );
 }
 
-const SERIAL_INLINE_GLB = "https://files.catbox.moe/ktpy7q.glb";
+const SERIAL_INLINE_GLB = "https://files.catbox.moe/tgly0l.glb";
 const SERIAL_TEST_INLINE_GLB = "https://files.catbox.moe/dpd9ku.glb";
 const THRUSTER_INLINE_GLB = "https://files.catbox.moe/x54j79.glb";
 
@@ -686,9 +686,6 @@ function SubProjectRow({
             camera-controls
             rotation-per-second="20deg"
             interaction-prompt="none"
-            shadow-intensity="0"
-            exposure="0.4"
-            environment-image="neutral"
             loading="eager"
             reveal="auto"
             style={{ width: "100%", height: "100%", minHeight: 200, backgroundColor: "transparent" } as React.CSSProperties}
