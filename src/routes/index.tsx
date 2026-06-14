@@ -266,6 +266,7 @@ function Hero() {
 
 const SERIAL_INLINE_GLB = "https://files.catbox.moe/asgl55.glb";
 const SERIAL_TEST_INLINE_GLB = "https://files.catbox.moe/dpd9ku.glb";
+const THRUSTER_INLINE_GLB = "https://files.catbox.moe/x54j79.glb";
 
 function InlineSerialModel({
   embedded = false,
@@ -481,6 +482,32 @@ function CategoryBlock({ category: c }: { category: Category }) {
                       modelSrc={SERIAL_TEST_INLINE_GLB}
                     />
                   ) : null}
+                </div>
+              ) : c.id === "01" && p.id === "C" ? (
+                <div
+                  className="my-6 overflow-hidden"
+                  style={{
+                    background: "#111111",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: 2,
+                  }}
+                >
+                  <div className="flex flex-col lg:flex-row" style={{ minHeight: 350 }}>
+                    <div className="lg:w-1/2">
+                      <ProjectRow
+                        project={p}
+                        categoryId={c.id}
+                        onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
+                        bare
+                      />
+                    </div>
+                    <div
+                      className="lg:w-1/2"
+                      style={{ borderLeft: "1px solid rgba(255,255,255,0.06)" }}
+                    >
+                      <InlineSerialModel embedded src={THRUSTER_INLINE_GLB} />
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <ProjectRow
