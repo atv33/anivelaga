@@ -525,7 +525,7 @@ function SerialBoardGallery() {
         <TabsTrigger value="diff">Diff Pairs</TabsTrigger>
       </TabsList>
       <TabsContent value="3d">
-        <GalleryImage src={serialBoard3d} alt="Serial Board 3D render" />
+        <SerialViewer />
       </TabsContent>
       <TabsContent value="layout">
         <GalleryImage src={serialBoardLayout} alt="Serial Board PCB layout" />
@@ -537,6 +537,46 @@ function SerialBoardGallery() {
         <GalleryImage src={serialBoardDiff} alt="Serial Board differential pairs" />
       </TabsContent>
     </Tabs>
+  );
+}
+
+function SerialViewer() {
+  return (
+    <div
+      className="relative overflow-hidden rounded-md border border-border"
+      style={{ backgroundColor: "#1a1a1a" }}
+    >
+      {serialGlbSrc ? (
+        <model-viewer
+          src={serialGlbSrc}
+          alt="Serial Board 3D model"
+          auto-rotate
+          camera-controls
+          rotation-per-second="20deg"
+          interaction-prompt="none"
+          shadow-intensity="1"
+          loading="eager"
+          reveal="auto"
+          style={{
+            width: "100%",
+            height: "400px",
+            backgroundColor: "#1a1a1a",
+            "--poster-color": "#1a1a1a",
+          } as React.CSSProperties}
+        >
+          <div
+            slot="progress-bar"
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+          >
+            <div className="size-8 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />
+          </div>
+        </model-viewer>
+      ) : (
+        <div className="flex h-[400px] items-center justify-center font-mono text-xs uppercase tracking-[0.25em] text-white/40">
+          [ 3D model coming soon ]
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -583,39 +623,35 @@ function ThrusterViewer() {
 function About() {
   return (
     <section id="about" className="mx-auto max-w-6xl px-6 py-28 sm:px-10 sm:py-40">
-      <SectionHeader index="02" kicker="About & Skills" title="A few words, a long list." />
+      <SectionHeader index="02" kicker="About" title="Who I am." />
       <div className="mt-20 grid gap-16 sm:grid-cols-12">
-        <div className="sm:col-span-5">
+        <div className="sm:col-span-7">
           <p className="text-lg leading-relaxed text-ink-dim">
-            I've been writing software for eight years, mostly on the backend — building the
-            infrastructure other people build on top of. I care about correctness, latency, and
-            tooling that respects the engineer using it.
+            I'm an electrical and computer engineering student at Cornell, currently on CUAUV —
+            Cornell's autonomous underwater vehicle team. I design production PCBs in Altium
+            Designer: 4-layer stackups, differential pair routing, ESD protection, high-speed USB.
+            The submarine goes in real water, so the boards have to work.
           </p>
           <p className="mt-6 text-lg leading-relaxed text-ink-dim">
-            Outside of code: long walks, film cameras, and rebuilding mechanical keyboards I don't
-            actually need.
+            My work runs from board-level hardware through the networking stack up into LLM
+            inference systems. I care about the full path: what the silicon is doing, how data
+            moves between nodes, and where inference bottlenecks actually live. I'm looking for
+            roles where that end-to-end view matters.
           </p>
         </div>
-        <dl className="sm:col-span-7 sm:pl-12">
-          {Object.entries(SKILLS).map(([k, items], i) => (
-            <div
-              key={k}
-              className={`grid grid-cols-12 gap-4 py-6 ${i > 0 ? "border-t border-border" : ""}`}
-            >
-              <dt className="col-span-12 font-mono text-xs uppercase tracking-[0.28em] text-ink-faint sm:col-span-3">
-                {k}
-              </dt>
-              <dd className="col-span-12 text-base text-foreground sm:col-span-9">
-                {items.map((item, idx) => (
-                  <span key={item}>
-                    {item}
-                    {idx < items.length - 1 ? <span className="mx-2 text-ink-faint">·</span> : null}
-                  </span>
-                ))}
-              </dd>
-            </div>
-          ))}
-        </dl>
+        <div className="sm:col-span-5 sm:pl-12">
+          <div className="font-mono text-xs uppercase tracking-[0.28em] text-ink-faint">
+            Skills
+          </div>
+          <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 font-mono text-xs uppercase tracking-[0.18em] text-foreground">
+            {SKILLS.map((s, i) => (
+              <span key={s}>
+                {s}
+                {i < SKILLS.length - 1 ? <span className="ml-5 text-rule">/</span> : null}
+              </span>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -624,7 +660,7 @@ function About() {
 function Experience() {
   return (
     <section id="experience" className="mx-auto max-w-6xl px-6 py-28 sm:px-10 sm:py-40">
-      <SectionHeader index="03" kicker="Experience" title="Where I've been." />
+      <SectionHeader index="03" kicker="Experience" title="Where I've worked." />
       <ol className="mt-20 border-t border-border">
         {EXPERIENCE.map((e, i) => (
           <Reveal as="li" key={i} delay={i * 70}>
@@ -657,8 +693,9 @@ function Contact() {
       <SectionHeader index="04" kicker="Get in touch" title="Let's talk." />
       <div className="mt-20 grid gap-10 sm:grid-cols-12">
         <p className="sm:col-span-5 text-lg leading-relaxed text-ink-dim">
-          Open to select consulting and full-time roles in infrastructure, developer tools, and
-          backend systems. The fastest way to reach me is email.
+          Open to full-time roles and research positions in hardware engineering, embedded
+          systems, and ML infrastructure. I'm especially interested in teams working at the
+          hardware-software boundary. Email is the fastest way to reach me.
         </p>
         <ul className="sm:col-span-7 sm:pl-12">
           {links.map((l, i) => (
