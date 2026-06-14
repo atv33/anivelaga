@@ -280,99 +280,252 @@ function HeroCircuits() {
     let H = 0;
     let raf = 0;
 
-    // dir: 0=down, 1=right, 2=left  (no upward — traces flow generally downward)
-    type Dir = 0 | 1 | 2;
-    type Branch = {
-      x: number;
-      y: number;
-      dir: Dir;
-      traveled: number;
-      nextEvent: number;
-      sinceComponent: number;
-      nextComponent: number;
-      alive: boolean;
-      depth: number;
+    type Dir = "down" | "left" | "right";
+    const DVEC: Record<Dir, [number, number]> = {
+      down: [0, 1],
+      left: [-1, 0],
+      right: [1, 0],
     };
-    const DX: Record<Dir, number> = { 0: 0, 1: 1, 2: -1 };
-    const DY: Record<Dir, number> = { 0: 1, 1: 0, 2: 0 };
-    let branches: Branch[] = [];
+
+    type Seg = {
+      sx: number;
+      sy: number;
+      dir: Dir;
+      length: number;
+      depth: number;
+      startedAt: number;
+      headDist: number;
+      hasComponent: boolean;
+      gapStart: number;
+      gapEnd: number;
+      compDrawn: boolean;
+      terminal: boolean;
+      segIndex: number; // 1-based count of segments along this lineage
+    };
 
     const STROKE = 1.5;
-    const MAX_OPACITY = 0.07;
-    const MARGIN = 6;
-    const MAX_BRANCHES_TOTAL = 20;
+    const MAX_OPACITY = 0.08;
+    const SEG_MIN = 80;
+    const SEG_MAX = 180;
+    const SEG_DUR = 1200;
+    const MAX_DEPTH = 3;
+    const ACTIVE_CAP = 12;
+    const FADE_END_FRAC = 0.75;
+    const COMP_LEN = 14; // along trace
+    const COMP_WID = 6; // perpendicular to trace
 
-    // Only draw in the top 40% of hero height; fade gently in the last quarter of that zone.
+    let segs: Seg[] = [];
+
     const fadeForY = (y: number) => {
-      const zone = H * 0.4;
-      if (y >= zone) return 0;
-      const t = y / zone;
-      if (t < 0.7) return 1;
-      return (1 - t) / 0.3;
+      const limit = H * FADE_END_FRAC;
+      if (y >= limit) return 0;
+      return Math.max(0, 1 - y / limit);
     };
 
-    const stroke = (x1: number, y1: number, x2: number, y2: number, alpha: number) => {
+    const strokeLine = (x1: number, y1: number, x2: number, y2: number, alpha: number) => {
       if (alpha < 0.003) return;
       ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
       ctx.lineWidth = STROKE;
-      ctx.lineCap = "square";
+      ctx.lineCap = "butt";
       ctx.beginPath();
-      // snap to half-pixel for crisp 1.5px orthogonal strokes
       ctx.moveTo(Math.round(x1) + 0.5, Math.round(y1) + 0.5);
       ctx.lineTo(Math.round(x2) + 0.5, Math.round(y2) + 0.5);
       ctx.stroke();
     };
 
-    const via = (x: number, y: number, alpha: number) => {
+    const fillRect = (x: number, y: number, w: number, h: number, alpha: number) => {
+      if (alpha < 0.003) return;
+      ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+      ctx.fillRect(Math.round(x), Math.round(y), w, h);
+    };
+
+    const strokeRect = (x: number, y: number, w: number, h: number, alpha: number) => {
+      if (alpha < 0.003) return;
+      ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(Math.round(x) + 0.5, Math.round(y) + 0.5, w, h);
+    };
+
+    const fillCircle = (x: number, y: number, r: number, alpha: number) => {
       if (alpha < 0.003) return;
       ctx.fillStyle = `rgba(255,255,255,${alpha})`;
       ctx.beginPath();
-      ctx.arc(x, y, 3, 0, Math.PI * 2);
+      ctx.arc(x, y, r, 0, Math.PI * 2);
       ctx.fill();
     };
 
-    const component = (x: number, y: number, dir: Dir, alpha: number) => {
-      if (alpha < 0.003) return;
-      const roll = Math.random();
-      if (roll < 0.78) {
-        // SMD resistor/capacitor: 2x6 perpendicular to trace
-        const horiz = dir === 0; // perpendicular: if trace is vertical, pad is horizontal
-        const w = horiz ? 6 : 2;
-        const h = horiz ? 2 : 6;
-        ctx.fillStyle = `rgba(255,255,255,${alpha})`;
-        ctx.fillRect(Math.round(x - w / 2), Math.round(y - h / 2), w, h);
-      } else {
-        // IC pad: hollow 8x8 square
-        ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
-        ctx.lineWidth = 1;
-        ctx.strokeRect(Math.round(x - 4) + 0.5, Math.round(y - 4) + 0.5, 8, 8);
+    const makeSegment = (
+      sx: number,
+      sy: number,
+      dir: Dir,
+      depth: number,
+      segIndex: number,
+    ): Seg | null => {
+      const limit = H * FADE_END_FRAC;
+      if (sy >= limit) return null;
+      let length = SEG_MIN + Math.random() * (SEG_MAX - SEG_MIN);
+      const [vx, vy] = DVEC[dir];
+      let ex = sx + vx * length;
+      let ey = sy + vy * length;
+      let terminal = false;
+
+      if (dir === "down" && ey > limit) {
+        ey = limit;
+        length = ey - sy;
+        terminal = true;
+      } else if (dir === "left" && ex < 4) {
+        ex = 4;
+        length = sx - ex;
+        terminal = true;
+      } else if (dir === "right" && ex > W - 4) {
+        ex = W - 4;
+        length = ex - sx;
+        terminal = true;
       }
+
+      if (length < 24) return null;
+
+      let gapStart = -1;
+      let gapEnd = -1;
+      const placeComponent = segIndex > 0 && segIndex % 3 === 0;
+      if (placeComponent && length > COMP_LEN + 30) {
+        const center = length / 2;
+        gapStart = center - COMP_LEN / 2;
+        gapEnd = center + COMP_LEN / 2;
+      }
+
+      return {
+        sx,
+        sy,
+        dir,
+        length,
+        depth,
+        startedAt: performance.now(),
+        headDist: 0,
+        hasComponent: gapStart >= 0,
+        gapStart,
+        gapEnd,
+        compDrawn: false,
+        terminal,
+        segIndex,
+      };
+    };
+
+    const drawSubSegment = (s: Seg, from: number, to: number) => {
+      const [vx, vy] = DVEC[s.dir];
+      const drawRange = (a: number, b: number) => {
+        if (b <= a) return;
+        const x1 = s.sx + vx * a;
+        const y1 = s.sy + vy * a;
+        const x2 = s.sx + vx * b;
+        const y2 = s.sy + vy * b;
+        const midY = (y1 + y2) / 2;
+        strokeLine(x1, y1, x2, y2, MAX_OPACITY * fadeForY(midY));
+      };
+
+      if (!s.hasComponent) {
+        drawRange(from, to);
+        return;
+      }
+
+      const g1 = s.gapStart;
+      const g2 = s.gapEnd;
+
+      if (from < g1) drawRange(from, Math.min(to, g1));
+      if (to > g2) drawRange(Math.max(from, g2), to);
+
+      if (!s.compDrawn && to >= g1) {
+        const cx = s.sx + vx * ((g1 + g2) / 2);
+        const cy = s.sy + vy * ((g1 + g2) / 2);
+        const horiz = s.dir !== "down";
+        const w = horiz ? COMP_LEN : COMP_WID;
+        const h = horiz ? COMP_WID : COMP_LEN;
+        const alpha = MAX_OPACITY * fadeForY(cy);
+        strokeRect(cx - w / 2, cy - h / 2, w, h, alpha);
+        // 3x3 pads on each end, touching the trace
+        if (horiz) {
+          fillRect(cx - w / 2 - 3, cy - 1.5, 3, 3, alpha);
+          fillRect(cx + w / 2, cy - 1.5, 3, 3, alpha);
+        } else {
+          fillRect(cx - 1.5, cy - h / 2 - 3, 3, 3, alpha);
+          fillRect(cx - 1.5, cy + h / 2, 3, 3, alpha);
+        }
+        s.compDrawn = true;
+      }
+    };
+
+    const continuationChoices = (dir: Dir): Dir[] => {
+      // parent's next segment: keep going or 90° turn, never upward
+      if (dir === "down") return ["down", "down", "down", "left", "right"];
+      if (dir === "left") return ["left", "left", "down", "down"];
+      return ["right", "right", "down", "down"];
     };
 
     const perpendicular = (dir: Dir): Dir[] => {
-      if (dir === 0) return [1, 2];
-      return [0]; // from horizontal, only downward is valid (no upward)
+      if (dir === "down") return ["left", "right"];
+      return ["down"];
     };
 
-    const seed = () => {
-      branches = [];
-      const count = 3;
+    const onSegmentFinished = (s: Seg) => {
+      if (s.terminal) return;
+      const [vx, vy] = DVEC[s.dir];
+      const ex = s.sx + vx * s.length;
+      const ey = s.sy + vy * s.length;
+
+      // parent continues
+      if (segs.length < ACTIVE_CAP) {
+        const choices = continuationChoices(s.dir);
+        const pd = choices[Math.floor(Math.random() * choices.length)];
+        const next = makeSegment(ex, ey, pd, s.depth, s.segIndex + 1);
+        if (next) segs.push(next);
+      }
+
+      // 20% chance to spawn one perpendicular child
+      if (
+        Math.random() < 0.2 &&
+        s.depth < MAX_DEPTH &&
+        segs.length < ACTIVE_CAP
+      ) {
+        const perps = perpendicular(s.dir);
+        const cd = perps[Math.floor(Math.random() * perps.length)];
+        const child = makeSegment(ex, ey, cd, s.depth + 1, 1);
+        if (child) {
+          segs.push(child);
+          fillCircle(ex, ey, 3, MAX_OPACITY * fadeForY(ey));
+        }
+      }
+    };
+
+    const spawn = () => {
+      segs = [];
+      const count = 4;
       for (let i = 0; i < count; i++) {
         const slot = (i + 0.5) / count;
-        const jitter = (Math.random() - 0.5) * (0.5 / count);
-        branches.push({
-          x: Math.round(W * (slot + jitter)),
-          y: 0,
-          dir: 0,
-          traveled: 0,
-          nextEvent: 40 + Math.random() * 90,
-          sinceComponent: 0,
-          nextComponent: 40 + Math.random() * 90,
-          alive: true,
-          depth: 0,
-        });
+        const sx = Math.round(W * slot);
+        const s = makeSegment(sx, 0, "down", 0, 1);
+        if (s) segs.push(s);
       }
-      ctx.clearRect(0, 0, W, H);
+    };
+
+    const tick = () => {
+      const now = performance.now();
+      const finished: Seg[] = [];
+      for (const s of segs) {
+        const elapsed = now - s.startedAt;
+        const newHead = Math.min(s.length, (elapsed / SEG_DUR) * s.length);
+        if (newHead > s.headDist) {
+          drawSubSegment(s, s.headDist, newHead);
+          s.headDist = newHead;
+        }
+        if (s.headDist >= s.length) finished.push(s);
+      }
+      if (finished.length) {
+        segs = segs.filter((s) => !finished.includes(s));
+        for (const s of finished) onSegmentFinished(s);
+      }
+      if (segs.length > 0) {
+        raf = requestAnimationFrame(tick);
+      }
     };
 
     const resize = () => {
@@ -382,105 +535,10 @@ function HeroCircuits() {
       canvas.width = Math.max(1, Math.floor(W * dpr));
       canvas.height = Math.max(1, Math.floor(H * dpr));
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      seed();
+      ctx.clearRect(0, 0, W, H);
+      spawn();
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(tick);
-    };
-
-    // Per-frame step distance for each alive branch (pixels)
-    const STEP_PER_FRAME = 2;
-
-    const tick = () => {
-      let anyAlive = false;
-      const snapshot = branches.length;
-      for (let i = 0; i < snapshot; i++) {
-        const b = branches[i];
-        if (!b.alive) continue;
-
-        const dx = DX[b.dir];
-        const dy = DY[b.dir];
-        const nx = b.x + dx * STEP_PER_FRAME;
-        const ny = b.y + dy * STEP_PER_FRAME;
-
-        // bounds check — also stop once past the top-40% zone
-        const zoneBottom = H * 0.4;
-        if (nx < MARGIN || nx > W - MARGIN || ny > zoneBottom) {
-          // draw final partial + terminal via if inside
-          const cx = Math.min(W - MARGIN, Math.max(MARGIN, nx));
-          const cy = Math.min(zoneBottom, ny);
-          const a = MAX_OPACITY * fadeForY(cy);
-          stroke(b.x, b.y, cx, cy, a);
-          if (cy < zoneBottom) via(cx, cy, a);
-          b.alive = false;
-          continue;
-        }
-
-        const alpha = MAX_OPACITY * fadeForY(ny);
-        stroke(b.x, b.y, nx, ny, alpha);
-
-        b.x = nx;
-        b.y = ny;
-        b.traveled += STEP_PER_FRAME;
-        b.sinceComponent += STEP_PER_FRAME;
-        anyAlive = true;
-
-        // component placement
-        if (b.sinceComponent >= b.nextComponent) {
-          component(b.x, b.y, b.dir, alpha);
-          b.sinceComponent = 0;
-          b.nextComponent = 50 + Math.random() * 110;
-        }
-
-        // event: turn / branch / T-split
-        if (b.traveled >= b.nextEvent) {
-          via(b.x, b.y, alpha);
-          b.traveled = 0;
-          b.nextEvent = 50 + Math.random() * 130;
-
-          const roll = Math.random();
-          const perps = perpendicular(b.dir);
-
-          const canSpawn = branches.length < MAX_BRANCHES_TOTAL;
-          if (canSpawn && b.depth < 4 && b.dir === 0 && roll < 0.2) {
-            // T-split: parent dies, two perpendicular children (left + right)
-            b.alive = false;
-            for (const nd of [1, 2] as Dir[]) {
-              branches.push({
-                x: b.x,
-                y: b.y,
-                dir: nd,
-                traveled: 0,
-                nextEvent: 30 + Math.random() * 90,
-                sinceComponent: 0,
-                nextComponent: 40 + Math.random() * 90,
-                alive: true,
-                depth: b.depth + 1,
-              });
-            }
-          } else if (canSpawn && b.depth < 4 && roll < 0.55) {
-            // branch: spawn a perpendicular child, parent continues
-            const nd = perps[Math.floor(Math.random() * perps.length)];
-            branches.push({
-              x: b.x,
-              y: b.y,
-              dir: nd,
-              traveled: 0,
-              nextEvent: 30 + Math.random() * 90,
-              sinceComponent: 0,
-              nextComponent: 40 + Math.random() * 90,
-              alive: true,
-              depth: b.depth + 1,
-            });
-          } else {
-            // turn 90°
-            const nd = perps[Math.floor(Math.random() * perps.length)];
-            b.dir = nd;
-          }
-        }
-      }
-      if (anyAlive) {
-        raf = requestAnimationFrame(tick);
-      }
     };
 
     resize();
@@ -495,7 +553,14 @@ function HeroCircuits() {
     <canvas
       ref={canvasRef}
       aria-hidden
-      className="pointer-events-none absolute inset-0 z-0 h-full w-full"
+      style={{
+        position: "absolute",
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        zIndex: 0,
+        pointerEvents: "none",
+      }}
     />
   );
 }
