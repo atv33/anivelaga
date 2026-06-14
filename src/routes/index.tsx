@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
-  serialBoard3d,
   serialBoardFront,
   serialBoardLayout,
   serialBoardDiff,
