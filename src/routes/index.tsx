@@ -13,34 +13,103 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const PROJECTS = [
+type Project = {
+  id: string;
+  name: string;
+  tagline: string;
+  stack: string[];
+  year?: string;
+  links?: { label: string; href: string }[];
+  placeholderCaption?: string;
+  embedUrl?: string;
+  comingSoon?: boolean;
+};
+
+type Category = {
+  id: string;
+  label: string;
+  intro: string;
+  projects: Project[];
+};
+
+const CATEGORIES: Category[] = [
   {
     id: "01",
-    name: "Serial Board",
-    tagline:
-      "Central comms hub for CUAUV's autonomous submarine — bridges 16 RS-232 RX/TX subsystem pairs to a single USB-C on the Jetson, with USB ESD protection, flexible DVL connectivity, and pluggable EEPROM for easier debugging.",
-    stack: ["KiCad", "4-Layer PCB", "USB-C", "RS-232", "SMF05CT1G TVS"],
-    year: "Spring 2026",
-    github: null,
-    demo: null,
+    label: "PCB Design — CUAUV",
+    intro:
+      "Designed and laid out production PCBs in Altium Designer for Cornell's autonomous submarine. Hardware-first: 4-layer stackups, differential pair routing, ESD protection.",
+    projects: [
+      {
+        id: "A",
+        name: "Serial Board",
+        year: "Spring 2026",
+        tagline:
+          "Central communication hub for the submarine. Aggregates 16 RS-232 RX/TX channels from sensors and peripherals into a single USB-C connection to the Jetson AI computer. Uses FTDI USB-to-UART ICs with RS-232 level shifting. Spring 2026 added SMF05CT1G TVS diode arrays for ESD protection on all 32 signal lines, DVL direct-connect header, and hot-swap EEPROM footprint. 4-layer PCB, 3.701\" x 4.291\".",
+        stack: ["Altium Designer", "4-Layer PCB", "RS-232", "USB-C", "FTDI", "ESD Protection"],
+        links: [
+          { label: "Altium", href: "https://cuauv.365.altium.com/designs/489558F7-31D3-4C39-8F75-AE5F5562EFF5#design" },
+        ],
+        placeholderCaption: "Serial Board 3D Render",
+      },
+      {
+        id: "B",
+        name: "Serial Test Board",
+        tagline:
+          "Breakout and validation board for the Serial Board. Exposes all 16 RS-232 channels as labeled headers for bench testing without the full submarine harness. Used during bring-up to verify level-shifter voltages, FTDI enumeration, and loopback integrity on each channel pair.",
+        stack: ["Altium Designer", "Test & Validation", "RS-232", "Breakout Board"],
+        links: [
+          { label: "Altium", href: "https://cuauv.365.altium.com/designs/93799FBC-513E-446E-8096-13A66B62C593#design" },
+        ],
+      },
+      {
+        id: "C",
+        name: "Thruster Board — Orion",
+        tagline:
+          "Motor driver PCB for the Orion vehicle's thruster array. Receives PWM/CAN commands from the Jetson via backplane connector and drives 8 brushless DC thrusters. Handles power distribution, overcurrent protection, and ESC signal conditioning.",
+        stack: ["Altium Designer", "Motor Control", "CAN Bus", "PWM", "Power Distribution"],
+        links: [
+          { label: "Altium", href: "https://cuauv.365.altium.com/designs/91CB0DA0-70CB-4AD0-A772-2822C74EFC66#design" },
+          { label: "Wiki", href: "https://wiki.cuauv.org/electrical/orion/documentation/Thrusters-Orion" },
+        ],
+        embedUrl: "https://cuauv.365.altium.com/designs/91CB0DA0-70CB-4AD0-A772-2822C74EFC66#design",
+      },
+    ],
   },
   {
     id: "02",
-    name: "Pixie CDN",
-    tagline: "Edge image transform and cache layer with on-the-fly resizing at sub-30ms latency.",
-    stack: ["Rust", "WASM", "Cloudflare Workers"],
-    year: "2024",
-    github: "https://github.com/anivelaga/pixie-cdn",
-    demo: "https://pixie.velaga.dev",
+    label: "Networking / LLM Inference Research",
+    intro:
+      "Exploring how LLM inference latency breaks down at the network layer — profiling attention, KV-cache transfer, and token streaming across distributed GPU clusters.",
+    projects: [
+      {
+        id: "A",
+        name: "Distributed KV-Cache Networking",
+        tagline: "Measuring KV-cache transfer overhead across tensor-parallel GPU nodes.",
+        stack: ["CUDA", "NCCL", "RDMA"],
+        comingSoon: true,
+      },
+      {
+        id: "B",
+        name: "Tensor-Parallel Inference Profiling",
+        tagline: "End-to-end token latency breakdown across attention, all-reduce, and streaming.",
+        stack: ["PyTorch", "Triton", "Profiling"],
+        comingSoon: true,
+      },
+    ],
   },
   {
     id: "03",
-    name: "Loomctl",
-    tagline: "Declarative CLI for managing multi-region Postgres replicas across eight regions.",
-    stack: ["TypeScript", "Postgres", "Terraform"],
-    year: "2023",
-    github: "https://github.com/anivelaga/loomctl",
-    demo: null,
+    label: "Personal Projects",
+    intro: "Side experiments and things I build for fun.",
+    projects: [
+      {
+        id: "A",
+        name: "In the works",
+        tagline: "Something new is being built. Check back soon.",
+        stack: [],
+        comingSoon: true,
+      },
+    ],
   },
 ];
 
@@ -121,9 +190,9 @@ function Hero() {
       </h1>
       <div className="mt-10 grid gap-10 sm:mt-16 sm:grid-cols-12">
         <p className="sm:col-span-7 sm:col-start-6 max-w-xl text-lg leading-relaxed text-ink-dim sm:text-xl">
-          <span className="text-foreground">Software engineer</span> building fast, reliable
-          distributed systems — queues, edge runtimes, and the tooling that keeps them honest.
-          Currently shipping infrastructure other engineers depend on.
+          <span className="text-foreground">Electrical & computer engineer</span> — I design
+          hardware at the board level, then push it through the networking stack into LLM
+          inference systems. Currently on CUAUV building PCBs for an autonomous submarine.
         </p>
       </div>
     </section>
@@ -166,61 +235,120 @@ function Work() {
   return (
     <section id="work" className="mx-auto max-w-6xl px-6 py-28 sm:px-10 sm:py-40">
       <SectionHeader index="01" kicker="Selected Work" title="Things I've built." />
-      <ul className="mt-20 divide-y divide-border border-y border-border">
-        {PROJECTS.map((p, i) => (
-          <Reveal as="li" key={p.id} delay={i * 70}>
-            <ProjectRow project={p} />
-          </Reveal>
+      <div className="mt-20 space-y-24 sm:space-y-32">
+        {CATEGORIES.map((cat) => (
+          <CategoryBlock key={cat.id} category={cat} />
         ))}
-      </ul>
+      </div>
     </section>
   );
 }
 
-function ProjectRow({ project: p }: { project: (typeof PROJECTS)[number] }) {
+function CategoryBlock({ category: c }: { category: Category }) {
   return (
-    <article className="group grid grid-cols-12 items-baseline gap-6 py-10 transition-colors">
-      <div className="col-span-12 font-mono text-xs uppercase tracking-[0.25em] text-ink-faint sm:col-span-2">
-        {p.id} / {p.year}
-      </div>
-      <div className="col-span-12 sm:col-span-7">
-        <h3 className="font-display text-3xl font-bold tracking-tight transition-colors group-hover:text-mark sm:text-4xl">
-          {p.name}
-        </h3>
-        <p className="mt-3 max-w-xl text-base leading-relaxed text-ink-dim">{p.tagline}</p>
-        <div className="mt-5 flex flex-wrap gap-x-5 gap-y-1 font-mono text-xs uppercase tracking-[0.18em] text-ink-faint">
-          {p.stack.map((s, i) => (
-            <span key={s}>
-              {s}
-              {i < p.stack.length - 1 ? <span className="ml-5 text-rule">/</span> : null}
-            </span>
-          ))}
+    <div>
+      <div className="grid gap-6 sm:grid-cols-12">
+        <div className="font-mono text-xs uppercase tracking-[0.28em] text-ink-dim sm:col-span-3">
+          <span className="text-mark">{c.id}</span> / Category
+        </div>
+        <div className="sm:col-span-9">
+          <h3 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+            {c.label}
+          </h3>
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-dim">{c.intro}</p>
         </div>
       </div>
-      <div className="col-span-12 flex gap-6 text-sm sm:col-span-3 sm:justify-end">
-        {p.github ? (
+      <ul className="mt-12 divide-y divide-border border-y border-border">
+        {c.projects.map((p, i) => (
+          <Reveal as="li" key={p.id} delay={i * 70}>
+            <ProjectRow project={p} categoryId={c.id} />
+          </Reveal>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function ProjectRow({ project: p, categoryId }: { project: Project; categoryId: string }) {
+  return (
+    <article
+      className={`group grid grid-cols-12 items-baseline gap-6 py-10 transition-colors ${
+        p.comingSoon ? "opacity-50" : ""
+      }`}
+    >
+      <div className="col-span-12 font-mono text-xs uppercase tracking-[0.25em] text-ink-faint sm:col-span-2">
+        {categoryId}.{p.id}
+        {p.year ? <> / {p.year}</> : null}
+      </div>
+      <div className="col-span-12 sm:col-span-7">
+        <h4 className="font-display text-2xl font-bold tracking-tight transition-colors group-hover:text-mark sm:text-3xl">
+          {p.name}
+          {p.comingSoon ? (
+            <span className="ml-3 align-middle font-mono text-[10px] uppercase tracking-[0.25em] text-ink-faint">
+              Coming Soon
+            </span>
+          ) : null}
+        </h4>
+        <p className="mt-3 max-w-2xl text-base leading-relaxed text-ink-dim">{p.tagline}</p>
+        {p.stack.length > 0 ? (
+          <div className="mt-5 flex flex-wrap gap-x-5 gap-y-1 font-mono text-xs uppercase tracking-[0.18em] text-ink-faint">
+            {p.stack.map((s, i) => (
+              <span key={s}>
+                {s}
+                {i < p.stack.length - 1 ? <span className="ml-5 text-rule">/</span> : null}
+              </span>
+            ))}
+          </div>
+        ) : null}
+        {p.placeholderCaption ? (
+          <figure className="mt-6 max-w-xl">
+            <div className="flex aspect-[16/10] items-center justify-center rounded-md border border-border bg-secondary/60 font-mono text-xs uppercase tracking-[0.25em] text-ink-faint">
+              [ Image ]
+            </div>
+            <figcaption className="mt-2 font-mono text-[11px] uppercase tracking-[0.25em] text-ink-faint">
+              {p.placeholderCaption}
+            </figcaption>
+          </figure>
+        ) : null}
+        {p.embedUrl ? (
+          <figure className="mt-6">
+            <iframe
+              src={p.embedUrl}
+              title={`${p.name} interactive 3D viewer`}
+              allow="fullscreen"
+              style={{
+                width: "100%",
+                height: 480,
+                borderRadius: 8,
+                border: "1px solid #e5e5e5",
+              }}
+            />
+            <figcaption className="mt-2 font-mono text-[11px] uppercase tracking-[0.25em] text-ink-faint">
+              Interactive 3D — pan & rotate
+            </figcaption>
+          </figure>
+        ) : null}
+      </div>
+      <div className="col-span-12 flex flex-wrap gap-6 text-sm sm:col-span-3 sm:justify-end">
+        {p.links?.map((l) => (
           <a
-            href={p.github}
+            key={l.href}
+            href={l.href}
             target="_blank"
             rel="noreferrer"
             className="group/link inline-flex items-center gap-1.5 text-foreground transition hover:text-mark"
           >
-            <span className="underline decoration-rule underline-offset-4 group-hover/link:decoration-mark">GitHub</span>
-            <span className="transition-transform group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5">↗</span>
+            <span className="underline decoration-rule underline-offset-4 group-hover/link:decoration-mark">
+              {l.label}
+            </span>
+            <span className="transition-transform group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5">
+              ↗
+            </span>
           </a>
+        ))}
+        {!p.links?.length && !p.comingSoon ? (
+          <span className="text-ink-faint">— Internal project</span>
         ) : null}
-        {p.demo ? (
-          <a
-            href={p.demo}
-            target="_blank"
-            rel="noreferrer"
-            className="group/link inline-flex items-center gap-1.5 text-foreground transition hover:text-mark"
-          >
-            <span className="underline decoration-rule underline-offset-4 group-hover/link:decoration-mark">Live</span>
-            <span className="transition-transform group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5">↗</span>
-          </a>
-        ) : null}
-        {!p.github && !p.demo ? <span className="text-ink-faint">— Internal project</span> : null}
       </div>
     </article>
   );
