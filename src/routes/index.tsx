@@ -421,7 +421,13 @@ function ProjectRow({
           </a>
         ))}
         {!p.links?.length && !p.comingSoon ? (
-          <span className="text-ink-faint">— Internal project</span>
+          <span className="text-ink-faint">
+            {categoryId === "02"
+              ? "— Cornell ECE Research"
+              : categoryId === "03"
+                ? "— Personal project"
+                : "— Internal project"}
+          </span>
         ) : null}
       </div>
     </article>
