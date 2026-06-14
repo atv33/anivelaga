@@ -31,6 +31,8 @@ declare module "react" {
           "rotation-per-second"?: string;
           "interaction-prompt"?: string;
           "shadow-intensity"?: string | number;
+          exposure?: string | number;
+          "environment-image"?: string;
           loading?: string;
           reveal?: string;
           ar?: boolean;
