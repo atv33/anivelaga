@@ -268,7 +268,7 @@ function Hero() {
   );
 }
 
-function HeroCircuits({ chipRef }: { chipRef: React.RefObject<HTMLDivElement | null> }) {
+function HeroCircuits() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -280,165 +280,420 @@ function HeroCircuits({ chipRef }: { chipRef: React.RefObject<HTMLDivElement | n
     let H = 0;
     let raf = 0;
 
-    const OPACITY = 0.12;
-    const CHIP_OPACITY = 0.15;
-    const CHIP_PAD = 16;
-    const PIN_LEN = 12;
-    const SPEED = 500;
-    const STAGGER = 150;
-    const CHIP_DURATION = 500;
+    // ===== Style =====
+    const CHIP_OPACITY = 0.2;
+    const TRACE_OPACITY = 0.13;
+    const PAD_OPACITY = 0.18;
+    const CHIP_DURATION = 600;
+    const SPEED = 600; // px/s
+    const STAGGER = 100;
+    const POP_DURATION = 150;
+    const PIN_LEN = 18;
+    const PAD_SIZE = 5;
 
-    const stroke = (x1: number, y1: number, x2: number, y2: number, a: number) => {
+    // ===== Helpers =====
+    const fadeAt = (y: number) => {
+      const top = H * 0.70;
+      const bot = H * 0.82;
+      if (y <= top) return 1;
+      if (y >= bot) return 0;
+      return 1 - (y - top) / (bot - top);
+    };
+    const setStroke = (a: number, w: number) => {
       ctx.strokeStyle = `rgba(255,255,255,${a})`;
-      ctx.lineWidth = 1;
+      ctx.lineWidth = w;
+    };
+    const setFill = (a: number) => { ctx.fillStyle = `rgba(255,255,255,${a})`; };
+    const line = (x1: number, y1: number, x2: number, y2: number) => {
       ctx.beginPath();
-      ctx.moveTo(Math.round(x1) + 0.5, Math.round(y1) + 0.5);
-      ctx.lineTo(Math.round(x2) + 0.5, Math.round(y2) + 0.5);
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
       ctx.stroke();
     };
 
-    type Pin = { x: number; y: number; side: "top" | "bottom" | "left" | "right" };
-    type Chip = { x: number; y: number; w: number; h: number; pins: Pin[] };
-    type Trace = { waypoints: [number, number][]; total: number };
+    // ===== Chip / Pin model =====
+    type Side = "top" | "bottom" | "left" | "right";
+    type Pin = { base: [number, number]; tip: [number, number]; side: Side };
+    type Chip = { x: number; y: number; size: number; pins: Record<Side, Pin[]> };
 
-    let chip: Chip | null = null;
+    const makeChip = (cx: number, cy: number, size: number, perSide: number): Chip => {
+      const x = Math.round(cx - size / 2);
+      const y = Math.round(cy - size / 2);
+      const offs = Array.from({ length: perSide }, (_, i) => ((i + 1) * size) / (perSide + 1));
+      const mk = (side: Side): Pin[] => offs.map((o) => {
+        if (side === "top")    return { base: [x + o, y],         tip: [x + o, y - PIN_LEN], side };
+        if (side === "bottom") return { base: [x + o, y + size],  tip: [x + o, y + size + PIN_LEN], side };
+        if (side === "left")   return { base: [x, y + o],         tip: [x - PIN_LEN, y + o], side };
+        return                       { base: [x + size, y + o], tip: [x + size + PIN_LEN, y + o], side };
+      });
+      return { x, y, size, pins: { top: mk("top"), bottom: mk("bottom"), left: mk("left"), right: mk("right") } };
+    };
+
+    // ===== Trace model =====
+    type Trace = { pts: [number, number][]; segLens: number[]; total: number; delayIdx: number };
+    const buildTrace = (pts: [number, number][], delayIdx: number): Trace => {
+      const segLens: number[] = [];
+      let total = 0;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const dx = pts[i + 1][0] - pts[i][0];
+        const dy = pts[i + 1][1] - pts[i][1];
+        const L = Math.hypot(dx, dy);
+        segLens.push(L);
+        total += L;
+      }
+      return { pts, segLens, total, delayIdx };
+    };
+    const pointAt = (t: Trace, dist: number): [number, number] => {
+      let d = dist;
+      for (let i = 0; i < t.segLens.length; i++) {
+        if (d <= t.segLens[i]) {
+          const f = t.segLens[i] === 0 ? 0 : d / t.segLens[i];
+          return [t.pts[i][0] + (t.pts[i + 1][0] - t.pts[i][0]) * f,
+                  t.pts[i][1] + (t.pts[i + 1][1] - t.pts[i][1]) * f];
+        }
+        d -= t.segLens[i];
+      }
+      return t.pts[t.pts.length - 1];
+    };
+
+    // ===== State =====
+    let chipA: Chip;
+    let chipB: Chip;
     let traces: Trace[] = [];
+    type Via = { x: number; y: number; traceIdx: number; dist: number };
+    type Smd = { x: number; y: number; angle: number; traceIdx: number; dist: number };
+    let vias: Via[] = [];
+    let smds: Smd[] = [];
     let startTime = 0;
 
-    const computeLayout = () => {
-      const el = chipRef.current;
-      if (!el) return;
-      const cb = canvas.getBoundingClientRect();
-      const tb = el.getBoundingClientRect();
-      const x = tb.left - cb.left - CHIP_PAD;
-      const y = tb.top - cb.top - CHIP_PAD;
-      const w = tb.width + CHIP_PAD * 2;
-      const h = tb.height + CHIP_PAD * 2;
+    // ===== Layout =====
+    const layout = () => {
+      chipA = makeChip(W * 0.24, H * 0.20, 90, 7);
+      chipB = makeChip(W * 0.74, H * 0.22, 70, 5);
+      traces = [];
+      vias = [];
+      smds = [];
+      let order = 0;
 
-      const spread = (len: number, count: number) =>
-        Array.from({ length: count }, (_, i) => (len * (i + 1)) / (count + 1));
+      const push = (pts: [number, number][]) => {
+        traces.push(buildTrace(pts, order++));
+        return traces.length - 1;
+      };
 
-      const topX = spread(w, 4);
-      const bottomX = spread(w, 4);
-      const leftY = spread(h, 3);
-      const rightY = spread(h, 3);
-
-      const pins: Pin[] = [
-        ...topX.map((o) => ({ x: x + o, y, side: "top" as const })),
-        ...bottomX.map((o) => ({ x: x + o, y: y + h, side: "bottom" as const })),
-        ...leftY.map((o) => ({ x, y: y + o, side: "left" as const })),
-        ...rightY.map((o) => ({ x: x + w, y: y + o, side: "right" as const })),
-      ];
-      chip = { x, y, w, h, pins };
-
-      const marginX = 24;
-      const marginY = 24;
-      traces = pins.map((p) => {
-        const start: [number, number] = [p.x, p.y];
-        const pinEnd: [number, number] =
-          p.side === "top" ? [p.x, p.y - PIN_LEN]
-          : p.side === "bottom" ? [p.x, p.y + PIN_LEN]
-          : p.side === "left" ? [p.x - PIN_LEN, p.y]
-          : [p.x + PIN_LEN, p.y];
-
-        // Decide route: L-shape that reaches near hero edge
-        let mid: [number, number];
-        let end: [number, number];
-        if (p.side === "top") {
-          // go up, then horizontally toward nearest left/right edge
-          const goRight = p.x > W / 2;
-          const turnY = Math.max(marginY, pinEnd[1] - 120);
-          mid = [pinEnd[0], turnY];
-          end = [goRight ? W - marginX : marginX, turnY];
-        } else if (p.side === "bottom") {
-          const goRight = p.x > W / 2;
-          const turnY = pinEnd[1] + 120;
-          mid = [pinEnd[0], turnY];
-          end = [goRight ? W - marginX : marginX, turnY];
-        } else if (p.side === "left") {
-          const goUp = p.y < H / 2;
-          const turnX = Math.max(marginX, pinEnd[0] - 140);
-          mid = [turnX, pinEnd[1]];
-          end = [turnX, goUp ? marginY : H - marginY];
-        } else {
-          const goUp = p.y < H / 2;
-          const turnX = Math.min(W - marginX, pinEnd[0] + 140);
-          mid = [turnX, pinEnd[1]];
-          end = [turnX, goUp ? marginY : H - marginY];
-        }
-
-        const waypoints: [number, number][] = [pinEnd, mid, end];
-        let total = 0;
-        for (let i = 0; i < waypoints.length - 1; i++) {
-          total += Math.abs(waypoints[i][0] - waypoints[i + 1][0]) +
-                   Math.abs(waypoints[i][1] - waypoints[i + 1][1]);
-        }
-        // store start as first point so we know pin origin
-        waypoints.unshift(start);
-        return { waypoints, total };
+      // --- A LEFT: 3 parallel traces fanning to left edge with 45° bend ---
+      const aLeftIdxs = [1, 3, 5];
+      aLeftIdxs.forEach((pi, k) => {
+        const p = chipA.pins.left[pi];
+        const [tx, ty] = p.tip;
+        const off = (k - 1) * 8; // -8,0,8 vertical offset for bus separation
+        const run1 = 40;
+        const bend = 30 + k * 6;
+        const x1 = tx - run1;
+        const y1 = ty;
+        const x2 = x1 - bend;
+        const y2 = y1 + off * 2 + (k === 0 ? -30 : k === 2 ? 30 : 0);
+        const x3 = 20;
+        push([[p.base[0], p.base[1]], [tx, ty], [x1, y1], [x2, y2], [x3, y2]]);
       });
-    };
 
-    const drawChipOutline = (progress: number) => {
-      if (!chip) return;
-      const a = CHIP_OPACITY * progress;
-      ctx.strokeStyle = `rgba(255,255,255,${a})`;
-      ctx.lineWidth = 1;
-      ctx.strokeRect(Math.round(chip.x) + 0.5, Math.round(chip.y) + 0.5, chip.w, chip.h);
-    };
+      // --- A RIGHT -> B LEFT: 3 horizontal connections, with parallel bus bits ---
+      const aRightIdxs = [1, 3, 5];
+      const bLeftIdxs = [1, 2, 3];
+      aRightIdxs.forEach((pi, k) => {
+        const a = chipA.pins.right[pi];
+        const b = chipB.pins.left[bLeftIdxs[k]];
+        const midX = (a.tip[0] + b.tip[0]) / 2 + (k - 1) * 6;
+        const idx = push([
+          [a.base[0], a.base[1]],
+          [a.tip[0], a.tip[1]],
+          [a.tip[0] + 30, a.tip[1]],
+          [midX, a.tip[1]],
+          [midX, b.tip[1]],
+          [b.tip[0] - 30, b.tip[1]],
+          [b.tip[0], b.tip[1]],
+          [b.base[0], b.base[1]],
+        ]);
+        // via at corner
+        const via1 = pointAt(traces[idx], 30 + 30);
+        vias.push({ x: via1[0], y: via1[1], traceIdx: idx, dist: 30 + 30 });
+        // SMD midway
+        if (k === 1) {
+          const d = traces[idx].total * 0.5;
+          const pt = pointAt(traces[idx], d);
+          smds.push({ x: pt[0], y: pt[1], angle: 0, traceIdx: idx, dist: d });
+        }
+      });
 
-    const drawPins = () => {
-      if (!chip) return;
-      for (const p of chip.pins) {
-        const e =
-          p.side === "top" ? [p.x, p.y - PIN_LEN] as const
-          : p.side === "bottom" ? [p.x, p.y + PIN_LEN] as const
-          : p.side === "left" ? [p.x - PIN_LEN, p.y] as const
-          : [p.x + PIN_LEN, p.y] as const;
-        stroke(p.x, p.y, e[0], e[1], OPACITY);
+      // --- A TOP: 3 traces fanning up, spreading to top edge ---
+      const aTopIdxs = [1, 3, 5];
+      aTopIdxs.forEach((pi, k) => {
+        const p = chipA.pins.top[pi];
+        const run = 40;
+        const spreadX = (k - 1) * 60;
+        const y1 = p.tip[1] - run;
+        const xMid = p.tip[0] + spreadX;
+        const yMid = y1 - Math.abs(spreadX);
+        const idx = push([
+          [p.base[0], p.base[1]],
+          [p.tip[0], p.tip[1]],
+          [p.tip[0], y1],
+          [xMid, yMid],
+          [xMid, 16],
+        ]);
+        if (k === 1) {
+          const d = traces[idx].total * 0.45;
+          const pt = pointAt(traces[idx], d);
+          smds.push({ x: pt[0], y: pt[1], angle: Math.PI / 2, traceIdx: idx, dist: d });
+        }
+      });
+
+      // --- A BOTTOM: 3 traces routing down-left with 45° bends ---
+      const aBotIdxs = [1, 3, 5];
+      aBotIdxs.forEach((pi, k) => {
+        const p = chipA.pins.bottom[pi];
+        const run = 40 + k * 8;
+        const bend = 50 + k * 20;
+        const y1 = p.tip[1] + run;
+        const x2 = p.tip[0] - bend;
+        const y2 = y1 + bend;
+        const targetX = Math.max(20, p.tip[0] - 220 - k * 30);
+        const endY = Math.min(H * 0.68, y2 + 80);
+        const idx = push([
+          [p.base[0], p.base[1]],
+          [p.tip[0], p.tip[1]],
+          [p.tip[0], y1],
+          [x2, y2],
+          [targetX, y2],
+          [targetX, endY],
+        ]);
+        if (k === 0) {
+          const d = traces[idx].total * 0.5;
+          const pt = pointAt(traces[idx], d);
+          smds.push({ x: pt[0], y: pt[1], angle: 0, traceIdx: idx, dist: d });
+        }
+        if (k === 2) {
+          const d = traces[idx].total * 0.7;
+          const pt = pointAt(traces[idx], d);
+          vias.push({ x: pt[0], y: pt[1], traceIdx: idx, dist: d });
+        }
+      });
+
+      // --- B RIGHT: 3 parallel traces fanning right to canvas edge ---
+      const bRightIdxs = [0, 2, 4];
+      bRightIdxs.forEach((pi, k) => {
+        const p = chipB.pins.right[pi];
+        const run = 40;
+        const bend = 30 + k * 6;
+        const yOff = (k - 1) * 8;
+        const x1 = p.tip[0] + run;
+        const y1 = p.tip[1];
+        const x2 = x1 + bend;
+        const y2 = y1 + yOff * 2 + (k === 0 ? -30 : k === 2 ? 30 : 0);
+        const idx = push([
+          [p.base[0], p.base[1]],
+          [p.tip[0], p.tip[1]],
+          [x1, y1],
+          [x2, y2],
+          [W - 20, y2],
+        ]);
+        if (k === 1) {
+          const d = traces[idx].total * 0.6;
+          const pt = pointAt(traces[idx], d);
+          smds.push({ x: pt[0], y: pt[1], angle: 0, traceIdx: idx, dist: d });
+        }
+        if (k === 0 || k === 2) {
+          const d = traces[idx].total * 0.4;
+          const pt = pointAt(traces[idx], d);
+          vias.push({ x: pt[0], y: pt[1], traceIdx: idx, dist: d });
+        }
+      });
+
+      // --- B TOP: 2 traces fanning to top-right ---
+      [1, 3].forEach((pi, k) => {
+        const p = chipB.pins.top[pi];
+        const run = 40;
+        const y1 = p.tip[1] - run;
+        const spread = 60 + k * 40;
+        const x2 = p.tip[0] + spread;
+        const y2 = y1 - spread;
+        const idx = push([
+          [p.base[0], p.base[1]],
+          [p.tip[0], p.tip[1]],
+          [p.tip[0], y1],
+          [x2, y2],
+          [x2, 16],
+        ]);
+        if (k === 0) {
+          const d = traces[idx].total * 0.55;
+          const pt = pointAt(traces[idx], d);
+          vias.push({ x: pt[0], y: pt[1], traceIdx: idx, dist: d });
+        }
+      });
+
+      // --- B BOTTOM: 2 traces descending with 45° toward bottom (respecting fade) ---
+      [1, 3].forEach((pi, k) => {
+        const p = chipB.pins.bottom[pi];
+        const run = 40;
+        const y1 = p.tip[1] + run;
+        const bend = 60 + k * 30;
+        const dir = k === 0 ? -1 : 1;
+        const x2 = p.tip[0] + dir * bend;
+        const y2 = y1 + bend;
+        const endY = Math.min(H * 0.70, y2 + 80);
+        const endX = x2 + dir * 40;
+        const idx = push([
+          [p.base[0], p.base[1]],
+          [p.tip[0], p.tip[1]],
+          [p.tip[0], y1],
+          [x2, y2],
+          [endX, endY],
+        ]);
+        if (k === 1) {
+          const d = traces[idx].total * 0.5;
+          const pt = pointAt(traces[idx], d);
+          smds.push({ x: pt[0], y: pt[1], angle: Math.PI / 4, traceIdx: idx, dist: d });
+        }
+        const d2 = traces[idx].total * 0.35;
+        const pt2 = pointAt(traces[idx], d2);
+        vias.push({ x: pt2[0], y: pt2[1], traceIdx: idx, dist: d2 });
+      });
+
+      // Top-up vias to reach 12 total, scattered at bends of misc traces
+      while (vias.length < 12 && traces.length > 0) {
+        const ti = vias.length % traces.length;
+        const d = traces[ti].total * (0.25 + (vias.length % 5) * 0.12);
+        const pt = pointAt(traces[ti], d);
+        vias.push({ x: pt[0], y: pt[1], traceIdx: ti, dist: d });
       }
     };
 
-    const drawTrace = (t: Trace, drawn: number) => {
-      // waypoints[0] = pin start (on chip edge); skip drawing pin stub (drawn separately)
-      let remaining = drawn;
-      for (let i = 1; i < t.waypoints.length - 1; i++) {
-        const [x1, y1] = t.waypoints[i];
-        const [x2, y2] = t.waypoints[i + 1];
-        const segLen = Math.abs(x2 - x1) + Math.abs(y2 - y1);
+    // ===== Drawing =====
+    const drawChip = (c: Chip, progress: number) => {
+      const a = CHIP_OPACITY * progress * fadeAt(c.y + c.size / 2);
+      setStroke(a, 1);
+      ctx.strokeRect(c.x + 0.5, c.y + 0.5, c.size, c.size);
+    };
+    const drawPinsAndPads = (c: Chip) => {
+      const all = [...c.pins.top, ...c.pins.bottom, ...c.pins.left, ...c.pins.right];
+      for (const p of all) {
+        const f = fadeAt(p.tip[1]);
+        if (f <= 0) continue;
+        setStroke(CHIP_OPACITY * f, 1);
+        line(p.base[0] + 0.5, p.base[1] + 0.5, p.tip[0] + 0.5, p.tip[1] + 0.5);
+        setFill(PAD_OPACITY * f);
+        const px = p.tip[0] - PAD_SIZE / 2;
+        const py = p.tip[1] - PAD_SIZE / 2;
+        ctx.fillRect(Math.round(px), Math.round(py), PAD_SIZE, PAD_SIZE);
+      }
+    };
+    const drawTrace = (t: Trace, drawnDist: number) => {
+      if (drawnDist <= 0) return;
+      let remaining = drawnDist;
+      ctx.lineWidth = 1.5;
+      for (let i = 0; i < t.segLens.length; i++) {
+        const L = t.segLens[i];
+        if (L === 0) continue;
+        const take = Math.min(L, remaining);
+        const f = take / L;
+        const [x1, y1] = t.pts[i];
+        const x2 = x1 + (t.pts[i + 1][0] - x1) * f;
+        const y2 = y1 + (t.pts[i + 1][1] - y1) * f;
+        const yMid = (y1 + y2) / 2;
+        const a = TRACE_OPACITY * fadeAt(yMid);
+        if (a > 0.002) {
+          ctx.strokeStyle = `rgba(255,255,255,${a})`;
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.stroke();
+        }
+        remaining -= take;
         if (remaining <= 0) break;
-        const portion = Math.min(1, remaining / segLen);
-        const ex = x1 + (x2 - x1) * portion;
-        const ey = y1 + (y2 - y1) * portion;
-        stroke(x1, y1, ex, ey, OPACITY);
-        remaining -= segLen;
       }
+    };
+    const drawVia = (v: Via, s: number) => {
+      const f = fadeAt(v.y);
+      if (f <= 0) return;
+      const r1 = 2 * s;
+      const r2 = 4 * s;
+      setFill(PAD_OPACITY * f);
+      ctx.beginPath();
+      ctx.arc(v.x, v.y, r1, 0, Math.PI * 2);
+      ctx.fill();
+      setStroke(PAD_OPACITY * f, 1);
+      ctx.beginPath();
+      ctx.arc(v.x, v.y, r2, 0, Math.PI * 2);
+      ctx.stroke();
+    };
+    const drawSmd = (m: Smd, s: number) => {
+      const f = fadeAt(m.y);
+      if (f <= 0) return;
+      ctx.save();
+      ctx.translate(m.x, m.y);
+      ctx.rotate(m.angle);
+      ctx.scale(s, s);
+      setFill(PAD_OPACITY * f);
+      ctx.fillRect(-13, -2.5, 10, 5);
+      ctx.fillRect(3, -2.5, 10, 5);
+      setStroke(TRACE_OPACITY * 1.8 * f, 1);
+      ctx.strokeRect(-6 + 0.5, -3 + 0.5, 12, 6);
+      ctx.restore();
+    };
+
+    // ===== Render loop =====
+    const tracesStartAt = (i: number) => CHIP_DURATION + i * STAGGER;
+    const elementProgress = (drawnDist: number, popDist: number) => {
+      // returns scale 0..1 for pop after trace reaches popDist
+      if (drawnDist < popDist) return 0;
+      const t = Math.min(1, ((drawnDist - popDist) / SPEED) * 1000 / POP_DURATION);
+      // ease-out cubic
+      return 1 - Math.pow(1 - t, 3);
     };
 
     const render = (now: number) => {
       ctx.clearRect(0, 0, W, H);
       const elapsed = now - startTime;
-      const chipProgress = Math.min(1, elapsed / CHIP_DURATION);
-      drawChipOutline(chipProgress);
 
-      let anyAnimating = chipProgress < 1;
-      if (chipProgress >= 1) {
-        drawPins();
+      // Chips
+      const chipP = Math.min(1, elapsed / CHIP_DURATION);
+      drawChip(chipA, chipP);
+      drawChip(chipB, chipP);
+
+      let anyActive = chipP < 1;
+
+      if (chipP >= 1) {
+        drawPinsAndPads(chipA);
+        drawPinsAndPads(chipB);
+
+        // Traces
+        const traceDrawn: number[] = new Array(traces.length).fill(0);
         for (let i = 0; i < traces.length; i++) {
           const t = traces[i];
-          const traceElapsed = elapsed - CHIP_DURATION - i * STAGGER;
-          if (traceElapsed <= 0) {
-            anyAnimating = true;
-            continue;
-          }
-          const drawn = Math.min(t.total, (traceElapsed / 1000) * SPEED);
-          drawTrace(t, drawn);
-          if (drawn < t.total) anyAnimating = true;
+          const te = elapsed - tracesStartAt(i);
+          if (te <= 0) { anyActive = true; continue; }
+          const d = Math.min(t.total, (te / 1000) * SPEED);
+          traceDrawn[i] = d;
+          drawTrace(t, d);
+          if (d < t.total) anyActive = true;
+        }
+
+        // Vias pop in
+        for (const v of vias) {
+          const d = traceDrawn[v.traceIdx] || 0;
+          const s = elementProgress(d, v.dist);
+          if (s > 0) drawVia(v, s);
+          else if (d < v.dist) anyActive = true;
+        }
+        // SMDs pop in
+        for (const m of smds) {
+          const d = traceDrawn[m.traceIdx] || 0;
+          const s = elementProgress(d, m.dist);
+          if (s > 0) drawSmd(m, s);
+          else if (d < m.dist) anyActive = true;
         }
       }
-      if (anyAnimating) {
-        raf = requestAnimationFrame(render);
-      }
+
+      if (anyActive) raf = requestAnimationFrame(render);
     };
 
     const resize = () => {
@@ -448,7 +703,7 @@ function HeroCircuits({ chipRef }: { chipRef: React.RefObject<HTMLDivElement | n
       canvas.width = Math.max(1, Math.floor(W * dpr));
       canvas.height = Math.max(1, Math.floor(H * dpr));
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      computeLayout();
+      layout();
       startTime = performance.now();
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(render);
@@ -461,17 +716,18 @@ function HeroCircuits({ chipRef }: { chipRef: React.RefObject<HTMLDivElement | n
       cancelAnimationFrame(raf);
       ro.disconnect();
     };
-  }, [chipRef]);
+  }, []);
   return (
     <canvas
       ref={canvasRef}
       aria-hidden
       style={{
         position: "absolute",
-        inset: 0,
+        top: 0,
+        left: 0,
         width: "100%",
         height: "100%",
-        zIndex: 0,
+        zIndex: 1,
         pointerEvents: "none",
       }}
     />
