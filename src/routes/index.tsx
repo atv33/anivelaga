@@ -271,58 +271,42 @@ const SERIAL_INLINE_GLB = "https://files.catbox.moe/tgly0l.glb";
 const SERIAL_TEST_INLINE_GLB = "https://files.catbox.moe/dpd9ku.glb";
 const THRUSTER_INLINE_GLB = "https://files.catbox.moe/x54j79.glb";
 
-function useMouseOrbit(idleElevation: number) {
+function useMouseSpin(defaultSpeed = 20) {
   const ref = useRef<HTMLElement | null>(null);
   useEffect(() => {
-    const el = ref.current as (HTMLElement & { setAttribute: (k: string, v: string) => void }) | null;
+    const el = ref.current as HTMLElement | null;
     if (!el) return;
-    const idle = { az: 0, el: idleElevation };
-    const target = { az: idle.az, el: idle.el };
-    const current = { az: idle.az, el: idle.el };
-    const setOrbit = () => {
-      el.setAttribute("camera-orbit", `${current.az}deg ${current.el}deg auto`);
+    const setSpeed = (s: number) => {
+      el.setAttribute("rotation-per-second", `${s}deg`);
     };
-    setOrbit();
+    setSpeed(defaultSpeed);
     const onMove = (e: MouseEvent) => {
       const r = el.getBoundingClientRect();
-      const x = (e.clientX - r.left) / r.width;
-      const y = (e.clientY - r.top) / r.height;
-      target.az = (x - 0.5) * 120;
-      target.el = idle.el + (y - 0.5) * 30;
+      const x = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+      // Map left (0) -> -60deg/s (reverse), center -> 20deg/s, right (1) -> 120deg/s
+      const speed = -60 + x * 180;
+      setSpeed(speed);
     };
-    const onLeave = () => {
-      target.az = idle.az;
-      target.el = idle.el;
-    };
-    let raf = 0;
-    const tick = () => {
-      current.az += (target.az - current.az) * 0.12;
-      current.el += (target.el - current.el) * 0.12;
-      setOrbit();
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
+    const onLeave = () => setSpeed(defaultSpeed);
     el.addEventListener("mousemove", onMove);
     el.addEventListener("mouseleave", onLeave);
     return () => {
-      cancelAnimationFrame(raf);
       el.removeEventListener("mousemove", onMove);
       el.removeEventListener("mouseleave", onLeave);
     };
-  }, [idleElevation]);
+  }, [defaultSpeed]);
   return ref;
 }
 
 function InlineSerialModel({
   embedded = false,
   src = SERIAL_INLINE_GLB,
-  idleElevation = 30,
 }: {
   embedded?: boolean;
   src?: string;
   idleElevation?: number;
 }) {
-  const ref = useMouseOrbit(idleElevation);
+  const ref = useMouseSpin(20);
   return (
     <div
       className={embedded ? "h-full" : "col-span-12 mt-4"}
@@ -337,6 +321,8 @@ function InlineSerialModel({
           src={src}
           alt="Serial Board 3D model"
           camera-controls
+          auto-rotate
+          auto-rotate-delay={0}
           rotation-per-second="20deg"
           interaction-prompt="none"
           loading="eager"
@@ -729,6 +715,8 @@ function SubProjectRow({
             src={modelSrc}
             alt={`${p.name} 3D model`}
             camera-controls
+            auto-rotate
+            auto-rotate-delay={0}
             rotation-per-second="20deg"
             interaction-prompt="none"
             loading="eager"
@@ -873,7 +861,7 @@ function SerialBoardGallery() {
 }
 
 function SerialViewer() {
-  const ref = useMouseOrbit(30);
+  const ref = useMouseSpin(20);
   return (
     <div
       className="relative overflow-hidden rounded-md border border-border"
@@ -885,6 +873,8 @@ function SerialViewer() {
           src={serialGlbSrc}
           alt="Serial Board 3D model"
           camera-controls
+          auto-rotate
+          auto-rotate-delay={0}
           rotation-per-second="20deg"
           interaction-prompt="none"
           shadow-intensity="1"
@@ -914,7 +904,7 @@ function SerialViewer() {
 }
 
 function ThrusterViewer() {
-  const ref = useMouseOrbit(15);
+  const ref = useMouseSpin(20);
   return (
     <div
       className="relative overflow-hidden rounded-md border border-border"
@@ -926,6 +916,8 @@ function ThrusterViewer() {
           src={thrusterGlbSrc}
           alt="Thruster Board 3D model"
           camera-controls
+          auto-rotate
+          auto-rotate-delay={0}
           rotation-per-second="20deg"
           interaction-prompt="none"
           shadow-intensity="1"
