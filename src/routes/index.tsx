@@ -660,7 +660,6 @@ function SubProjectRow({
           <model-viewer
             src={modelSrc}
             alt={`${p.name} 3D model`}
-            auto-rotate
             camera-controls
             rotation-per-second="20deg"
             interaction-prompt="none"
