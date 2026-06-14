@@ -280,50 +280,96 @@ function HeroCircuits() {
     let H = 0;
     let raf = 0;
 
+    // dir: 0=down, 1=right, 2=left  (no upward — traces flow generally downward)
+    type Dir = 0 | 1 | 2;
     type Branch = {
       x: number;
       y: number;
-      angle: number; // 0 = straight down, positive = right
-      thickness: number;
+      dir: Dir;
       traveled: number;
-      nextSplit: number;
+      nextEvent: number;
+      sinceComponent: number;
+      nextComponent: number;
       alive: boolean;
       depth: number;
     };
+    const DX: Record<Dir, number> = { 0: 0, 1: 1, 2: -1 };
+    const DY: Record<Dir, number> = { 0: 1, 1: 0, 2: 0 };
     let branches: Branch[] = [];
-    let phase: "grow" | "hold" | "fade" = "grow";
-    let phaseStart = performance.now();
 
-    const STEP = 1.4;
-    const MAX_OPACITY = 0.18;
+    const STROKE = 1.5;
+    const MAX_OPACITY = 0.15;
+    const MARGIN = 6;
 
     const fadeForY = (y: number) => {
       const t = y / H;
-      if (t < 0.45) return 1;
+      if (t < 0.55) return 1;
       if (t > 0.98) return 0;
-      return (0.98 - t) / 0.53;
+      return (0.98 - t) / 0.43;
+    };
+
+    const stroke = (x1: number, y1: number, x2: number, y2: number, alpha: number) => {
+      if (alpha < 0.003) return;
+      ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
+      ctx.lineWidth = STROKE;
+      ctx.lineCap = "square";
+      ctx.beginPath();
+      // snap to half-pixel for crisp 1.5px orthogonal strokes
+      ctx.moveTo(Math.round(x1) + 0.5, Math.round(y1) + 0.5);
+      ctx.lineTo(Math.round(x2) + 0.5, Math.round(y2) + 0.5);
+      ctx.stroke();
+    };
+
+    const via = (x: number, y: number, alpha: number) => {
+      if (alpha < 0.003) return;
+      ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+      ctx.beginPath();
+      ctx.arc(x, y, 3, 0, Math.PI * 2);
+      ctx.fill();
+    };
+
+    const component = (x: number, y: number, dir: Dir, alpha: number) => {
+      if (alpha < 0.003) return;
+      const roll = Math.random();
+      if (roll < 0.78) {
+        // SMD resistor/capacitor: 2x6 perpendicular to trace
+        const horiz = dir === 0; // perpendicular: if trace is vertical, pad is horizontal
+        const w = horiz ? 6 : 2;
+        const h = horiz ? 2 : 6;
+        ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+        ctx.fillRect(Math.round(x - w / 2), Math.round(y - h / 2), w, h);
+      } else {
+        // IC pad: hollow 8x8 square
+        ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(Math.round(x - 4) + 0.5, Math.round(y - 4) + 0.5, 8, 8);
+      }
+    };
+
+    const perpendicular = (dir: Dir): Dir[] => {
+      if (dir === 0) return [1, 2];
+      return [0]; // from horizontal, only downward is valid (no upward)
     };
 
     const seed = () => {
       branches = [];
-      const count = 2 + Math.floor(Math.random() * 2); // 2-3
+      const count = 8;
       for (let i = 0; i < count; i++) {
         const slot = (i + 0.5) / count;
-        const jitter = (Math.random() - 0.5) * (0.6 / count);
+        const jitter = (Math.random() - 0.5) * (0.5 / count);
         branches.push({
-          x: W * (slot + jitter),
+          x: Math.round(W * (slot + jitter)),
           y: 0,
-          angle: (Math.random() - 0.5) * 0.25,
-          thickness: 1.25,
+          dir: 0,
           traveled: 0,
-          nextSplit: 70 + Math.random() * 90,
+          nextEvent: 40 + Math.random() * 90,
+          sinceComponent: 0,
+          nextComponent: 40 + Math.random() * 90,
           alive: true,
           depth: 0,
         });
       }
       ctx.clearRect(0, 0, W, H);
-      phase = "grow";
-      phaseStart = performance.now();
     };
 
     const resize = () => {
@@ -336,90 +382,98 @@ function HeroCircuits() {
       seed();
     };
 
-    const drawNode = (x: number, y: number, r: number, alpha: number) => {
-      if (alpha < 0.003) return;
-      ctx.fillStyle = `rgba(255,255,255,${alpha})`;
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.fill();
-    };
+    // Per-frame step distance for each alive branch (pixels)
+    const STEP_PER_FRAME = 2;
 
-    const tick = (now: number) => {
-      if (phase === "grow") {
-        let anyAlive = false;
-        // copy length because splits push new branches
-        const len = branches.length;
-        for (let i = 0; i < len; i++) {
-          const b = branches[i];
-          if (!b.alive) continue;
-          anyAlive = true;
+    const tick = () => {
+      let anyAlive = false;
+      const snapshot = branches.length;
+      for (let i = 0; i < snapshot; i++) {
+        const b = branches[i];
+        if (!b.alive) continue;
 
-          const nx = b.x + Math.sin(b.angle) * STEP;
-          const ny = b.y + Math.cos(b.angle) * STEP;
-          const alpha = MAX_OPACITY * fadeForY(ny);
+        const dx = DX[b.dir];
+        const dy = DY[b.dir];
+        const nx = b.x + dx * STEP_PER_FRAME;
+        const ny = b.y + dy * STEP_PER_FRAME;
 
-          if (alpha > 0.003) {
-            ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
-            ctx.lineWidth = b.thickness;
-            ctx.lineCap = "round";
-            ctx.beginPath();
-            ctx.moveTo(b.x, b.y);
-            ctx.lineTo(nx, ny);
-            ctx.stroke();
-          }
+        // bounds check
+        if (nx < MARGIN || nx > W - MARGIN || ny > H - 2) {
+          // draw final partial + terminal via if inside
+          const cx = Math.min(W - MARGIN, Math.max(MARGIN, nx));
+          const cy = Math.min(H, ny);
+          const a = MAX_OPACITY * fadeForY(cy);
+          stroke(b.x, b.y, cx, cy, a);
+          if (cy < H) via(cx, cy, a);
+          b.alive = false;
+          continue;
+        }
 
-          b.x = nx;
-          b.y = ny;
-          b.traveled += STEP;
+        const alpha = MAX_OPACITY * fadeForY(ny);
+        stroke(b.x, b.y, nx, ny, alpha);
 
-          if (ny >= H || b.thickness < 0.35 || b.depth > 6 || b.x < -20 || b.x > W + 20) {
-            // terminal node
-            drawNode(b.x, b.y, Math.max(1, b.thickness * 0.8), alpha);
+        b.x = nx;
+        b.y = ny;
+        b.traveled += STEP_PER_FRAME;
+        b.sinceComponent += STEP_PER_FRAME;
+        anyAlive = true;
+
+        // component placement
+        if (b.sinceComponent >= b.nextComponent) {
+          component(b.x, b.y, b.dir, alpha);
+          b.sinceComponent = 0;
+          b.nextComponent = 50 + Math.random() * 110;
+        }
+
+        // event: turn / branch / T-split
+        if (b.traveled >= b.nextEvent) {
+          via(b.x, b.y, alpha);
+          b.traveled = 0;
+          b.nextEvent = 50 + Math.random() * 130;
+
+          const roll = Math.random();
+          const perps = perpendicular(b.dir);
+
+          if (b.depth < 7 && b.dir === 0 && roll < 0.25) {
+            // T-split: parent dies, two perpendicular children (left + right)
             b.alive = false;
-            continue;
-          }
-
-          if (b.traveled >= b.nextSplit) {
-            // junction node
-            drawNode(b.x, b.y, Math.max(1.2, b.thickness * 1.1), alpha);
-            b.alive = false;
-            const split = ((18 + Math.random() * 30) * Math.PI) / 180;
-            const newThickness = b.thickness * 0.78;
-            for (const sign of [-1, 1]) {
+            for (const nd of [1, 2] as Dir[]) {
               branches.push({
                 x: b.x,
                 y: b.y,
-                angle: b.angle + sign * split,
-                thickness: newThickness,
+                dir: nd,
                 traveled: 0,
-                nextSplit: 45 + Math.random() * 95,
+                nextEvent: 30 + Math.random() * 90,
+                sinceComponent: 0,
+                nextComponent: 40 + Math.random() * 90,
                 alive: true,
                 depth: b.depth + 1,
               });
             }
+          } else if (b.depth < 7 && roll < 0.65) {
+            // branch: spawn a perpendicular child, parent continues
+            const nd = perps[Math.floor(Math.random() * perps.length)];
+            branches.push({
+              x: b.x,
+              y: b.y,
+              dir: nd,
+              traveled: 0,
+              nextEvent: 30 + Math.random() * 90,
+              sinceComponent: 0,
+              nextComponent: 40 + Math.random() * 90,
+              alive: true,
+              depth: b.depth + 1,
+            });
+          } else {
+            // turn 90°
+            const nd = perps[Math.floor(Math.random() * perps.length)];
+            b.dir = nd;
           }
         }
-        if (!anyAlive) {
-          phase = "hold";
-          phaseStart = now;
-        }
-      } else if (phase === "hold") {
-        if (now - phaseStart > 1400) {
-          phase = "fade";
-          phaseStart = now;
-        }
-      } else {
-        const elapsed = now - phaseStart;
-        ctx.save();
-        ctx.globalCompositeOperation = "destination-out";
-        ctx.fillStyle = "rgba(0,0,0,0.04)";
-        ctx.fillRect(0, 0, W, H);
-        ctx.restore();
-        if (elapsed > 2000) {
-          seed();
-        }
       }
-      raf = requestAnimationFrame(tick);
+      if (anyAlive) {
+        raf = requestAnimationFrame(tick);
+      }
     };
 
     resize();
