@@ -873,6 +873,7 @@ function SerialBoardGallery() {
 }
 
 function SerialViewer() {
+  const ref = useMouseOrbit(30);
   return (
     <div
       className="relative overflow-hidden rounded-md border border-border"
@@ -880,9 +881,9 @@ function SerialViewer() {
     >
       {serialGlbSrc ? (
         <model-viewer
+          ref={ref as unknown as React.Ref<HTMLElement>}
           src={serialGlbSrc}
           alt="Serial Board 3D model"
-          auto-rotate
           camera-controls
           rotation-per-second="20deg"
           interaction-prompt="none"
@@ -913,6 +914,7 @@ function SerialViewer() {
 }
 
 function ThrusterViewer() {
+  const ref = useMouseOrbit(15);
   return (
     <div
       className="relative overflow-hidden rounded-md border border-border"
@@ -920,9 +922,9 @@ function ThrusterViewer() {
     >
       {thrusterGlbSrc ? (
         <model-viewer
+          ref={ref as unknown as React.Ref<HTMLElement>}
           src={thrusterGlbSrc}
           alt="Thruster Board 3D model"
-          auto-rotate
           camera-controls
           rotation-per-second="20deg"
           interaction-prompt="none"
