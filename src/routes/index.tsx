@@ -15,6 +15,7 @@ import {
   thrusterGlbSrc,
   serialGlbSrc,
 } from "@/lib/pcbImages";
+import headshotAsset from "@/assets/headshot.jpg.asset.json";
 
 // Allow <model-viewer> custom element in JSX (React 19 uses React.JSX)
 declare module "react" {
@@ -698,6 +699,14 @@ function About() {
       <SectionHeader index="02" kicker="About" title="Who I am." />
       <div className="mt-20 grid gap-16 sm:grid-cols-12">
         <div className="sm:col-span-7">
+          <img
+            src={headshotAsset.url}
+            alt="Ani Velaga"
+            width={220}
+            height={220}
+            className="mb-8 size-[220px] object-cover"
+            style={{ borderRadius: 12 }}
+          />
           <p className="text-lg leading-relaxed text-ink-dim">
             I'm an electrical and computer engineering student at Cornell, currently on CUAUV —
             Cornell's autonomous underwater vehicle team. I design production PCBs in Altium
