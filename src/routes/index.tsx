@@ -8,6 +8,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   serialBoardFront,
   serialBoardLayout,
@@ -216,14 +217,14 @@ function TopBar() {
     <header className="sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5 sm:px-10">
         <a href="#top" className="font-display text-base font-bold tracking-tight">
-          Ani Velaga<span className="text-mark">.</span>
+          Ani Velaga
         </a>
         <nav className="flex items-center gap-7 text-sm">
           {NAV.map(([label, href]) => (
             <a
               key={href}
               href={href}
-              className="text-ink-dim transition hover:text-foreground"
+              className="nav-link text-ink-dim transition hover:text-foreground"
             >
               {label}
             </a>
@@ -241,23 +242,105 @@ function Hero() {
       data-section="00"
       className="relative mx-auto flex h-screen max-w-6xl flex-col justify-center px-6 sm:px-10"
     >
-      <h1 className="font-display text-[clamp(3.5rem,12vw,11rem)] font-black uppercase">
-        Ani
-        <br />
-        Velaga<span className="text-mark">.</span>
-      </h1>
-      <div className="mt-10 grid gap-10 sm:mt-16 sm:grid-cols-12">
-        <p className="sm:col-span-7 sm:col-start-6 max-w-xl text-lg leading-relaxed text-ink-dim sm:text-xl">
-          <span className="text-foreground">Electrical & computer engineer</span> — I design
-          hardware at the board level, then push it through the networking stack into LLM
-          inference systems. Currently on CUAUV building PCBs for an autonomous submarine.
-        </p>
+      <div className="grid items-center gap-12 lg:grid-cols-12">
+        <div className="lg:col-span-8">
+          <h1 className="font-display text-[clamp(3rem,10vw,9rem)] font-black uppercase">
+            Ani
+            <br />
+            Velaga<span className="text-mark">.</span>
+          </h1>
+          <p className="mt-8 max-w-xl text-lg leading-relaxed text-ink-dim sm:text-xl">
+            <span className="text-foreground">Electrical & computer engineer</span> — I design
+            hardware at the board level, then push it through the networking stack into LLM
+            inference systems. Currently on CUAUV building PCBs for an autonomous submarine.
+          </p>
+        </div>
+        <div className="lg:col-span-4">
+          <HeroBoardViewer />
+        </div>
       </div>
       <div className="absolute inset-x-0 bottom-8 flex items-center justify-center gap-3 px-6 font-mono text-xs uppercase tracking-[0.28em] text-ink-dim sm:px-10">
         <span className="size-1.5 rounded-full bg-mark" />
         Available for new work — 2026
       </div>
     </section>
+  );
+}
+
+const HERO_GLB = "https://files.catbox.moe/0vyi4l.glb";
+const HERO_SPECS: Array<[string, string]> = [
+  ["Board", "4-layer 3.701\" × 4.291\""],
+  ["ICs", "FTDI USB-UART"],
+  ["Channels", "16× RS-232"],
+  ["ESD", "SMF05CT1G TVS"],
+  ["Connector", "USB-C + DVL header"],
+];
+
+function HeroBoardViewer() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="group block w-full text-left"
+        aria-label="Open Serial Board 3D viewer"
+      >
+        <div
+          className="relative overflow-hidden border border-border transition-transform duration-200 group-hover:scale-[1.02]"
+          style={{ backgroundColor: "#1a1a1a", width: 300, height: 300, maxWidth: "100%" }}
+        >
+          <model-viewer
+            src={HERO_GLB}
+            alt="Serial Board 3D model"
+            auto-rotate
+            camera-controls
+            rotation-per-second="20deg"
+            interaction-prompt="none"
+            shadow-intensity="1"
+            loading="eager"
+            reveal="auto"
+            style={{ width: "100%", height: "100%", backgroundColor: "#1a1a1a" } as React.CSSProperties}
+          />
+        </div>
+        <div className="mt-3 font-mono text-[11px] uppercase tracking-[0.28em] text-ink-faint group-hover:text-mark">
+          Serial Board — CUAUV 2026
+        </div>
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-[90vw] p-6 sm:max-w-[90vw]">
+          <DialogTitle className="font-display text-2xl font-bold">Serial Board — CUAUV 2026</DialogTitle>
+          <DialogDescription className="sr-only">Interactive 3D viewer and specs</DialogDescription>
+          <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
+            <div className="border border-border" style={{ backgroundColor: "#1a1a1a", width: "80vw", maxWidth: "100%", height: "60vh" }}>
+              <model-viewer
+                src={HERO_GLB}
+                alt="Serial Board 3D model"
+                auto-rotate
+                camera-controls
+                rotation-per-second="20deg"
+                interaction-prompt="none"
+                shadow-intensity="1"
+                loading="eager"
+                reveal="auto"
+                style={{ width: "100%", height: "100%", backgroundColor: "#1a1a1a" } as React.CSSProperties}
+              />
+            </div>
+            <div>
+              <div className="font-mono text-[11px] uppercase tracking-[0.28em] text-ink-faint">Specs</div>
+              <dl className="mt-4 space-y-3">
+                {HERO_SPECS.map(([k, v]) => (
+                  <div key={k} className="border-b border-border pb-3">
+                    <dt className="font-mono text-[10px] uppercase tracking-[0.25em] text-ink-faint">{k}</dt>
+                    <dd className="mt-1 text-sm text-foreground">{v}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -443,7 +526,7 @@ function ProjectRow({
       }
       className={`group grid grid-cols-12 items-baseline gap-6 py-10 transition-colors ${
         p.comingSoon ? "opacity-50" : ""
-      } ${clickable ? "cursor-pointer hover:bg-secondary/40 -mx-4 px-4 rounded-sm" : ""}`}
+      } ${clickable ? "cursor-pointer hover:bg-secondary/40 -mx-4 px-4 rounded-sm transition-transform duration-200 hover:scale-[1.02]" : ""}`}
     >
       <div className="col-span-12 font-mono text-xs uppercase tracking-[0.25em] text-ink-faint sm:col-span-2">
         {categoryId}.{p.id}
