@@ -193,15 +193,16 @@ function Index() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <TopBar />
+      <SideRail />
       <main>
         <Hero />
         <Ticker />
         <Work />
-        <Ticker reverse />
+        <PcbDivider />
         <About />
-        <Ticker />
+        <PcbDivider />
         <Experience />
-        <Ticker reverse />
+        <PcbDivider />
         <Contact />
       </main>
       <Footer />
@@ -234,12 +235,12 @@ function TopBar() {
 
 function Hero() {
   return (
-    <section id="top" className="mx-auto max-w-6xl px-6 pb-28 pt-24 sm:px-10 sm:pb-40 sm:pt-36">
-      <div className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.28em] text-ink-dim">
-        <span className="size-1.5 rounded-full bg-mark" />
-        Available for new work — 2026
-      </div>
-      <h1 className="font-display mt-10 text-[clamp(3.5rem,12vw,11rem)] font-black uppercase">
+    <section
+      id="top"
+      data-section="00"
+      className="relative mx-auto flex h-screen max-w-6xl flex-col justify-center px-6 sm:px-10"
+    >
+      <h1 className="font-display text-[clamp(3.5rem,12vw,11rem)] font-black uppercase">
         Ani
         <br />
         Velaga<span className="text-mark">.</span>
@@ -250,6 +251,10 @@ function Hero() {
           hardware at the board level, then push it through the networking stack into LLM
           inference systems. Currently on CUAUV building PCBs for an autonomous submarine.
         </p>
+      </div>
+      <div className="absolute inset-x-0 bottom-8 flex items-center justify-center gap-3 px-6 font-mono text-xs uppercase tracking-[0.28em] text-ink-dim sm:px-10">
+        <span className="size-1.5 rounded-full bg-mark" />
+        Available for new work — 2026
       </div>
     </section>
   );
@@ -262,7 +267,7 @@ function Ticker({ reverse = false }: { reverse?: boolean }) {
   ).join("  /  ");
   const content = `${segment}  /  ${segment}`;
   return (
-    <div className="border-y border-border bg-secondary/40 overflow-hidden">
+    <div className="overflow-hidden border-y border-border" style={{ background: "#050505" }}>
       <div
         className="ticker-track flex whitespace-nowrap py-3 font-mono text-[11px] tracking-widest text-ink-faint"
         style={reverse ? { animationDirection: "reverse" } : undefined}
@@ -276,11 +281,57 @@ function Ticker({ reverse = false }: { reverse?: boolean }) {
   );
 }
 
+function PcbDivider() {
+  return (
+    <div className="mx-auto max-w-6xl px-6 sm:px-10">
+      <div className="pcb-divider" />
+    </div>
+  );
+}
+
+function SideRail() {
+  const [active, setActive] = useState("01");
+  useEffect(() => {
+    const ids: Array<[string, string]> = [
+      ["work", "01"],
+      ["about", "02"],
+      ["experience", "03"],
+      ["contact", "04"],
+    ];
+    const onScroll = () => {
+      const y = window.scrollY + window.innerHeight * 0.35;
+      let current = "01";
+      for (const [id, num] of ids) {
+        const el = document.getElementById(id);
+        if (el && el.offsetTop <= y) current = num;
+      }
+      setActive(current);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  return (
+    <aside
+      aria-hidden
+      className="pointer-events-none fixed inset-y-0 left-0 z-20 hidden w-10 items-center justify-center border-r border-border lg:flex"
+    >
+      <span
+        className="font-mono text-[11px] uppercase tracking-[0.35em] text-ink-faint"
+        style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
+      >
+        SECTION <span className="text-mark">{active}</span>
+      </span>
+    </aside>
+  );
+}
+
 function SectionHeader({ index, title, kicker }: { index: string; title: string; kicker: string }) {
   return (
     <div className="grid gap-6 sm:grid-cols-12">
       <div className="font-mono text-xs uppercase tracking-[0.28em] text-ink-dim sm:col-span-3">
-        <span className="text-mark">{index}</span> — {kicker}
+        <span className="font-bold text-mark">{index}</span>
+        <span className="text-ink-faint"> — {kicker}</span>
       </div>
       <h2 className="font-display text-5xl font-bold sm:col-span-9 sm:text-7xl">{title}</h2>
     </div>
@@ -288,13 +339,36 @@ function SectionHeader({ index, title, kicker }: { index: string; title: string;
 }
 
 function Work() {
+  const [tab, setTab] = useState(CATEGORIES[0].id);
+  const active = CATEGORIES.find((c) => c.id === tab) ?? CATEGORIES[0];
   return (
     <section id="work" className="mx-auto max-w-6xl px-6 py-28 sm:px-10 sm:py-40">
       <SectionHeader index="01" kicker="Selected Work" title="Things I've built." />
-      <div className="mt-20 space-y-24 sm:space-y-32">
-        {CATEGORIES.map((cat) => (
-          <CategoryBlock key={cat.id} category={cat} />
-        ))}
+      <div className="mt-16 flex flex-wrap gap-x-8 gap-y-3 border-b border-border pb-4">
+        {CATEGORIES.map((cat) => {
+          const isActive = cat.id === tab;
+          return (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => setTab(cat.id)}
+              className={`font-mono text-xs uppercase tracking-[0.28em] transition-colors ${
+                isActive ? "text-foreground" : "text-ink-faint hover:text-ink-dim"
+              }`}
+            >
+              <span className={isActive ? "font-bold text-mark" : "text-mark/70"}>
+                {cat.id}
+              </span>
+              <span className="ml-2">{cat.label.split(" — ")[0]}</span>
+              {isActive ? (
+                <span className="mt-2 block h-[2px] w-full bg-mark" />
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-12">
+        <CategoryBlock key={active.id} category={active} />
       </div>
     </section>
   );
@@ -385,12 +459,9 @@ function ProjectRow({
         </h4>
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-ink-dim">{p.tagline}</p>
         {p.stack.length > 0 ? (
-          <div className="mt-5 flex flex-wrap gap-x-5 gap-y-1 font-mono text-xs uppercase tracking-[0.18em] text-ink-faint">
-            {p.stack.map((s, i) => (
-              <span key={s}>
-                {s}
-                {i < p.stack.length - 1 ? <span className="ml-5 text-rule">/</span> : null}
-              </span>
+          <div className="mt-5 flex flex-wrap gap-2">
+            {p.stack.map((s) => (
+              <span key={s} className="tag-pill">{s}</span>
             ))}
           </div>
         ) : null}
@@ -464,12 +535,7 @@ function ProjectDetails({
       {p.stack.length > 0 ? (
         <div className="flex flex-wrap gap-2">
           {p.stack.map((s) => (
-            <span
-              key={s}
-              className="rounded-full border border-border bg-secondary/60 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-foreground"
-            >
-              {s}
-            </span>
+            <span key={s} className="tag-pill">{s}</span>
           ))}
         </div>
       ) : null}
@@ -649,12 +715,9 @@ function About() {
           <div className="font-mono text-xs uppercase tracking-[0.28em] text-ink-faint">
             Skills
           </div>
-          <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 font-mono text-xs uppercase tracking-[0.18em] text-foreground">
-            {SKILLS.map((s, i) => (
-              <span key={s}>
-                {s}
-                {i < SKILLS.length - 1 ? <span className="ml-5 text-rule">/</span> : null}
-              </span>
+          <div className="mt-5 flex flex-wrap gap-2">
+            {SKILLS.map((s) => (
+              <span key={s} className="tag-pill">{s}</span>
             ))}
           </div>
         </div>
