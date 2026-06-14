@@ -8,7 +8,6 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   serialBoardFront,
   serialBoardLayout,
@@ -440,6 +439,7 @@ function CategoryBlock({ category: c }: { category: Category }) {
               categoryId={c.id}
               onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
             />
+            {c.id === "01" && p.id === "A" ? <InlineSerialModel /> : null}
           </Reveal>
         ))}
       </ul>
