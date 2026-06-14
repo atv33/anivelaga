@@ -424,12 +424,31 @@ function CategoryBlock({ category: c }: { category: Category }) {
       <ul className="mt-12 divide-y divide-border border-y border-border">
         {c.projects.map((p, i) => (
           <Reveal as="li" key={p.id} delay={i * 70}>
-            <ProjectRow
-              project={p}
-              categoryId={c.id}
-              onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
-            />
-            {c.id === "01" && p.id === "A" ? <InlineSerialModel /> : null}
+            {c.id === "01" && p.id === "A" ? (
+              <div
+                className="my-6 overflow-hidden"
+                style={{
+                  background: "#111",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 2,
+                }}
+              >
+                <ProjectRow
+                  project={p}
+                  categoryId={c.id}
+                  onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
+                  bare
+                />
+                <div style={{ height: 1, background: "var(--mark)" }} />
+                <InlineSerialModel embedded />
+              </div>
+            ) : (
+              <ProjectRow
+                project={p}
+                categoryId={c.id}
+                onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
+              />
+            )}
           </Reveal>
         ))}
       </ul>
