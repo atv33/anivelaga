@@ -76,84 +76,64 @@
 }
 
 :root {
+  --card: #ffffff;
+  --ring: #a1a1a1;
+  --input: #e5e5e5;
+  --muted: #f5f5f5;
+  --accent: #f5f5f5;
+  --border: #e5e5e5;
   --radius: 0rem;
+  --primary: #737373;
+  --background: #ffffff;
+  --foreground: #0a0a0a;
+  --font-mono: Geist Mono, monospace;
+  --font-sans: Geist Mono, monospace;
+  --font-serif: Geist Mono, monospace;
+  --secondary: #f5f5f5;
+  --popover: #ffffff;
+  --sidebar: #fafafa;
+  --destructive: #e7000b;
+  --shadow-blur: 0px;
+  --shadow-spread: 0px;
+  --shadow-opacity: 0;
+  --shadow-offset-x: 0px;
+  --shadow-offset-y: 1px;
 
-  /* Engineering / PCB dark palette */
-  --paper: oklch(0.14 0.025 258);       /* #080c14 deep PCB-substrate */
-  --paper-warm: oklch(0.20 0.03 258);   /* subtle raised panel */
-  --ink: oklch(0.93 0.01 95);           /* off-white text */
-  --ink-dim: oklch(0.72 0.008 95);      /* secondary text */
-  --ink-faint: oklch(0.5 0.005 95);     /* tertiary / captions */
-  --rule: oklch(0.38 0.15 263);         /* deep navy hairline (#0d47a1-ish) */
-  --mark: oklch(0.66 0.22 28);          /* vermillion accent */
-
-  --background: var(--paper);
-  --foreground: var(--ink);
-  --card: var(--paper);
-  --card-foreground: var(--ink);
-  --popover: var(--paper);
-  --popover-foreground: var(--ink);
-  --primary: var(--ink);
-  --primary-foreground: var(--paper);
-  --secondary: var(--paper-warm);
-  --secondary-foreground: var(--ink);
-  --muted: var(--paper-warm);
-  --muted-foreground: var(--ink-dim);
-  --accent: var(--mark);
-  --accent-foreground: var(--paper);
-  --destructive: oklch(0.6 0.22 27);
-  --destructive-foreground: var(--ink);
-  --border: var(--rule);
-  --input: var(--rule);
-  --ring: var(--ink);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: var(--paper);
-  --sidebar-foreground: var(--ink);
-  --sidebar-primary: var(--ink);
-  --sidebar-primary-foreground: var(--paper);
-  --sidebar-accent: var(--paper-warm);
-  --sidebar-accent-foreground: var(--ink);
-  --sidebar-border: var(--rule);
-  --sidebar-ring: var(--ink);
+  /* Legacy editorial aliases mapped to new neutral theme */
+  --paper: var(--background);
+  --paper-warm: var(--muted);
+  --ink: var(--foreground);
+  --ink-dim: #525252;
+  --ink-faint: #a1a1a1;
+  --rule: var(--border);
+  --mark: var(--foreground);
 }
 
 .dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  --card: #191919;
+  --ring: #737373;
+  --input: #525252;
+  --muted: #262626;
+  --accent: #404040;
+  --border: #383838;
+  --primary: #737373;
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+  --card-foreground: #fafafa;
+  --muted-foreground: #a1a1a1;
+  --sidebar: #171717;
+  --popover: #262626;
+  --secondary: #262626;
+  --destructive: #ff6467;
+  --sidebar-border: #ffffff;
+
+  --paper: var(--background);
+  --paper-warm: var(--muted);
+  --ink: var(--foreground);
+  --ink-dim: #a1a1a1;
+  --ink-faint: #737373;
+  --rule: var(--border);
+  --mark: var(--foreground);
 }
 
 @layer base {
@@ -168,10 +148,6 @@
 
   body {
     background-color: var(--color-background);
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'><g fill='none' stroke='%231a6bff' stroke-opacity='0.06' stroke-width='1'><path d='M0 30 H120 M0 90 H120 M30 0 V120 M90 0 V120 M30 30 L60 60 M90 90 L60 60'/></g><g fill='%231a6bff' fill-opacity='0.1'><circle cx='30' cy='30' r='1.8'/><circle cx='90' cy='30' r='1.8'/><circle cx='30' cy='90' r='1.8'/><circle cx='90' cy='90' r='1.8'/><circle cx='60' cy='60' r='1.4'/></g></svg>");
-    background-repeat: repeat;
-    background-attachment: fixed;
-    background-size: 120px 120px;
     color: var(--color-foreground);
     font-family: var(--font-sans);
     font-feature-settings: "ss01", "cv11";
@@ -219,19 +195,6 @@
 
 @utility ticker-track-fast {
   animation: ticker 22s linear infinite;
-}
-
-/* PCB-trace grid texture for hero */
-.hero-bg::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    repeating-linear-gradient(0deg, rgba(80, 200, 120, 0.15) 0 1px, transparent 1px 40px),
-    repeating-linear-gradient(90deg, rgba(80, 200, 120, 0.15) 0 1px, transparent 1px 40px);
-  mask-image: radial-gradient(ellipse at center, black 40%, transparent 85%);
-  -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 85%);
 }
 
 /* Blinking terminal cursor */
