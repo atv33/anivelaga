@@ -267,12 +267,12 @@ const SERIAL_INLINE_GLB = "https://files.catbox.moe/ktpy7q.glb";
 function InlineSerialModel({ embedded = false }: { embedded?: boolean }) {
   return (
     <div
-      className={embedded ? "" : "col-span-12 mt-4"}
+      className={embedded ? "h-full" : "col-span-12 mt-4"}
       onClick={(e) => e.stopPropagation()}
     >
       <div
-        className={embedded ? "scanline-wrap overflow-hidden" : "scanline-wrap overflow-hidden border border-border"}
-        style={{ backgroundColor: "#1a1a1a", width: "100%", height: 300 }}
+        className={embedded ? "overflow-hidden h-full" : "overflow-hidden border border-border"}
+        style={{ backgroundColor: "#111", width: "100%", height: embedded ? "100%" : 300, minHeight: embedded ? 350 : undefined }}
       >
         <model-viewer
           src={SERIAL_INLINE_GLB}
@@ -284,7 +284,7 @@ function InlineSerialModel({ embedded = false }: { embedded?: boolean }) {
           shadow-intensity="1"
           loading="eager"
           reveal="auto"
-          style={{ width: "100%", height: "100%", backgroundColor: "#1a1a1a", filter: "saturate(0.7) brightness(0.85)" } as React.CSSProperties}
+          style={{ width: "100%", height: "100%", backgroundColor: "#111" } as React.CSSProperties}
         />
       </div>
     </div>
