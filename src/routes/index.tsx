@@ -266,6 +266,7 @@ function Hero() {
 
 const SERIAL_INLINE_GLB = "https://files.catbox.moe/asgl55.glb";
 const SERIAL_TEST_INLINE_GLB = "https://files.catbox.moe/dpd9ku.glb";
+const THRUSTER_INLINE_GLB = "https://files.catbox.moe/x54j79.glb";
 
 function InlineSerialModel({
   embedded = false,
