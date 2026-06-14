@@ -215,10 +215,10 @@ function TopBar() {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5 sm:px-10">
-        <a href="#top" className="font-display text-base font-bold tracking-tight">
+        <a href="#top" className="font-mono text-sm font-bold tracking-tight uppercase">
           Ani Velaga
         </a>
-        <nav className="flex items-center gap-7 text-sm">
+        <nav className="flex items-center gap-7 font-mono text-xs uppercase tracking-[0.18em]">
           {NAV.map(([label, href]) => (
             <a
               key={href}
@@ -310,7 +310,7 @@ function Ticker({ reverse = false }: { reverse?: boolean }) {
   return (
     <div className="overflow-hidden border-y border-border" style={{ background: "#050505" }}>
       <div
-        className="ticker-track flex whitespace-nowrap py-3 font-mono text-[11px] tracking-widest text-ink-faint"
+        className="ticker-track-fast flex whitespace-nowrap py-3 font-mono text-[11px] tracking-widest text-mark"
         style={reverse ? { animationDirection: "reverse" } : undefined}
       >
         <span className="px-6">{content}</span>
@@ -370,9 +370,9 @@ function SideRail() {
 function SectionHeader({ index, title, kicker }: { index: string; title: string; kicker: string }) {
   return (
     <div className="grid gap-6 sm:grid-cols-12">
-      <div className="font-mono text-xs uppercase tracking-[0.28em] text-ink-dim sm:col-span-3">
+      <div className="font-mono text-xs uppercase tracking-[0.28em] text-ink-dim sm:col-span-3 pl-3" style={{ borderLeft: "2px solid var(--mark)" }}>
         <span className="font-bold text-mark">{index}</span>
-        <span className="text-ink-faint"> — {kicker}</span>
+        <span className="text-ink-faint"> | {kicker}</span>
       </div>
       <h2 className="font-display text-5xl font-bold sm:col-span-9 sm:text-7xl">{title}</h2>
     </div>
@@ -740,26 +740,30 @@ function About() {
       <SectionHeader index="02" kicker="About" title="Who I am." />
       <div className="mt-20 grid gap-16 sm:grid-cols-12">
         <div className="sm:col-span-7">
-          <img
-            src={headshotAsset.url}
-            alt="Ani Velaga"
-            width={220}
-            height={220}
-            className="mb-8 size-[220px] object-cover"
-            style={{ borderRadius: 12 }}
-          />
-          <p className="text-lg leading-relaxed text-ink-dim">
+          <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-start sm:gap-8">
+            <img
+              src={headshotAsset.url}
+              alt="Ani Velaga"
+              width={180}
+              height={180}
+              className="size-[180px] shrink-0 object-cover border border-border"
+              style={{ borderRadius: "50%" }}
+            />
+            <div>
+              <p className="text-lg leading-relaxed text-ink-dim">
             I'm an electrical and computer engineering student at Cornell, currently on CUAUV —
             Cornell's autonomous underwater vehicle team. I design production PCBs in Altium
             Designer: 4-layer stackups, differential pair routing, ESD protection, high-speed USB.
             The submarine goes in real water, so the boards have to work.
-          </p>
-          <p className="mt-6 text-lg leading-relaxed text-ink-dim">
+              </p>
+              <p className="mt-6 text-lg leading-relaxed text-ink-dim">
             My work runs from board-level hardware through the networking stack up into LLM
             inference systems. I care about the full path: what the silicon is doing, how data
             moves between nodes, and where inference bottlenecks actually live. I'm looking for
             roles where that end-to-end view matters.
-          </p>
+              </p>
+            </div>
+          </div>
         </div>
         <div className="sm:col-span-5 sm:pl-12">
           <div className="font-mono text-xs uppercase tracking-[0.28em] text-ink-faint">
