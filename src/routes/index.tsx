@@ -277,6 +277,8 @@ function Work() {
 }
 
 function CategoryBlock({ category: c }: { category: Category }) {
+  const [openId, setOpenId] = useState<string | null>(null);
+  const openProject = c.projects.find((p) => p.id === openId) ?? null;
   return (
     <div>
       <div className="grid gap-6 sm:grid-cols-12">
@@ -293,10 +295,24 @@ function CategoryBlock({ category: c }: { category: Category }) {
       <ul className="mt-12 divide-y divide-border border-y border-border">
         {c.projects.map((p, i) => (
           <Reveal as="li" key={p.id} delay={i * 70}>
-            <ProjectRow project={p} categoryId={c.id} />
+            <ProjectRow
+              project={p}
+              categoryId={c.id}
+              onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
+            />
           </Reveal>
         ))}
       </ul>
+      <Sheet open={!!openProject} onOpenChange={(o) => !o && setOpenId(null)}>
+        <SheetContent
+          side="right"
+          className="w-full overflow-y-auto sm:max-w-2xl"
+        >
+          {openProject ? (
+            <ProjectDetails project={openProject} categoryId={c.id} />
+          ) : null}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
