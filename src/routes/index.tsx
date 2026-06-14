@@ -470,10 +470,12 @@ function ProjectRow({
   project: p,
   categoryId,
   onOpen,
+  bare = false,
 }: {
   project: Project;
   categoryId: string;
   onOpen?: () => void;
+  bare?: boolean;
 }) {
   const clickable = !!onOpen;
   return (
@@ -493,7 +495,7 @@ function ProjectRow({
       }
       className={`group grid grid-cols-12 items-baseline gap-6 py-10 transition-colors ${
         p.comingSoon ? "opacity-50" : ""
-      } ${clickable ? "cursor-pointer hover:bg-secondary/40 -mx-4 px-4 rounded-sm transition-transform duration-200 hover:scale-[1.02]" : ""}`}
+      } ${clickable ? (bare ? "cursor-pointer px-6" : "cursor-pointer hover:bg-secondary/40 -mx-4 px-4 rounded-sm transition-transform duration-200 hover:scale-[1.02]") : ""}`}
     >
       <div className="col-span-12 font-mono text-xs uppercase tracking-[0.25em] text-ink-faint sm:col-span-2">
         {categoryId}.{p.id}
