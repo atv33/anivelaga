@@ -78,14 +78,14 @@
 :root {
   --radius: 0rem;
 
-  /* Editorial monochrome palette */
-  --paper: oklch(0.985 0.004 90);       /* off-white background */
-  --paper-warm: oklch(0.96 0.008 85);   /* subtle warm panel */
-  --ink: oklch(0.13 0 0);               /* near-black text */
-  --ink-dim: oklch(0.40 0 0);           /* secondary text */
-  --ink-faint: oklch(0.62 0 0);         /* tertiary / captions */
-  --rule: oklch(0.86 0.005 90);         /* hairline rules */
-  --mark: oklch(0.62 0.22 28);          /* single subtle accent — vermillion */
+  /* Engineering-native dark palette */
+  --paper: oklch(0.16 0 0);             /* #0d0d0d-ish near-black background */
+  --paper-warm: oklch(0.21 0.003 90);   /* subtle raised panel */
+  --ink: oklch(0.93 0.01 95);           /* #e8e8e0 off-white text */
+  --ink-dim: oklch(0.72 0.008 95);      /* secondary text */
+  --ink-faint: oklch(0.5 0.005 95);     /* tertiary / captions */
+  --rule: oklch(0.28 0.005 90);         /* hairline rules */
+  --mark: oklch(0.66 0.22 28);          /* vermillion accent */
 
   --background: var(--paper);
   --foreground: var(--ink);
@@ -102,7 +102,7 @@
   --accent: var(--mark);
   --accent-foreground: var(--paper);
   --destructive: oklch(0.6 0.22 27);
-  --destructive-foreground: var(--paper);
+  --destructive-foreground: var(--ink);
   --border: var(--rule);
   --input: var(--rule);
   --ring: var(--ink);
@@ -211,4 +211,40 @@
 
 @utility ticker-track {
   animation: ticker 60s linear infinite;
+}
+
+/* PCB trace divider: hairline with a square pad on each end */
+@utility pcb-divider {
+  position: relative;
+  height: 1px;
+  background: var(--rule);
+  margin-block: 0;
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    background: var(--mark);
+    transform: translateY(-50%);
+  }
+  &::before { left: 0; }
+  &::after { right: 0; }
+}
+
+/* Bordered monospace tag pill */
+@utility tag-pill {
+  display: inline-flex;
+  align-items: center;
+  font-family: "Courier New", ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 1px solid var(--rule);
+  color: var(--ink-dim);
+  background: transparent;
+  border-radius: 0;
+  line-height: 1;
 }
