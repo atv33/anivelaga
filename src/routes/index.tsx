@@ -120,7 +120,6 @@ const CATEGORIES: Category[] = [
         tagline:
           "Investigated inter-GPU communication overhead during LLM prefill and decode phases. Benchmarked NCCL collective operations vs. RDMA direct transfers on multi-GPU clusters. Identified memory bottlenecks in KV-cache sharing across tensor-parallel shards. Results showed 2.3× throughput improvement using direct RDMA transfers for KV-cache migration between decode instances.",
         stack: ["CUDA", "NCCL", "RDMA", "PyTorch", "Python"],
-        links: [{ label: "— Cornell ECE Research", href: "" }],
       },
       {
         id: "B",
@@ -129,7 +128,6 @@ const CATEGORIES: Category[] = [
         tagline:
           "Systematic benchmarking of LLM inference throughput across batch sizes, sequence lengths, and quantization schemes on NVIDIA A100 GPUs. Profiled kernel-level bottlenecks using Nsight Systems. Compared vLLM, TensorRT-LLM, and naive HuggingFace baselines. Documented optimal batching strategies for decode-heavy workloads.",
         stack: ["CUDA", "TensorRT", "Python", "NVIDIA A100"],
-        links: [{ label: "— Cornell ECE Research", href: "" }],
       },
     ],
   },
@@ -145,7 +143,6 @@ const CATEGORIES: Category[] = [
         tagline:
           "Designed a custom 65% keyboard PCB in KiCad. Hot-swap Kailh sockets, per-key RGB via IS31FL3741 LED driver, QMK-compatible ATmega32U4 MCU. 2-layer board. Ordered from JLCPCB and hand-assembled.",
         stack: ["KiCad", "ATmega32U4", "QMK", "PCB Layout", "Hand Assembly"],
-        links: [{ label: "— Personal project", href: "" }],
       },
       {
         id: "B",
@@ -154,7 +151,6 @@ const CATEGORIES: Category[] = [
         tagline:
           "Built and maintain a home server running Proxmox VE with multiple VMs: pfSense router, Jellyfin media server, Nextcloud instance, and a GPU passthrough VM for local LLM inference (llama.cpp on an RTX 3080). Managed VLANs, reverse proxy (Caddy), and WireGuard VPN.",
         stack: ["Proxmox", "Linux", "Networking", "Docker", "WireGuard"],
-        links: [{ label: "— Personal project", href: "" }],
       },
     ],
   },
