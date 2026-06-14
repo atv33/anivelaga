@@ -269,7 +269,7 @@ function Hero() {
   );
 }
 
-function HeroCircuits() {
+function HeroCircuits({ chipRef }: { chipRef: React.RefObject<HTMLDivElement | null> }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -286,9 +286,9 @@ function HeroCircuits() {
     const SPEED = 600; // px / second
     const STAGGER = 200; // ms between routes
     const FADE_END = 0.8;
-    const IC_SIZE = 56;
     const PIN_LEN = 14;
-    const PIN_OFFSETS = [7, 21, 35, 49] as const;
+    const PIN_PITCH = 28;
+    const CHIP_PAD = 16;
 
     const snap = (v: number) => Math.round(v / G) * G;
 
@@ -328,9 +328,11 @@ function HeroCircuits() {
       ctx.fill();
     };
 
-    type IC = {
+    type Chip = {
       x: number;
       y: number;
+      w: number;
+      h: number;
       pins: {
         top: [number, number][];
         bottom: [number, number][];
@@ -338,32 +340,51 @@ function HeroCircuits() {
         right: [number, number][];
       };
     };
-    const makeIC = (cx: number, cy: number): IC => {
-      const x = cx - IC_SIZE / 2;
-      const y = cy - IC_SIZE / 2;
+    const makeChip = (): Chip | null => {
+      const el = chipRef.current;
+      if (!el) return null;
+      const cb = canvas.getBoundingClientRect();
+      const tb = el.getBoundingClientRect();
+      const rawX = tb.left - cb.left - CHIP_PAD;
+      const rawY = tb.top - cb.top - CHIP_PAD;
+      const rawW = tb.width + CHIP_PAD * 2;
+      const rawH = tb.height + CHIP_PAD * 2;
+      const x = snap(rawX);
+      const y = snap(rawY);
+      const w = snap(rawW);
+      const h = snap(rawH);
+      const pinsAlong = (len: number): number[] => {
+        const count = Math.max(1, Math.floor((len - PIN_PITCH) / PIN_PITCH));
+        const span = count * PIN_PITCH;
+        const start = (len - span) / 2;
+        return Array.from({ length: count + 1 }, (_, i) => start + i * PIN_PITCH);
+      };
+      const hOffs = pinsAlong(w);
+      const vOffs = pinsAlong(h);
       return {
-        x,
-        y,
+        x, y, w, h,
         pins: {
-          top: PIN_OFFSETS.map((o) => [x + o, y - PIN_LEN] as [number, number]),
-          bottom: PIN_OFFSETS.map(
-            (o) => [x + o, y + IC_SIZE + PIN_LEN] as [number, number],
-          ),
-          left: PIN_OFFSETS.map((o) => [x - PIN_LEN, y + o] as [number, number]),
-          right: PIN_OFFSETS.map(
-            (o) => [x + IC_SIZE + PIN_LEN, y + o] as [number, number],
-          ),
+          top: hOffs.map((o) => [x + o, y - PIN_LEN] as [number, number]),
+          bottom: hOffs.map((o) => [x + o, y + h + PIN_LEN] as [number, number]),
+          left: vOffs.map((o) => [x - PIN_LEN, y + o] as [number, number]),
+          right: vOffs.map((o) => [x + w + PIN_LEN, y + o] as [number, number]),
         },
       };
     };
-    const drawIC = (ic: IC) => {
-      const a = alphaAt(ic.y + IC_SIZE / 2);
-      sRect(ic.x, ic.y, IC_SIZE, IC_SIZE, a);
-      for (const o of PIN_OFFSETS) {
-        sLine(ic.x + o, ic.y - PIN_LEN, ic.x + o, ic.y, a);
-        sLine(ic.x + o, ic.y + IC_SIZE, ic.x + o, ic.y + IC_SIZE + PIN_LEN, a);
-        sLine(ic.x - PIN_LEN, ic.y + o, ic.x, ic.y + o, a);
-        sLine(ic.x + IC_SIZE, ic.y + o, ic.x + IC_SIZE + PIN_LEN, ic.y + o, a);
+    const drawChip = (c: Chip) => {
+      const a = alphaAt(c.y + c.h / 2);
+      sRect(c.x, c.y, c.w, c.h, a);
+      for (const [px] of c.pins.top) {
+        sLine(px, c.y - PIN_LEN, px, c.y, a);
+      }
+      for (const [px] of c.pins.bottom) {
+        sLine(px, c.y + c.h, px, c.y + c.h + PIN_LEN, a);
+      }
+      for (const [, py] of c.pins.left) {
+        sLine(c.x - PIN_LEN, py, c.x, py, alphaAt(py));
+      }
+      for (const [, py] of c.pins.right) {
+        sLine(c.x + c.w, py, c.x + c.w + PIN_LEN, py, alphaAt(py));
       }
     };
 
@@ -463,111 +484,59 @@ function HeroCircuits() {
     const setupLayout = () => {
       ctx.clearRect(0, 0, W, H);
 
-      const ic1 = makeIC(snap(W * 0.20), snap(H * 0.12));
-      const ic2 = makeIC(snap(W * 0.68), snap(H * 0.18));
-      drawIC(ic1);
-      drawIC(ic2);
+      const chip = makeChip();
+      routes = [];
+      vias = [];
+      if (!chip) {
+        viasDrawn = true;
+        startTime = performance.now();
+        return;
+      }
+      drawChip(chip);
 
       const sx = (frac: number) => snap(W * frac);
       const sy = (frac: number) => snap(H * frac);
+      const marginX = snap(W * 0.04);
+      const marginY = snap(H * 0.04);
 
-      routes = [
-        // 1) IC1 right -> IC2 left (mid)
-        buildRoute(
-          [
-            ic1.pins.right[1],
-            [sx(0.42), ic1.pins.right[1][1]],
-            [sx(0.42), ic2.pins.left[1][1]],
-            ic2.pins.left[1],
-          ],
-          1,
-          0,
-        ),
-        // 2) IC1 bottom -> down then right then down again
-        buildRoute(
-          [
-            ic1.pins.bottom[2],
-            [ic1.pins.bottom[2][0], sy(0.42)],
-            [sx(0.50), sy(0.42)],
-            [sx(0.50), sy(0.58)],
-          ],
-          0,
-          1,
-        ),
-        // 3) IC1 top -> up and across to top-right
-        buildRoute(
-          [
-            ic1.pins.top[0],
-            [ic1.pins.top[0][0], sy(0.04)],
-            [sx(0.90), sy(0.04)],
-          ],
-          1,
-          2,
-        ),
-        // 4) IC1 left -> left edge then down
-        buildRoute(
-          [
-            ic1.pins.left[2],
-            [sx(0.06), ic1.pins.left[2][1]],
-            [sx(0.06), sy(0.46)],
-          ],
-          0,
-          3,
-        ),
-        // 5) IC2 right -> right edge then down
-        buildRoute(
-          [
-            ic2.pins.right[1],
-            [sx(0.94), ic2.pins.right[1][1]],
-            [sx(0.94), sy(0.50)],
-          ],
-          1,
-          4,
-        ),
-        // 6) IC2 bottom -> down, left, down
-        buildRoute(
-          [
-            ic2.pins.bottom[1],
-            [ic2.pins.bottom[1][0], sy(0.48)],
-            [sx(0.56), sy(0.48)],
-            [sx(0.56), sy(0.62)],
-          ],
-          0,
-          5,
-        ),
-        // 7) IC2 top -> up and across to top-center, then down
-        buildRoute(
-          [
-            ic2.pins.top[3],
-            [ic2.pins.top[3][0], sy(0.06)],
-            [sx(0.46), sy(0.06)],
-            [sx(0.46), sy(0.18)],
-          ],
-          1,
-          6,
-        ),
-        // 8) IC2 bottom -> down, far right, down
-        buildRoute(
-          [
-            ic2.pins.bottom[3],
-            [ic2.pins.bottom[3][0], sy(0.34)],
-            [sx(0.82), sy(0.34)],
-            [sx(0.82), sy(0.56)],
-          ],
-          0,
-          7,
-        ),
+      const picks: { side: "top" | "bottom" | "left" | "right"; idx: number; legs: number; comp: boolean }[] = [
+        { side: "top", idx: 0, legs: 1, comp: true },
+        { side: "top", idx: 2, legs: 1, comp: false },
+        { side: "left", idx: 1, legs: 1, comp: true },
+        { side: "left", idx: Math.max(0, chip.pins.left.length - 2), legs: 1, comp: false },
+        { side: "right", idx: 1, legs: 1, comp: true },
+        { side: "right", idx: Math.max(0, chip.pins.right.length - 2), legs: 1, comp: false },
+        { side: "bottom", idx: 0, legs: 1, comp: false },
+        { side: "bottom", idx: Math.max(0, chip.pins.bottom.length - 1), legs: 1, comp: true },
       ];
 
-      vias = [
-        // pre-chosen waypoint meet / cross points
-        [sx(0.42), ic1.pins.right[1][1]],
-        [sx(0.42), ic2.pins.left[1][1]],
-        [sx(0.50), sy(0.42)],
-        [sx(0.94), ic2.pins.right[1][1]],
-        [sx(0.46), sy(0.06)],
-        [sx(0.82), sy(0.34)],
-      ];
+      const safeIdx = (arr: unknown[], i: number) => Math.min(arr.length - 1, Math.max(0, i));
+      let delay = 0;
+      for (const p of picks) {
+        const pinArr = chip.pins[p.side];
+        if (pinArr.length === 0) continue;
+        const [px, py] = pinArr[safeIdx(pinArr, p.idx)];
+        let waypoints: [number, number][] = [[px, py]];
+        if (p.side === "top") {
+          const ty = Math.max(marginY, snap(py - 60 - (p.idx % 3) * 28));
+          const tx = p.idx < pinArr.length / 2 ? snap(px - 80 - p.idx * 28) : snap(px + 80 + p.idx * 28);
+          waypoints.push([px, ty], [Math.max(marginX, Math.min(W - marginX, tx)), ty]);
+        } else if (p.side === "bottom") {
+          const ty = snap(py + 60 + (p.idx % 3) * 28);
+          const tx = p.idx < pinArr.length / 2 ? snap(px - 100 - p.idx * 28) : snap(px + 100 + p.idx * 28);
+          waypoints.push([px, ty], [Math.max(marginX, Math.min(W - marginX, tx)), ty]);
+        } else if (p.side === "left") {
+          const tx = Math.max(marginX, snap(px - 60 - (p.idx % 3) * 28));
+          const ty = p.idx < pinArr.length / 2 ? snap(py - 80 - p.idx * 28) : snap(py + 80 + p.idx * 28);
+          waypoints.push([tx, py], [tx, Math.max(marginY, Math.min(H * FADE_END - G, ty))]);
+        } else {
+          const tx = Math.min(W - marginX, snap(px + 60 + (p.idx % 3) * 28));
+          const ty = p.idx < pinArr.length / 2 ? snap(py - 80 - p.idx * 28) : snap(py + 80 + p.idx * 28);
+          waypoints.push([tx, py], [tx, Math.max(marginY, Math.min(H * FADE_END - G, ty))]);
+        }
+        routes.push(buildRoute(waypoints, p.comp ? 1 : null, delay++));
+        vias.push(waypoints[1]);
+      }
       viasDrawn = false;
       startTime = performance.now();
     };
