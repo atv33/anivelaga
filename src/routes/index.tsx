@@ -653,19 +653,22 @@ function HeroCircuits() {
       ctx.stroke();
     };
     const drawHeadshot = (c: Chip, progress: number) => {
-      // Frame chip is non-square: width 120, height 140 (from layout)
+      // Frame chip is 120x140 (from layout); photo natural 3:4 portrait → 90x110 centered
       const fw = 120;
       const fh = 140;
-      const a = 0.3 * progress;
-      // Image fill
+      const pw = 90;
+      const ph = 110;
+      const px = c.x + (fw - pw) / 2;
+      const py = c.y + (fh - ph) / 2;
       if (imgReady) {
         ctx.save();
-        ctx.globalAlpha = 0.55 * progress;
-        ctx.drawImage(headshotImg, c.x, c.y, fw, fh);
+        ctx.globalAlpha = 0.7 * progress;
+        ctx.drawImage(headshotImg, px, py, pw, ph);
         ctx.restore();
       }
-      setStroke(a, 1);
-      ctx.strokeRect(c.x + 0.5, c.y + 0.5, fw, fh);
+      // Outer IC package frame
+      setStroke(0.5 * progress, 2);
+      ctx.strokeRect(c.x + 1, c.y + 1, fw - 2, fh - 2);
     };
 
     // ===== Render loop =====
