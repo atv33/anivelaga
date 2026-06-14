@@ -264,14 +264,14 @@ function Hero() {
 
 const SERIAL_INLINE_GLB = "https://files.catbox.moe/ktpy7q.glb";
 
-function InlineSerialModel() {
+function InlineSerialModel({ embedded = false }: { embedded?: boolean }) {
   return (
     <div
-      className="col-span-12 mt-4"
+      className={embedded ? "" : "col-span-12 mt-4"}
       onClick={(e) => e.stopPropagation()}
     >
       <div
-        className="overflow-hidden border border-border"
+        className={embedded ? "overflow-hidden" : "overflow-hidden border border-border"}
         style={{ backgroundColor: "#1a1a1a", width: "100%", height: 300 }}
       >
         <model-viewer
@@ -424,12 +424,31 @@ function CategoryBlock({ category: c }: { category: Category }) {
       <ul className="mt-12 divide-y divide-border border-y border-border">
         {c.projects.map((p, i) => (
           <Reveal as="li" key={p.id} delay={i * 70}>
-            <ProjectRow
-              project={p}
-              categoryId={c.id}
-              onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
-            />
-            {c.id === "01" && p.id === "A" ? <InlineSerialModel /> : null}
+            {c.id === "01" && p.id === "A" ? (
+              <div
+                className="my-6 overflow-hidden"
+                style={{
+                  background: "#111",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 2,
+                }}
+              >
+                <ProjectRow
+                  project={p}
+                  categoryId={c.id}
+                  onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
+                  bare
+                />
+                <div style={{ height: 1, background: "var(--mark)" }} />
+                <InlineSerialModel embedded />
+              </div>
+            ) : (
+              <ProjectRow
+                project={p}
+                categoryId={c.id}
+                onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
+              />
+            )}
           </Reveal>
         ))}
       </ul>
@@ -451,10 +470,12 @@ function ProjectRow({
   project: p,
   categoryId,
   onOpen,
+  bare = false,
 }: {
   project: Project;
   categoryId: string;
   onOpen?: () => void;
+  bare?: boolean;
 }) {
   const clickable = !!onOpen;
   return (
@@ -474,7 +495,7 @@ function ProjectRow({
       }
       className={`group grid grid-cols-12 items-baseline gap-6 py-10 transition-colors ${
         p.comingSoon ? "opacity-50" : ""
-      } ${clickable ? "cursor-pointer hover:bg-secondary/40 -mx-4 px-4 rounded-sm transition-transform duration-200 hover:scale-[1.02]" : ""}`}
+      } ${clickable ? (bare ? "cursor-pointer px-6" : "cursor-pointer hover:bg-secondary/40 -mx-4 px-4 rounded-sm transition-transform duration-200 hover:scale-[1.02]") : ""}`}
     >
       <div className="col-span-12 font-mono text-xs uppercase tracking-[0.25em] text-ink-faint sm:col-span-2">
         {categoryId}.{p.id}
