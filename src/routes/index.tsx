@@ -269,59 +269,174 @@ function Hero() {
 }
 
 function HeroCircuits() {
-  // Vertical traces with junction nodes that travel downward and fade out.
-  // Stagger durations + delays so it feels organic.
-  const traces = [
-    { x: 8, len: 120, dur: 6.5, delay: 0 },
-    { x: 17, len: 80, dur: 8.2, delay: 1.8 },
-    { x: 26, len: 160, dur: 7.4, delay: 3.1 },
-    { x: 34, len: 90, dur: 9.1, delay: 0.6 },
-    { x: 43, len: 140, dur: 6.8, delay: 2.4 },
-    { x: 52, len: 70, dur: 10.2, delay: 4.0 },
-    { x: 61, len: 130, dur: 7.9, delay: 1.2 },
-    { x: 70, len: 100, dur: 8.6, delay: 3.7 },
-    { x: 79, len: 150, dur: 7.1, delay: 0.9 },
-    { x: 88, len: 85, dur: 9.4, delay: 2.7 },
-    { x: 95, len: 110, dur: 6.9, delay: 4.5 },
-  ];
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const dpr = window.devicePixelRatio || 1;
+    let W = 0;
+    let H = 0;
+    let raf = 0;
+
+    type Branch = {
+      x: number;
+      y: number;
+      angle: number; // 0 = straight down, positive = right
+      thickness: number;
+      traveled: number;
+      nextSplit: number;
+      alive: boolean;
+      depth: number;
+    };
+    let branches: Branch[] = [];
+    let phase: "grow" | "hold" | "fade" = "grow";
+    let phaseStart = performance.now();
+
+    const STEP = 1.4;
+    const MAX_OPACITY = 0.18;
+
+    const fadeForY = (y: number) => {
+      const t = y / H;
+      if (t < 0.45) return 1;
+      if (t > 0.98) return 0;
+      return (0.98 - t) / 0.53;
+    };
+
+    const seed = () => {
+      branches = [];
+      const count = 2 + Math.floor(Math.random() * 2); // 2-3
+      for (let i = 0; i < count; i++) {
+        const slot = (i + 0.5) / count;
+        const jitter = (Math.random() - 0.5) * (0.6 / count);
+        branches.push({
+          x: W * (slot + jitter),
+          y: 0,
+          angle: (Math.random() - 0.5) * 0.25,
+          thickness: 1.25,
+          traveled: 0,
+          nextSplit: 70 + Math.random() * 90,
+          alive: true,
+          depth: 0,
+        });
+      }
+      ctx.clearRect(0, 0, W, H);
+      phase = "grow";
+      phaseStart = performance.now();
+    };
+
+    const resize = () => {
+      const rect = canvas.getBoundingClientRect();
+      W = rect.width;
+      H = rect.height;
+      canvas.width = Math.max(1, Math.floor(W * dpr));
+      canvas.height = Math.max(1, Math.floor(H * dpr));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      seed();
+    };
+
+    const drawNode = (x: number, y: number, r: number, alpha: number) => {
+      if (alpha < 0.003) return;
+      ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    };
+
+    const tick = (now: number) => {
+      if (phase === "grow") {
+        let anyAlive = false;
+        // copy length because splits push new branches
+        const len = branches.length;
+        for (let i = 0; i < len; i++) {
+          const b = branches[i];
+          if (!b.alive) continue;
+          anyAlive = true;
+
+          const nx = b.x + Math.sin(b.angle) * STEP;
+          const ny = b.y + Math.cos(b.angle) * STEP;
+          const alpha = MAX_OPACITY * fadeForY(ny);
+
+          if (alpha > 0.003) {
+            ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
+            ctx.lineWidth = b.thickness;
+            ctx.lineCap = "round";
+            ctx.beginPath();
+            ctx.moveTo(b.x, b.y);
+            ctx.lineTo(nx, ny);
+            ctx.stroke();
+          }
+
+          b.x = nx;
+          b.y = ny;
+          b.traveled += STEP;
+
+          if (ny >= H || b.thickness < 0.35 || b.depth > 6 || b.x < -20 || b.x > W + 20) {
+            // terminal node
+            drawNode(b.x, b.y, Math.max(1, b.thickness * 0.8), alpha);
+            b.alive = false;
+            continue;
+          }
+
+          if (b.traveled >= b.nextSplit) {
+            // junction node
+            drawNode(b.x, b.y, Math.max(1.2, b.thickness * 1.1), alpha);
+            b.alive = false;
+            const split = ((18 + Math.random() * 30) * Math.PI) / 180;
+            const newThickness = b.thickness * 0.78;
+            for (const sign of [-1, 1]) {
+              branches.push({
+                x: b.x,
+                y: b.y,
+                angle: b.angle + sign * split,
+                thickness: newThickness,
+                traveled: 0,
+                nextSplit: 45 + Math.random() * 95,
+                alive: true,
+                depth: b.depth + 1,
+              });
+            }
+          }
+        }
+        if (!anyAlive) {
+          phase = "hold";
+          phaseStart = now;
+        }
+      } else if (phase === "hold") {
+        if (now - phaseStart > 1400) {
+          phase = "fade";
+          phaseStart = now;
+        }
+      } else {
+        const elapsed = now - phaseStart;
+        ctx.save();
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.fillStyle = "rgba(0,0,0,0.04)";
+        ctx.fillRect(0, 0, W, H);
+        ctx.restore();
+        if (elapsed > 2000) {
+          seed();
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+
+    resize();
+    raf = requestAnimationFrame(tick);
+    const ro = new ResizeObserver(resize);
+    ro.observe(canvas);
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
+  }, []);
   return (
-    <div
+    <canvas
+      ref={canvasRef}
       aria-hidden
-      className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
-      style={{
-        WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
-        maskImage: "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
-      }}
-    >
-      <svg
-        width="100%"
-        height="100%"
-        preserveAspectRatio="none"
-        style={{ position: "absolute", inset: 0 }}
-      >
-        {traces.map((t, i) => (
-          <g
-            key={i}
-            className="hero-trace"
-            style={{
-              animation: `hero-trace-fall ${t.dur}s linear ${t.delay}s infinite`,
-              transformBox: "fill-box",
-            }}
-          >
-            <line
-              x1={`${t.x}%`}
-              y1={-t.len}
-              x2={`${t.x}%`}
-              y2={0}
-              stroke="white"
-              strokeWidth="1"
-              strokeOpacity="0.15"
-            />
-            <circle cx={`${t.x}%`} cy={0} r="2" fill="white" fillOpacity="0.18" />
-          </g>
-        ))}
-      </svg>
-    </div>
+      className="pointer-events-none absolute inset-0 z-0 h-full w-full"
+    />
   );
 }
 
