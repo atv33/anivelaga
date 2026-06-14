@@ -264,14 +264,14 @@ function Hero() {
 
 const SERIAL_INLINE_GLB = "https://files.catbox.moe/ktpy7q.glb";
 
-function InlineSerialModel() {
+function InlineSerialModel({ embedded = false }: { embedded?: boolean }) {
   return (
     <div
-      className="col-span-12 mt-4"
+      className={embedded ? "" : "col-span-12 mt-4"}
       onClick={(e) => e.stopPropagation()}
     >
       <div
-        className="overflow-hidden border border-border"
+        className={embedded ? "overflow-hidden" : "overflow-hidden border border-border"}
         style={{ backgroundColor: "#1a1a1a", width: "100%", height: 300 }}
       >
         <model-viewer
