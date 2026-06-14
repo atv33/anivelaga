@@ -246,6 +246,7 @@ function Hero() {
       data-section="00"
       className="hero-bg relative mx-auto flex h-screen max-w-6xl flex-col justify-center px-6 sm:px-10"
     >
+      <HeroCircuits />
       <div className="relative z-10">
         <h1 className="font-display text-[clamp(3rem,10vw,9rem)] font-black uppercase">
           Ani
@@ -267,6 +268,63 @@ function Hero() {
   );
 }
 
+function HeroCircuits() {
+  // Vertical traces with junction nodes that travel downward and fade out.
+  // Stagger durations + delays so it feels organic.
+  const traces = [
+    { x: 8, len: 120, dur: 6.5, delay: 0 },
+    { x: 17, len: 80, dur: 8.2, delay: 1.8 },
+    { x: 26, len: 160, dur: 7.4, delay: 3.1 },
+    { x: 34, len: 90, dur: 9.1, delay: 0.6 },
+    { x: 43, len: 140, dur: 6.8, delay: 2.4 },
+    { x: 52, len: 70, dur: 10.2, delay: 4.0 },
+    { x: 61, len: 130, dur: 7.9, delay: 1.2 },
+    { x: 70, len: 100, dur: 8.6, delay: 3.7 },
+    { x: 79, len: 150, dur: 7.1, delay: 0.9 },
+    { x: 88, len: 85, dur: 9.4, delay: 2.7 },
+    { x: 95, len: 110, dur: 6.9, delay: 4.5 },
+  ];
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
+      style={{
+        WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
+        maskImage: "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
+      }}
+    >
+      <svg
+        width="100%"
+        height="100%"
+        preserveAspectRatio="none"
+        style={{ position: "absolute", inset: 0 }}
+      >
+        {traces.map((t, i) => (
+          <g
+            key={i}
+            className="hero-trace"
+            style={{
+              animation: `hero-trace-fall ${t.dur}s linear ${t.delay}s infinite`,
+              transformBox: "fill-box",
+            }}
+          >
+            <line
+              x1={`${t.x}%`}
+              y1={-t.len}
+              x2={`${t.x}%`}
+              y2={0}
+              stroke="white"
+              strokeWidth="1"
+              strokeOpacity="0.15"
+            />
+            <circle cx={`${t.x}%`} cy={0} r="2" fill="white" fillOpacity="0.18" />
+          </g>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
 const SERIAL_INLINE_GLB = "https://files.catbox.moe/tgly0l.glb";
 const SERIAL_TEST_INLINE_GLB = "https://files.catbox.moe/dpd9ku.glb";
 const THRUSTER_INLINE_GLB = "https://files.catbox.moe/x54j79.glb";
@@ -276,21 +334,46 @@ function useMouseSpin(defaultSpeed = 20) {
   useEffect(() => {
     const el = ref.current as HTMLElement | null;
     if (!el) return;
+    let currentSpeed = defaultSpeed;
+    let rafId = 0;
     const setSpeed = (s: number) => {
+      currentSpeed = s;
       el.setAttribute("rotation-per-second", `${s}deg`);
     };
     setSpeed(defaultSpeed);
     const onMove = (e: MouseEvent) => {
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = 0;
+      }
       const r = el.getBoundingClientRect();
       const x = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
-      // Map left (0) -> -60deg/s (reverse), center -> 20deg/s, right (1) -> 120deg/s
       const speed = -60 + x * 180;
       setSpeed(speed);
     };
-    const onLeave = () => setSpeed(defaultSpeed);
+    const onLeave = () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      const startSpeed = currentSpeed;
+      const startTime = performance.now();
+      const duration = 1500;
+      const tick = (now: number) => {
+        const t = Math.min(1, (now - startTime) / duration);
+        // easeOutCubic
+        const eased = 1 - Math.pow(1 - t, 3);
+        const s = startSpeed + (defaultSpeed - startSpeed) * eased;
+        setSpeed(s);
+        if (t < 1) {
+          rafId = requestAnimationFrame(tick);
+        } else {
+          rafId = 0;
+        }
+      };
+      rafId = requestAnimationFrame(tick);
+    };
     el.addEventListener("mousemove", onMove);
     el.addEventListener("mouseleave", onLeave);
     return () => {
+      if (rafId) cancelAnimationFrame(rafId);
       el.removeEventListener("mousemove", onMove);
       el.removeEventListener("mouseleave", onLeave);
     };
