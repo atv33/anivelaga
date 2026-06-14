@@ -459,12 +459,9 @@ function ProjectRow({
         </h4>
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-ink-dim">{p.tagline}</p>
         {p.stack.length > 0 ? (
-          <div className="mt-5 flex flex-wrap gap-x-5 gap-y-1 font-mono text-xs uppercase tracking-[0.18em] text-ink-faint">
-            {p.stack.map((s, i) => (
-              <span key={s}>
-                {s}
-                {i < p.stack.length - 1 ? <span className="ml-5 text-rule">/</span> : null}
-              </span>
+          <div className="mt-5 flex flex-wrap gap-2">
+            {p.stack.map((s) => (
+              <span key={s} className="tag-pill">{s}</span>
             ))}
           </div>
         ) : null}
@@ -538,12 +535,7 @@ function ProjectDetails({
       {p.stack.length > 0 ? (
         <div className="flex flex-wrap gap-2">
           {p.stack.map((s) => (
-            <span
-              key={s}
-              className="rounded-full border border-border bg-secondary/60 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-foreground"
-            >
-              {s}
-            </span>
+            <span key={s} className="tag-pill">{s}</span>
           ))}
         </div>
       ) : null}
@@ -723,12 +715,9 @@ function About() {
           <div className="font-mono text-xs uppercase tracking-[0.28em] text-ink-faint">
             Skills
           </div>
-          <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 font-mono text-xs uppercase tracking-[0.18em] text-foreground">
-            {SKILLS.map((s, i) => (
-              <span key={s}>
-                {s}
-                {i < SKILLS.length - 1 ? <span className="ml-5 text-rule">/</span> : null}
-              </span>
+          <div className="mt-5 flex flex-wrap gap-2">
+            {SKILLS.map((s) => (
+              <span key={s} className="tag-pill">{s}</span>
             ))}
           </div>
         </div>
