@@ -859,7 +859,7 @@ function SerialBoardGallery() {
 }
 
 function SerialViewer() {
-  const ref = useMouseOrbit(30);
+  const ref = useMouseSpin(20);
   return (
     <div
       className="relative overflow-hidden rounded-md border border-border"
@@ -900,7 +900,7 @@ function SerialViewer() {
 }
 
 function ThrusterViewer() {
-  const ref = useMouseOrbit(15);
+  const ref = useMouseSpin(20);
   return (
     <div
       className="relative overflow-hidden rounded-md border border-border"
