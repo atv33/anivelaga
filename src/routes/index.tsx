@@ -265,38 +265,28 @@ function Hero() {
 const SERIAL_INLINE_GLB = "https://files.catbox.moe/ktpy7q.glb";
 
 function InlineSerialModel() {
-  const [open, setOpen] = useState(false);
   return (
     <div
       className="col-span-12 mt-4"
       onClick={(e) => e.stopPropagation()}
     >
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="font-mono text-[11px] uppercase tracking-[0.25em] text-ink-dim transition-colors hover:text-mark"
+      <div
+        className="overflow-hidden border border-border"
+        style={{ backgroundColor: "#1a1a1a", width: "100%", height: 300 }}
       >
-        {open ? "Hide 3D Model ✕" : "View 3D Model ↗"}
-      </button>
-      {open ? (
-        <div
-          className="mt-4 overflow-hidden border border-border"
-          style={{ backgroundColor: "#1a1a1a", width: "100%", height: 280 }}
-        >
-          <model-viewer
-            src={SERIAL_INLINE_GLB}
-            alt="Serial Board 3D model"
-            auto-rotate
-            camera-controls
-            rotation-per-second="20deg"
-            interaction-prompt="none"
-            shadow-intensity="1"
-            loading="eager"
-            reveal="auto"
-            style={{ width: "100%", height: "100%", backgroundColor: "#1a1a1a" } as React.CSSProperties}
-          />
-        </div>
-      ) : null}
+        <model-viewer
+          src={SERIAL_INLINE_GLB}
+          alt="Serial Board 3D model"
+          auto-rotate
+          camera-controls
+          rotation-per-second="20deg"
+          interaction-prompt="none"
+          shadow-intensity="1"
+          loading="eager"
+          reveal="auto"
+          style={{ width: "100%", height: "100%", backgroundColor: "#1a1a1a" } as React.CSSProperties}
+        />
+      </div>
     </div>
   );
 }
@@ -491,7 +481,7 @@ function ProjectRow({
         {p.year ? <> / {p.year}</> : null}
       </div>
       <div className="col-span-12 sm:col-span-7">
-        <h4 className="font-display text-2xl font-bold tracking-tight transition-colors group-hover:text-mark sm:text-3xl">
+        <h4 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           {p.name}
           {p.comingSoon ? (
             <span className="ml-3 align-middle font-mono text-[10px] uppercase tracking-[0.25em] text-ink-faint">
