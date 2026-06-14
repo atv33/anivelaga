@@ -426,21 +426,28 @@ function CategoryBlock({ category: c }: { category: Category }) {
           <Reveal as="li" key={p.id} delay={i * 70}>
             {c.id === "01" && p.id === "A" ? (
               <div
-                className="my-6 overflow-hidden"
+                className="my-6 overflow-hidden flex flex-col lg:flex-row"
                 style={{
-                  background: "#111",
+                  background: "#111111",
                   border: "1px solid rgba(255,255,255,0.08)",
                   borderRadius: 2,
+                  minHeight: 350,
                 }}
               >
-                <ProjectRow
-                  project={p}
-                  categoryId={c.id}
-                  onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
-                  bare
-                />
-                <div style={{ height: 1, background: "var(--mark)" }} />
-                <InlineSerialModel embedded />
+                <div className="lg:w-1/2">
+                  <ProjectRow
+                    project={p}
+                    categoryId={c.id}
+                    onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
+                    bare
+                  />
+                </div>
+                <div
+                  className="lg:w-1/2"
+                  style={{ borderLeft: "1px solid rgba(255,255,255,0.06)" }}
+                >
+                  <InlineSerialModel embedded />
+                </div>
               </div>
             ) : (
               <ProjectRow
