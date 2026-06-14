@@ -264,18 +264,16 @@ function Hero() {
   );
 }
 
-const SERIAL_INLINE_GLB = "https://files.catbox.moe/y2jna3.glb";
+const SERIAL_INLINE_GLB = "https://files.catbox.moe/ktpy7q.glb";
 const SERIAL_TEST_INLINE_GLB = "https://files.catbox.moe/dpd9ku.glb";
 const THRUSTER_INLINE_GLB = "https://files.catbox.moe/x54j79.glb";
 
 function InlineSerialModel({
   embedded = false,
   src = SERIAL_INLINE_GLB,
-  exposure = "0.4",
 }: {
   embedded?: boolean;
   src?: string;
-  exposure?: string;
 }) {
   return (
     <div
@@ -293,9 +291,6 @@ function InlineSerialModel({
           camera-controls
           rotation-per-second="20deg"
           interaction-prompt="none"
-          shadow-intensity="0"
-          exposure={exposure}
-          environment-image="neutral"
           loading="eager"
           reveal="auto"
           style={{ width: "100%", height: "100%", backgroundColor: "#111" } as React.CSSProperties}
