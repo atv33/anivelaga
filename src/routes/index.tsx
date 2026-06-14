@@ -281,300 +281,164 @@ function HeroCircuits({ chipRef }: { chipRef: React.RefObject<HTMLDivElement | n
     let H = 0;
     let raf = 0;
 
-    const G = 28;
-    const MAX_OPACITY = 0.12;
-    const SPEED = 600; // px / second
-    const STAGGER = 200; // ms between routes
-    const FADE_END = 0.8;
-    const PIN_LEN = 14;
-    const PIN_PITCH = 28;
+    const OPACITY = 0.12;
+    const CHIP_OPACITY = 0.15;
     const CHIP_PAD = 16;
+    const PIN_LEN = 12;
+    const SPEED = 500;
+    const STAGGER = 150;
+    const CHIP_DURATION = 500;
 
-    const snap = (v: number) => Math.round(v / G) * G;
-
-    const fadeForY = (y: number) => {
-      const limit = H * FADE_END;
-      if (y >= limit) return 0;
-      return Math.max(0, 1 - y / limit);
-    };
-    const alphaAt = (y: number) => MAX_OPACITY * fadeForY(y);
-
-    const sLine = (x1: number, y1: number, x2: number, y2: number, a: number) => {
-      if (a < 0.003) return;
+    const stroke = (x1: number, y1: number, x2: number, y2: number, a: number) => {
       ctx.strokeStyle = `rgba(255,255,255,${a})`;
-      ctx.lineWidth = 1.5;
-      ctx.lineCap = "butt";
+      ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(Math.round(x1) + 0.5, Math.round(y1) + 0.5);
       ctx.lineTo(Math.round(x2) + 0.5, Math.round(y2) + 0.5);
       ctx.stroke();
     };
-    const sRect = (x: number, y: number, w: number, h: number, a: number) => {
-      if (a < 0.003) return;
-      ctx.strokeStyle = `rgba(255,255,255,${a})`;
-      ctx.lineWidth = 1;
-      ctx.strokeRect(Math.round(x) + 0.5, Math.round(y) + 0.5, w, h);
-    };
-    const fRect = (x: number, y: number, w: number, h: number, a: number) => {
-      if (a < 0.003) return;
-      ctx.fillStyle = `rgba(255,255,255,${a})`;
-      ctx.fillRect(Math.round(x), Math.round(y), w, h);
-    };
-    const fCircle = (x: number, y: number, r: number, a: number) => {
-      if (a < 0.003) return;
-      ctx.fillStyle = `rgba(255,255,255,${a})`;
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.fill();
-    };
 
-    type Chip = {
-      x: number;
-      y: number;
-      w: number;
-      h: number;
-      pins: {
-        top: [number, number][];
-        bottom: [number, number][];
-        left: [number, number][];
-        right: [number, number][];
-      };
-    };
-    const makeChip = (): Chip | null => {
-      const el = chipRef.current;
-      if (!el) return null;
-      const cb = canvas.getBoundingClientRect();
-      const tb = el.getBoundingClientRect();
-      const rawX = tb.left - cb.left - CHIP_PAD;
-      const rawY = tb.top - cb.top - CHIP_PAD;
-      const rawW = tb.width + CHIP_PAD * 2;
-      const rawH = tb.height + CHIP_PAD * 2;
-      const x = snap(rawX);
-      const y = snap(rawY);
-      const w = snap(rawW);
-      const h = snap(rawH);
-      const pinsAlong = (len: number): number[] => {
-        const count = Math.max(1, Math.floor((len - PIN_PITCH) / PIN_PITCH));
-        const span = count * PIN_PITCH;
-        const start = (len - span) / 2;
-        return Array.from({ length: count + 1 }, (_, i) => start + i * PIN_PITCH);
-      };
-      const hOffs = pinsAlong(w);
-      const vOffs = pinsAlong(h);
-      return {
-        x, y, w, h,
-        pins: {
-          top: hOffs.map((o) => [x + o, y - PIN_LEN] as [number, number]),
-          bottom: hOffs.map((o) => [x + o, y + h + PIN_LEN] as [number, number]),
-          left: vOffs.map((o) => [x - PIN_LEN, y + o] as [number, number]),
-          right: vOffs.map((o) => [x + w + PIN_LEN, y + o] as [number, number]),
-        },
-      };
-    };
-    const drawChip = (c: Chip) => {
-      const a = alphaAt(c.y + c.h / 2);
-      sRect(c.x, c.y, c.w, c.h, a);
-      for (const [px] of c.pins.top) {
-        sLine(px, c.y - PIN_LEN, px, c.y, a);
-      }
-      for (const [px] of c.pins.bottom) {
-        sLine(px, c.y + c.h, px, c.y + c.h + PIN_LEN, a);
-      }
-      for (const [, py] of c.pins.left) {
-        sLine(c.x - PIN_LEN, py, c.x, py, alphaAt(py));
-      }
-      for (const [, py] of c.pins.right) {
-        sLine(c.x + c.w, py, c.x + c.w + PIN_LEN, py, alphaAt(py));
-      }
-    };
+    type Pin = { x: number; y: number; side: "top" | "bottom" | "left" | "right" };
+    type Chip = { x: number; y: number; w: number; h: number; pins: Pin[] };
+    type Trace = { waypoints: [number, number][]; total: number };
 
-    type Seg = {
-      x1: number;
-      y1: number;
-      x2: number;
-      y2: number;
-      length: number;
-      horiz: boolean;
-      hasComp: boolean;
-      gapStart: number;
-      gapEnd: number;
-      compDrawn: boolean;
-    };
-    type Route = {
-      segments: Seg[];
-      totalLength: number;
-      startDelay: number;
-      drawnDist: number;
-    };
-
-    let routes: Route[] = [];
-    let vias: [number, number][] = [];
-    let viasDrawn = false;
+    let chip: Chip | null = null;
+    let traces: Trace[] = [];
     let startTime = 0;
 
-    const buildRoute = (
-      waypoints: [number, number][],
-      componentSegIdx: number | null,
-      delayIdx: number,
-    ): Route => {
-      const segments: Seg[] = [];
-      for (let i = 0; i < waypoints.length - 1; i++) {
-        const [x1, y1] = waypoints[i];
-        const [x2, y2] = waypoints[i + 1];
-        const horiz = y1 === y2;
-        const length = Math.abs(horiz ? x2 - x1 : y2 - y1);
-        const hasComp = componentSegIdx === i && length > 50;
-        let gapStart = -1;
-        let gapEnd = -1;
-        if (hasComp) {
-          const compLen = 20;
-          const mid = length / 2;
-          gapStart = mid - compLen / 2;
-          gapEnd = mid + compLen / 2;
-        }
-        segments.push({
-          x1, y1, x2, y2,
-          length, horiz, hasComp, gapStart, gapEnd, compDrawn: false,
-        });
-      }
-      const totalLength = segments.reduce((s, sg) => s + sg.length, 0);
-      return { segments, totalLength, startDelay: delayIdx * STAGGER, drawnDist: 0 };
-    };
+    const computeLayout = () => {
+      const el = chipRef.current;
+      if (!el) return;
+      const cb = canvas.getBoundingClientRect();
+      const tb = el.getBoundingClientRect();
+      const x = tb.left - cb.left - CHIP_PAD;
+      const y = tb.top - cb.top - CHIP_PAD;
+      const w = tb.width + CHIP_PAD * 2;
+      const h = tb.height + CHIP_PAD * 2;
 
-    const drawSegmentRange = (s: Seg, from: number, to: number) => {
-      const len = s.length;
-      if (len === 0) return;
-      const ux = (s.x2 - s.x1) / len;
-      const uy = (s.y2 - s.y1) / len;
-      const draw = (a: number, b: number) => {
-        if (b <= a) return;
-        const px1 = s.x1 + ux * a;
-        const py1 = s.y1 + uy * a;
-        const px2 = s.x1 + ux * b;
-        const py2 = s.y1 + uy * b;
-        sLine(px1, py1, px2, py2, alphaAt((py1 + py2) / 2));
-      };
-      if (!s.hasComp) {
-        draw(from, to);
-        return;
-      }
-      const g1 = s.gapStart;
-      const g2 = s.gapEnd;
-      if (from < g1) draw(from, Math.min(to, g1));
-      if (to > g2) draw(Math.max(from, g2), to);
-      if (!s.compDrawn && to >= g1) {
-        const cmid = (g1 + g2) / 2;
-        const cx = s.x1 + ux * cmid;
-        const cy = s.y1 + uy * cmid;
-        const a = alphaAt(cy);
-        const w = s.horiz ? 20 : 8;
-        const h = s.horiz ? 8 : 20;
-        sRect(cx - w / 2, cy - h / 2, w, h, a);
-        if (s.horiz) {
-          fRect(cx - w / 2 - 4, cy - 2, 4, 4, a);
-          fRect(cx + w / 2, cy - 2, 4, 4, a);
-        } else {
-          fRect(cx - 2, cy - h / 2 - 4, 4, 4, a);
-          fRect(cx - 2, cy + h / 2, 4, 4, a);
-        }
-        s.compDrawn = true;
-      }
-    };
+      const spread = (len: number, count: number) =>
+        Array.from({ length: count }, (_, i) => (len * (i + 1)) / (count + 1));
 
-    const setupLayout = () => {
-      ctx.clearRect(0, 0, W, H);
+      const topX = spread(w, 4);
+      const bottomX = spread(w, 4);
+      const leftY = spread(h, 3);
+      const rightY = spread(h, 3);
 
-      const chip = makeChip();
-      routes = [];
-      vias = [];
-      if (!chip) {
-        viasDrawn = true;
-        startTime = performance.now();
-        return;
-      }
-      drawChip(chip);
-
-      const sx = (frac: number) => snap(W * frac);
-      const sy = (frac: number) => snap(H * frac);
-      const marginX = snap(W * 0.04);
-      const marginY = snap(H * 0.04);
-
-      const picks: { side: "top" | "bottom" | "left" | "right"; idx: number; legs: number; comp: boolean }[] = [
-        { side: "top", idx: 0, legs: 1, comp: true },
-        { side: "top", idx: 2, legs: 1, comp: false },
-        { side: "left", idx: 1, legs: 1, comp: true },
-        { side: "left", idx: Math.max(0, chip.pins.left.length - 2), legs: 1, comp: false },
-        { side: "right", idx: 1, legs: 1, comp: true },
-        { side: "right", idx: Math.max(0, chip.pins.right.length - 2), legs: 1, comp: false },
-        { side: "bottom", idx: 0, legs: 1, comp: false },
-        { side: "bottom", idx: Math.max(0, chip.pins.bottom.length - 1), legs: 1, comp: true },
+      const pins: Pin[] = [
+        ...topX.map((o) => ({ x: x + o, y, side: "top" as const })),
+        ...bottomX.map((o) => ({ x: x + o, y: y + h, side: "bottom" as const })),
+        ...leftY.map((o) => ({ x, y: y + o, side: "left" as const })),
+        ...rightY.map((o) => ({ x: x + w, y: y + o, side: "right" as const })),
       ];
+      chip = { x, y, w, h, pins };
 
-      const safeIdx = (arr: unknown[], i: number) => Math.min(arr.length - 1, Math.max(0, i));
-      let delay = 0;
-      for (const p of picks) {
-        const pinArr = chip.pins[p.side];
-        if (pinArr.length === 0) continue;
-        const [px, py] = pinArr[safeIdx(pinArr, p.idx)];
-        let waypoints: [number, number][] = [[px, py]];
+      const marginX = 24;
+      const marginY = 24;
+      traces = pins.map((p) => {
+        const start: [number, number] = [p.x, p.y];
+        const pinEnd: [number, number] =
+          p.side === "top" ? [p.x, p.y - PIN_LEN]
+          : p.side === "bottom" ? [p.x, p.y + PIN_LEN]
+          : p.side === "left" ? [p.x - PIN_LEN, p.y]
+          : [p.x + PIN_LEN, p.y];
+
+        // Decide route: L-shape that reaches near hero edge
+        let mid: [number, number];
+        let end: [number, number];
         if (p.side === "top") {
-          const ty = Math.max(marginY, snap(py - 60 - (p.idx % 3) * 28));
-          const tx = p.idx < pinArr.length / 2 ? snap(px - 80 - p.idx * 28) : snap(px + 80 + p.idx * 28);
-          waypoints.push([px, ty], [Math.max(marginX, Math.min(W - marginX, tx)), ty]);
+          // go up, then horizontally toward nearest left/right edge
+          const goRight = p.x > W / 2;
+          const turnY = Math.max(marginY, pinEnd[1] - 120);
+          mid = [pinEnd[0], turnY];
+          end = [goRight ? W - marginX : marginX, turnY];
         } else if (p.side === "bottom") {
-          const ty = snap(py + 60 + (p.idx % 3) * 28);
-          const tx = p.idx < pinArr.length / 2 ? snap(px - 100 - p.idx * 28) : snap(px + 100 + p.idx * 28);
-          waypoints.push([px, ty], [Math.max(marginX, Math.min(W - marginX, tx)), ty]);
+          const goRight = p.x > W / 2;
+          const turnY = pinEnd[1] + 120;
+          mid = [pinEnd[0], turnY];
+          end = [goRight ? W - marginX : marginX, turnY];
         } else if (p.side === "left") {
-          const tx = Math.max(marginX, snap(px - 60 - (p.idx % 3) * 28));
-          const ty = p.idx < pinArr.length / 2 ? snap(py - 80 - p.idx * 28) : snap(py + 80 + p.idx * 28);
-          waypoints.push([tx, py], [tx, Math.max(marginY, Math.min(H * FADE_END - G, ty))]);
+          const goUp = p.y < H / 2;
+          const turnX = Math.max(marginX, pinEnd[0] - 140);
+          mid = [turnX, pinEnd[1]];
+          end = [turnX, goUp ? marginY : H - marginY];
         } else {
-          const tx = Math.min(W - marginX, snap(px + 60 + (p.idx % 3) * 28));
-          const ty = p.idx < pinArr.length / 2 ? snap(py - 80 - p.idx * 28) : snap(py + 80 + p.idx * 28);
-          waypoints.push([tx, py], [tx, Math.max(marginY, Math.min(H * FADE_END - G, ty))]);
+          const goUp = p.y < H / 2;
+          const turnX = Math.min(W - marginX, pinEnd[0] + 140);
+          mid = [turnX, pinEnd[1]];
+          end = [turnX, goUp ? marginY : H - marginY];
         }
-        routes.push(buildRoute(waypoints, p.comp ? 1 : null, delay++));
-        vias.push(waypoints[1]);
-      }
-      viasDrawn = false;
-      startTime = performance.now();
+
+        const waypoints: [number, number][] = [pinEnd, mid, end];
+        let total = 0;
+        for (let i = 0; i < waypoints.length - 1; i++) {
+          total += Math.abs(waypoints[i][0] - waypoints[i + 1][0]) +
+                   Math.abs(waypoints[i][1] - waypoints[i + 1][1]);
+        }
+        // store start as first point so we know pin origin
+        waypoints.unshift(start);
+        return { waypoints, total };
+      });
     };
 
-    const tick = () => {
-      const now = performance.now();
-      let anyActive = false;
-      for (const r of routes) {
-        const elapsed = now - startTime - r.startDelay;
-        if (elapsed <= 0) {
-          anyActive = true;
-          continue;
-        }
-        const target = Math.min(r.totalLength, (elapsed / 1000) * SPEED);
-        if (target > r.drawnDist) {
-          let cursor = 0;
-          for (const seg of r.segments) {
-            const segStart = cursor;
-            const segEnd = cursor + seg.length;
-            if (target > segStart && r.drawnDist < segEnd) {
-              const from = Math.max(0, r.drawnDist - segStart);
-              const to = Math.min(seg.length, target - segStart);
-              drawSegmentRange(seg, from, to);
-            }
-            cursor = segEnd;
+    const drawChipOutline = (progress: number) => {
+      if (!chip) return;
+      const a = CHIP_OPACITY * progress;
+      ctx.strokeStyle = `rgba(255,255,255,${a})`;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(Math.round(chip.x) + 0.5, Math.round(chip.y) + 0.5, chip.w, chip.h);
+    };
+
+    const drawPins = () => {
+      if (!chip) return;
+      for (const p of chip.pins) {
+        const e =
+          p.side === "top" ? [p.x, p.y - PIN_LEN] as const
+          : p.side === "bottom" ? [p.x, p.y + PIN_LEN] as const
+          : p.side === "left" ? [p.x - PIN_LEN, p.y] as const
+          : [p.x + PIN_LEN, p.y] as const;
+        stroke(p.x, p.y, e[0], e[1], OPACITY);
+      }
+    };
+
+    const drawTrace = (t: Trace, drawn: number) => {
+      // waypoints[0] = pin start (on chip edge); skip drawing pin stub (drawn separately)
+      let remaining = drawn;
+      for (let i = 1; i < t.waypoints.length - 1; i++) {
+        const [x1, y1] = t.waypoints[i];
+        const [x2, y2] = t.waypoints[i + 1];
+        const segLen = Math.abs(x2 - x1) + Math.abs(y2 - y1);
+        if (remaining <= 0) break;
+        const portion = Math.min(1, remaining / segLen);
+        const ex = x1 + (x2 - x1) * portion;
+        const ey = y1 + (y2 - y1) * portion;
+        stroke(x1, y1, ex, ey, OPACITY);
+        remaining -= segLen;
+      }
+    };
+
+    const render = (now: number) => {
+      ctx.clearRect(0, 0, W, H);
+      const elapsed = now - startTime;
+      const chipProgress = Math.min(1, elapsed / CHIP_DURATION);
+      drawChipOutline(chipProgress);
+
+      let anyAnimating = chipProgress < 1;
+      if (chipProgress >= 1) {
+        drawPins();
+        for (let i = 0; i < traces.length; i++) {
+          const t = traces[i];
+          const traceElapsed = elapsed - CHIP_DURATION - i * STAGGER;
+          if (traceElapsed <= 0) {
+            anyAnimating = true;
+            continue;
           }
-          r.drawnDist = target;
+          const drawn = Math.min(t.total, (traceElapsed / 1000) * SPEED);
+          drawTrace(t, drawn);
+          if (drawn < t.total) anyAnimating = true;
         }
-        if (r.drawnDist < r.totalLength) anyActive = true;
       }
-      if (!anyActive && !viasDrawn) {
-        for (const [vx, vy] of vias) {
-          fCircle(vx, vy, 4, alphaAt(vy));
-        }
-        viasDrawn = true;
-      }
-      if (anyActive) {
-        raf = requestAnimationFrame(tick);
+      if (anyAnimating) {
+        raf = requestAnimationFrame(render);
       }
     };
 
@@ -585,9 +449,10 @@ function HeroCircuits({ chipRef }: { chipRef: React.RefObject<HTMLDivElement | n
       canvas.width = Math.max(1, Math.floor(W * dpr));
       canvas.height = Math.max(1, Math.floor(H * dpr));
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      setupLayout();
+      computeLayout();
+      startTime = performance.now();
       cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(tick);
+      raf = requestAnimationFrame(render);
     };
 
     resize();
@@ -597,7 +462,7 @@ function HeroCircuits({ chipRef }: { chipRef: React.RefObject<HTMLDivElement | n
       cancelAnimationFrame(raf);
       ro.disconnect();
     };
-  }, []);
+  }, [chipRef]);
   return (
     <canvas
       ref={canvasRef}
