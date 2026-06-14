@@ -271,7 +271,7 @@ function InlineSerialModel({ embedded = false }: { embedded?: boolean }) {
       onClick={(e) => e.stopPropagation()}
     >
       <div
-        className={embedded ? "overflow-hidden" : "overflow-hidden border border-border"}
+        className={embedded ? "scanline-wrap overflow-hidden" : "scanline-wrap overflow-hidden border border-border"}
         style={{ backgroundColor: "#1a1a1a", width: "100%", height: 300 }}
       >
         <model-viewer
