@@ -240,14 +240,15 @@ function TopBar() {
 }
 
 function Hero() {
+  const chipRef = useRef<HTMLDivElement>(null);
   return (
     <section
       id="top"
       data-section="00"
       className="hero-bg relative mx-auto flex h-screen max-w-6xl flex-col justify-center px-6 sm:px-10"
     >
-      <HeroCircuits />
-      <div className="relative z-10">
+      <HeroCircuits chipRef={chipRef} />
+      <div ref={chipRef} className="relative z-10 inline-block self-start">
         <h1 className="font-display text-[clamp(3rem,10vw,9rem)] font-black uppercase">
           Ani
           <br />
