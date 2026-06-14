@@ -265,3 +265,11 @@
   transform: scaleX(1);
   transform-origin: left;
 }
+
+/* Hero PCB trace fall */
+@keyframes hero-trace-fall {
+  0% { transform: translateY(-10%); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(110vh); opacity: 0; }
+}
