@@ -5,9 +5,9 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Ani Velaga — Software Engineer" },
-      { name: "description", content: "Software engineer building reliable, performant systems. Selected projects, stack, and contact." },
+      { name: "description", content: "Software engineer building reliable, performant systems. Selected projects, skills, and contact." },
       { property: "og:title", content: "Ani Velaga — Software Engineer" },
-      { property: "og:description", content: "Selected projects, stack, and contact." },
+      { property: "og:description", content: "Selected projects, skills, and contact." },
     ],
   }),
   component: Index,
@@ -16,77 +16,76 @@ export const Route = createFileRoute("/")({
 const PROJECTS = [
   {
     id: "01",
-    name: "atlas-queue",
-    tagline: "Distributed job queue with at-least-once semantics",
+    name: "Atlas Queue",
+    tagline: "Distributed job queue with at-least-once semantics, designed for high-throughput backends.",
     stack: ["Go", "Redis", "gRPC", "Kubernetes"],
-    metric: "12k jobs/s sustained",
-    status: "live",
+    year: "2024",
     github: "https://github.com/anivelaga/atlas-queue",
     demo: "https://atlas.velaga.dev",
   },
   {
     id: "02",
-    name: "pixie-cdn",
-    tagline: "Edge image transform & cache layer with on-the-fly resizing",
+    name: "Pixie CDN",
+    tagline: "Edge image transform and cache layer with on-the-fly resizing at sub-30ms latency.",
     stack: ["Rust", "WASM", "Cloudflare Workers"],
-    metric: "p99 < 30ms",
-    status: "live",
+    year: "2024",
     github: "https://github.com/anivelaga/pixie-cdn",
     demo: "https://pixie.velaga.dev",
   },
   {
     id: "03",
-    name: "loomctl",
-    tagline: "Declarative CLI for managing multi-region Postgres replicas",
+    name: "Loomctl",
+    tagline: "Declarative CLI for managing multi-region Postgres replicas across eight regions.",
     stack: ["TypeScript", "Postgres", "Terraform"],
-    metric: "8 regions",
-    status: "beta",
+    year: "2023",
     github: "https://github.com/anivelaga/loomctl",
     demo: null,
   },
   {
     id: "04",
-    name: "specter",
-    tagline: "Observability SDK with low-overhead tracing and sampling",
+    name: "Specter",
+    tagline: "Observability SDK with low-overhead tracing and adaptive sampling under load.",
     stack: ["Rust", "OpenTelemetry"],
-    metric: "<1% overhead",
-    status: "wip",
+    year: "2023",
     github: "https://github.com/anivelaga/specter",
     demo: null,
   },
 ];
 
-const STACK = {
-  languages: ["TypeScript", "Go", "Rust", "Python", "SQL"],
-  systems: ["Postgres", "Redis", "Kafka", "Kubernetes", "gRPC"],
-  cloud: ["AWS", "Cloudflare", "GCP", "Terraform"],
-  frontend: ["React", "TanStack", "Tailwind", "Vite"],
+const SKILLS = {
+  Languages: ["TypeScript", "Go", "Rust", "Python", "SQL"],
+  Systems: ["Postgres", "Redis", "Kafka", "Kubernetes", "gRPC"],
+  Cloud: ["AWS", "Cloudflare", "GCP", "Terraform"],
+  Tools: ["React", "TanStack", "Tailwind", "Vite", "Git"],
 };
 
 const EXPERIENCE = [
-  { when: "2023 — now", role: "Senior Software Engineer", org: "Stealth Infra Co.", note: "Building the distributed job platform powering core workloads." },
+  { when: "2023 — Now", role: "Senior Software Engineer", org: "Stealth Infra Co.", note: "Building the distributed job platform powering core workloads." },
   { when: "2020 — 2023", role: "Software Engineer", org: "Northwind Systems", note: "Owned multi-region Postgres tooling and developer CLI." },
-  { when: "2018 — 2020", role: "Software Engineer", org: "Quill Labs", note: "Backend services for high-volume ingest pipeline." },
+  { when: "2018 — 2020", role: "Software Engineer", org: "Quill Labs", note: "Backend services for a high-volume ingest pipeline." },
 ];
+
+const NAV = [
+  ["Work", "#work"],
+  ["About", "#about"],
+  ["Experience", "#experience"],
+  ["Contact", "#contact"],
+] as const;
 
 function Index() {
   return (
-    <div className="min-h-screen text-terminal-fg">
+    <div className="min-h-screen bg-background text-foreground">
       <TopBar />
-      <main className="mx-auto max-w-5xl px-6 pb-32 pt-10 sm:px-10">
+      <main>
         <Hero />
-        <Section id="projects" label="projects" cmd="ls -la ~/projects">
-          <ProjectsGrid />
-        </Section>
-        <Section id="about" label="about" cmd="cat ~/.config/stack.toml">
-          <Stack />
-        </Section>
-        <Section id="experience" label="experience" cmd="git log --oneline --pretty=short">
-          <Experience />
-        </Section>
-        <Section id="contact" label="contact" cmd="echo $CONTACT">
-          <Contact />
-        </Section>
+        <Ticker />
+        <Work />
+        <Ticker reverse />
+        <About />
+        <Ticker />
+        <Experience />
+        <Ticker reverse />
+        <Contact />
       </main>
       <Footer />
     </div>
@@ -95,25 +94,19 @@ function Index() {
 
 function TopBar() {
   return (
-    <header className="sticky top-0 z-20 border-b border-terminal-border bg-terminal-bg/85 backdrop-blur">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3 sm:px-10">
-        <div className="flex items-center gap-3 text-xs text-terminal-dim">
-          <div className="flex gap-1.5">
-            <span className="size-2.5 rounded-full bg-destructive/80" />
-            <span className="size-2.5 rounded-full bg-terminal-warn/80" />
-            <span className="size-2.5 rounded-full bg-terminal-accent/80" />
-          </div>
-          <span className="hidden sm:inline">ani@velaga ~ %</span>
-        </div>
-        <nav className="flex items-center gap-5 text-xs uppercase tracking-[0.18em] text-terminal-dim">
-          {[
-            ["projects", "#projects"],
-            ["about", "#about"],
-            ["xp", "#experience"],
-            ["contact", "#contact"],
-          ].map(([label, href]) => (
-            <a key={href} href={href} className="transition hover:text-terminal-accent">
-              ./{label}
+    <header className="sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5 sm:px-10">
+        <a href="#top" className="font-display text-base font-bold tracking-tight">
+          Ani Velaga<span className="text-mark">.</span>
+        </a>
+        <nav className="flex items-center gap-7 text-sm">
+          {NAV.map(([label, href]) => (
+            <a
+              key={href}
+              href={href}
+              className="text-ink-dim transition hover:text-foreground"
+            >
+              {label}
             </a>
           ))}
         </nav>
@@ -124,136 +117,236 @@ function TopBar() {
 
 function Hero() {
   return (
-    <section className="relative border-b border-terminal-border pb-16 pt-14 sm:pt-20">
-      <div className="text-xs uppercase tracking-[0.3em] text-terminal-accent-dim">
-        whoami
+    <section id="top" className="mx-auto max-w-6xl px-6 pb-28 pt-24 sm:px-10 sm:pb-40 sm:pt-36">
+      <div className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.28em] text-ink-dim">
+        <span className="size-1.5 rounded-full bg-mark" />
+        Available for new work — 2026
       </div>
-      <h1 className="mt-4 text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl md:text-7xl">
-        Ani Velaga.
+      <h1 className="font-display mt-10 text-[clamp(3.5rem,12vw,11rem)] font-black uppercase">
+        Ani
         <br />
-        <span className="text-terminal-accent text-glow">Software engineer</span>
-        <span className="cursor-blink" />
+        Velaga<span className="text-mark">.</span>
       </h1>
-      <p className="mt-8 max-w-2xl text-base leading-relaxed text-terminal-dim sm:text-lg">
-        <span className="text-terminal-accent">$</span> I build fast, reliable distributed systems — queues, edge runtimes, and the
-        tooling that keeps them honest. Currently shipping infrastructure that other engineers depend on.
-      </p>
-      <div className="mt-10 flex flex-wrap gap-3">
-        <a
-          href="#projects"
-          className="group inline-flex items-center gap-2 border border-terminal-accent bg-terminal-accent/10 px-4 py-2 text-sm font-medium text-terminal-accent transition hover:bg-terminal-accent hover:text-terminal-bg"
-        >
-          <span>./view-projects</span>
-          <span className="transition group-hover:translate-x-0.5">→</span>
-        </a>
-        <a
-          href="#contact"
-          className="inline-flex items-center gap-2 border border-terminal-border px-4 py-2 text-sm text-terminal-fg transition hover:border-terminal-accent hover:text-terminal-accent"
-        >
-          <span>./contact</span>
-        </a>
+      <div className="mt-10 grid gap-10 sm:mt-16 sm:grid-cols-12">
+        <p className="sm:col-span-7 sm:col-start-6 max-w-xl text-lg leading-relaxed text-ink-dim sm:text-xl">
+          <span className="text-foreground">Software engineer</span> building fast, reliable
+          distributed systems — queues, edge runtimes, and the tooling that keeps them honest.
+          Currently shipping infrastructure other engineers depend on.
+        </p>
       </div>
-      <dl className="mt-14 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-terminal-border pt-6 text-xs sm:grid-cols-4">
-        {[
-          ["uptime", "8 yrs"],
-          ["systems", "shipped 20+"],
-          ["timezone", "UTC−05"],
-          ["status", "open to collab"],
-        ].map(([k, v]) => (
-          <div key={k}>
-            <dt className="uppercase tracking-[0.18em] text-terminal-dim">{k}</dt>
-            <dd className="mt-1 text-terminal-fg">{v}</dd>
-          </div>
+    </section>
+  );
+}
+
+function Ticker({ reverse = false }: { reverse?: boolean }) {
+  // Generate a long binary string. Doubled to make the marquee seamless.
+  const segment = Array.from({ length: 64 }, (_, i) =>
+    (((i * 2654435761) >>> 0) % 2 === 0 ? "01001010 11010011 00101110" : "10110101 00101100 11010001"),
+  ).join("  /  ");
+  const content = `${segment}  /  ${segment}`;
+  return (
+    <div className="border-y border-border bg-secondary/40 overflow-hidden">
+      <div
+        className="ticker-track flex whitespace-nowrap py-3 font-mono text-[11px] tracking-widest text-ink-faint"
+        style={reverse ? { animationDirection: "reverse" } : undefined}
+      >
+        <span className="px-6">{content}</span>
+        <span className="px-6" aria-hidden>
+          {content}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function SectionHeader({ index, title, kicker }: { index: string; title: string; kicker: string }) {
+  return (
+    <div className="grid gap-6 sm:grid-cols-12">
+      <div className="font-mono text-xs uppercase tracking-[0.28em] text-ink-dim sm:col-span-3">
+        <span className="text-mark">{index}</span> — {kicker}
+      </div>
+      <h2 className="font-display text-5xl font-bold sm:col-span-9 sm:text-7xl">{title}</h2>
+    </div>
+  );
+}
+
+function Work() {
+  return (
+    <section id="work" className="mx-auto max-w-6xl px-6 py-28 sm:px-10 sm:py-40">
+      <SectionHeader index="01" kicker="Selected Work" title="Things I've built." />
+      <ul className="mt-20 divide-y divide-border border-y border-border">
+        {PROJECTS.map((p, i) => (
+          <Reveal as="li" key={p.id} delay={i * 70}>
+            <ProjectRow project={p} />
+          </Reveal>
         ))}
-      </dl>
+      </ul>
     </section>
   );
 }
 
-function Section({
-  id,
-  label,
-  cmd,
-  children,
-}: {
-  id: string;
-  label: string;
-  cmd: string;
-  children: React.ReactNode;
-}) {
+function ProjectRow({ project: p }: { project: (typeof PROJECTS)[number] }) {
   return (
-    <section id={id} className="border-b border-terminal-border py-16 sm:py-24">
-      <div className="flex items-baseline justify-between gap-4">
-        <div>
-          <div className="text-xs uppercase tracking-[0.3em] text-terminal-accent-dim">// {label}</div>
-          <div className="mt-2 font-mono text-sm text-terminal-dim">
-            <span className="text-terminal-accent">$</span> {cmd}
-          </div>
-        </div>
-        <a href={`#${id}`} className="text-xs text-terminal-dim transition hover:text-terminal-accent">
-          #
-        </a>
+    <article className="group grid grid-cols-12 items-baseline gap-6 py-10 transition-colors">
+      <div className="col-span-12 font-mono text-xs uppercase tracking-[0.25em] text-ink-faint sm:col-span-2">
+        {p.id} / {p.year}
       </div>
-      <div className="mt-10">{children}</div>
+      <div className="col-span-12 sm:col-span-7">
+        <h3 className="font-display text-3xl font-bold tracking-tight transition-colors group-hover:text-mark sm:text-4xl">
+          {p.name}
+        </h3>
+        <p className="mt-3 max-w-xl text-base leading-relaxed text-ink-dim">{p.tagline}</p>
+        <div className="mt-5 flex flex-wrap gap-x-5 gap-y-1 font-mono text-xs uppercase tracking-[0.18em] text-ink-faint">
+          {p.stack.map((s, i) => (
+            <span key={s}>
+              {s}
+              {i < p.stack.length - 1 ? <span className="ml-5 text-rule">/</span> : null}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div className="col-span-12 flex gap-6 text-sm sm:col-span-3 sm:justify-end">
+        <a
+          href={p.github}
+          target="_blank"
+          rel="noreferrer"
+          className="group/link inline-flex items-center gap-1.5 text-foreground transition hover:text-mark"
+        >
+          <span className="underline decoration-rule underline-offset-4 group-hover/link:decoration-mark">GitHub</span>
+          <span className="transition-transform group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5">↗</span>
+        </a>
+        {p.demo ? (
+          <a
+            href={p.demo}
+            target="_blank"
+            rel="noreferrer"
+            className="group/link inline-flex items-center gap-1.5 text-foreground transition hover:text-mark"
+          >
+            <span className="underline decoration-rule underline-offset-4 group-hover/link:decoration-mark">Live</span>
+            <span className="transition-transform group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5">↗</span>
+          </a>
+        ) : (
+          <span className="text-ink-faint">— Live n/a</span>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function About() {
+  return (
+    <section id="about" className="mx-auto max-w-6xl px-6 py-28 sm:px-10 sm:py-40">
+      <SectionHeader index="02" kicker="About & Skills" title="A few words, a long list." />
+      <div className="mt-20 grid gap-16 sm:grid-cols-12">
+        <div className="sm:col-span-5">
+          <p className="text-lg leading-relaxed text-ink-dim">
+            I've been writing software for eight years, mostly on the backend — building the
+            infrastructure other people build on top of. I care about correctness, latency, and
+            tooling that respects the engineer using it.
+          </p>
+          <p className="mt-6 text-lg leading-relaxed text-ink-dim">
+            Outside of code: long walks, film cameras, and rebuilding mechanical keyboards I don't
+            actually need.
+          </p>
+        </div>
+        <dl className="sm:col-span-7 sm:pl-12">
+          {Object.entries(SKILLS).map(([k, items], i) => (
+            <div
+              key={k}
+              className={`grid grid-cols-12 gap-4 py-6 ${i > 0 ? "border-t border-border" : ""}`}
+            >
+              <dt className="col-span-12 font-mono text-xs uppercase tracking-[0.28em] text-ink-faint sm:col-span-3">
+                {k}
+              </dt>
+              <dd className="col-span-12 text-base text-foreground sm:col-span-9">
+                {items.map((item, idx) => (
+                  <span key={item}>
+                    {item}
+                    {idx < items.length - 1 ? <span className="mx-2 text-ink-faint">·</span> : null}
+                  </span>
+                ))}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
     </section>
   );
 }
 
-function ProjectsGrid() {
+function Experience() {
   return (
-    <ul className="grid gap-4 md:grid-cols-2">
-      {PROJECTS.map((p, i) => (
-        <Reveal as="li" key={p.id} delay={i * 80}>
-          <article className="group relative flex h-full flex-col border border-terminal-border bg-terminal-surface/60 p-6 transition hover:border-terminal-accent hover:bg-terminal-surface">
-            <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.25em] text-terminal-dim">
-              <span>proj_{p.id}</span>
-              <StatusBadge status={p.status} />
+    <section id="experience" className="mx-auto max-w-6xl px-6 py-28 sm:px-10 sm:py-40">
+      <SectionHeader index="03" kicker="Experience" title="Where I've been." />
+      <ol className="mt-20 border-t border-border">
+        {EXPERIENCE.map((e, i) => (
+          <Reveal as="li" key={i} delay={i * 70}>
+            <div className="grid grid-cols-12 gap-4 border-b border-border py-8 sm:py-10">
+              <div className="col-span-12 font-mono text-xs uppercase tracking-[0.25em] text-ink-faint sm:col-span-3">
+                {e.when}
+              </div>
+              <div className="col-span-12 sm:col-span-9">
+                <div className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+                  {e.role} <span className="text-ink-dim">— {e.org}</span>
+                </div>
+                <p className="mt-2 max-w-2xl text-base leading-relaxed text-ink-dim">{e.note}</p>
+              </div>
             </div>
-            <h3 className="mt-4 font-mono text-xl text-terminal-fg group-hover:text-terminal-accent">
-              {p.name}
-            </h3>
-            <p className="mt-2 text-sm leading-relaxed text-terminal-dim">{p.tagline}</p>
-            <div className="mt-5 flex flex-wrap gap-1.5">
-              {p.stack.map((s) => (
-                <span
-                  key={s}
-                  className="border border-terminal-border px-2 py-0.5 text-[11px] text-terminal-dim"
-                >
-                  {s}
-                </span>
-              ))}
-            </div>
-            <div className="mt-5 flex-1 border-t border-terminal-border pt-3 text-[11px] text-terminal-dim">
-              <span className="text-terminal-accent">›</span> {p.metric}
-            </div>
-            <div className="mt-4 flex items-center gap-3 text-xs">
+          </Reveal>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+function Contact() {
+  const links = [
+    { k: "Email", v: "ani@velaga.dev", href: "mailto:ani@velaga.dev" },
+    { k: "GitHub", v: "github.com/anivelaga", href: "https://github.com/anivelaga" },
+    { k: "LinkedIn", v: "linkedin.com/in/anivelaga", href: "https://linkedin.com/in/anivelaga" },
+  ];
+  return (
+    <section id="contact" className="mx-auto max-w-6xl px-6 py-28 sm:px-10 sm:py-40">
+      <SectionHeader index="04" kicker="Get in touch" title="Let's talk." />
+      <div className="mt-20 grid gap-10 sm:grid-cols-12">
+        <p className="sm:col-span-5 text-lg leading-relaxed text-ink-dim">
+          Open to select consulting and full-time roles in infrastructure, developer tools, and
+          backend systems. The fastest way to reach me is email.
+        </p>
+        <ul className="sm:col-span-7 sm:pl-12">
+          {links.map((l, i) => (
+            <li
+              key={l.k}
+              className={`grid grid-cols-12 items-baseline gap-4 py-6 ${i > 0 ? "border-t border-border" : "border-t border-border"}`}
+            >
+              <span className="col-span-4 font-mono text-xs uppercase tracking-[0.28em] text-ink-faint sm:col-span-3">
+                {l.k}
+              </span>
               <a
-                href={p.github}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 border border-terminal-border px-3 py-1.5 text-terminal-fg transition hover:border-terminal-accent hover:text-terminal-accent"
+                href={l.href}
+                className="group col-span-8 inline-flex items-baseline gap-2 font-display text-2xl font-bold tracking-tight transition hover:text-mark sm:col-span-9 sm:text-3xl"
               >
-                <span>[github]</span>
-                <span>↗</span>
+                <span className="underline decoration-rule underline-offset-[6px] group-hover:decoration-mark">
+                  {l.v}
+                </span>
+                <span className="text-base">↗</span>
               </a>
-              {p.demo ? (
-                <a
-                  href={p.demo}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 border border-terminal-accent bg-terminal-accent/10 px-3 py-1.5 text-terminal-accent transition hover:bg-terminal-accent hover:text-terminal-bg"
-                >
-                  <span>[live demo]</span>
-                  <span>↗</span>
-                </a>
-              ) : (
-                <span className="text-terminal-dim">[demo: n/a]</span>
-              )}
-            </div>
-          </article>
-        </Reveal>
-      ))}
-    </ul>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="border-t border-border">
+      <div className="mx-auto flex max-w-6xl flex-col gap-2 px-6 py-10 text-xs uppercase tracking-[0.2em] text-ink-faint sm:flex-row sm:items-center sm:justify-between sm:px-10">
+        <div>© {new Date().getFullYear()} Ani Velaga — All rights reserved.</div>
+        <div>Designed & built with care</div>
+      </div>
+    </footer>
   );
 }
 
@@ -288,106 +381,5 @@ function Reveal({
     <Tag ref={ref} className="reveal" style={{ animationDelay: `${delay}ms` }}>
       {children}
     </Tag>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const color =
-    status === "live"
-      ? "text-terminal-accent"
-      : status === "beta"
-        ? "text-terminal-warn"
-        : "text-terminal-dim";
-  return (
-    <span className={`flex items-center gap-1.5 ${color}`}>
-      <span className="size-1.5 rounded-full bg-current" />
-      {status}
-    </span>
-  );
-}
-
-function Stack() {
-  return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      {Object.entries(STACK).map(([key, items]) => (
-        <div key={key} className="border border-terminal-border bg-terminal-surface/60 p-5">
-          <div className="text-[11px] uppercase tracking-[0.25em] text-terminal-accent">[{key}]</div>
-          <ul className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-sm text-terminal-fg">
-            {items.map((i) => (
-              <li key={i} className="before:mr-1.5 before:text-terminal-dim before:content-['›']">
-                {i}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function Experience() {
-  return (
-    <ol className="space-y-0">
-      {EXPERIENCE.map((e, i) => (
-        <li
-          key={i}
-          className="grid grid-cols-[auto_1fr] gap-x-6 border-l border-terminal-border py-5 pl-6 sm:grid-cols-[140px_1fr]"
-        >
-          <div className="text-xs uppercase tracking-[0.2em] text-terminal-dim">{e.when}</div>
-          <div>
-            <div className="font-mono text-base text-terminal-fg">
-              {e.role} <span className="text-terminal-accent">@</span>{" "}
-              <span className="text-terminal-accent">{e.org}</span>
-            </div>
-            <p className="mt-1 text-sm text-terminal-dim">{e.note}</p>
-          </div>
-        </li>
-      ))}
-    </ol>
-  );
-}
-
-function Contact() {
-  const links = [
-    { k: "email", v: "ani@velaga.dev", href: "mailto:ani@velaga.dev" },
-    { k: "github", v: "github.com/anivelaga", href: "https://github.com/anivelaga" },
-    { k: "linkedin", v: "linkedin.com/in/anivelaga", href: "https://linkedin.com/in/anivelaga" },
-    { k: "x", v: "@anivelaga", href: "https://x.com/anivelaga" },
-  ];
-  return (
-    <div className="border border-terminal-border bg-terminal-surface/60 p-6 font-mono text-sm">
-      <div className="text-terminal-dim">
-        <span className="text-terminal-accent">$</span> cat contact.txt
-      </div>
-      <ul className="mt-4 divide-y divide-terminal-border">
-        {links.map((l) => (
-          <li key={l.k} className="flex items-center justify-between py-2.5">
-            <span className="text-terminal-dim">{l.k.padEnd(10, ".")}.</span>
-            <a
-              href={l.href}
-              className="text-terminal-fg transition hover:text-terminal-accent hover:underline underline-offset-4"
-            >
-              {l.v}
-            </a>
-          </li>
-        ))}
-      </ul>
-      <div className="mt-6 text-terminal-dim">
-        <span className="text-terminal-accent">›</span> available for select consulting & full-time roles.
-      </div>
-    </div>
-  );
-}
-
-function Footer() {
-  return (
-    <footer className="border-t border-terminal-border">
-      <div className="mx-auto flex max-w-5xl flex-col gap-2 px-6 py-6 text-xs text-terminal-dim sm:flex-row sm:items-center sm:justify-between sm:px-10">
-        <div>
-          <span className="text-terminal-accent">$</span> exit 0 — © {new Date().getFullYear()} Ani Velaga
-        </div>
-        <div>built with care · v1.0.0</div>
-      </div>
-    </footer>
   );
 }

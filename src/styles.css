@@ -4,18 +4,18 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Terminal Brutalist design system — Ani Velaga portfolio */
+/* Minimal editorial design system — Ani Velaga portfolio */
 @theme inline {
-  --font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  --font-sans: "JetBrains Mono", ui-monospace, monospace;
-  --color-terminal-bg: var(--terminal-bg);
-  --color-terminal-surface: var(--terminal-surface);
-  --color-terminal-fg: var(--terminal-fg);
-  --color-terminal-dim: var(--terminal-dim);
-  --color-terminal-accent: var(--terminal-accent);
-  --color-terminal-accent-dim: var(--terminal-accent-dim);
-  --color-terminal-border: var(--terminal-border);
-  --color-terminal-warn: var(--terminal-warn);
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: "Inter Tight", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-ink: var(--ink);
+  --color-ink-dim: var(--ink-dim);
+  --color-ink-faint: var(--ink-faint);
+  --color-paper: var(--paper);
+  --color-paper-warm: var(--paper-warm);
+  --color-rule: var(--rule);
+  --color-mark: var(--mark);
 }
 
 /*
@@ -78,48 +78,47 @@
 :root {
   --radius: 0rem;
 
-  /* Terminal palette */
-  --terminal-bg: oklch(0.13 0 0);
-  --terminal-surface: oklch(0.18 0 0);
-  --terminal-fg: oklch(0.96 0 0);
-  --terminal-dim: oklch(0.65 0 0);
-  --terminal-accent: oklch(0.86 0.22 152);
-  --terminal-accent-dim: oklch(0.55 0.15 152);
-  --terminal-border: oklch(0.3 0 0);
-  --terminal-warn: oklch(0.82 0.18 70);
+  /* Editorial monochrome palette */
+  --paper: oklch(0.985 0.004 90);       /* off-white background */
+  --paper-warm: oklch(0.96 0.008 85);   /* subtle warm panel */
+  --ink: oklch(0.13 0 0);               /* near-black text */
+  --ink-dim: oklch(0.40 0 0);           /* secondary text */
+  --ink-faint: oklch(0.62 0 0);         /* tertiary / captions */
+  --rule: oklch(0.86 0.005 90);         /* hairline rules */
+  --mark: oklch(0.62 0.22 28);          /* single subtle accent — vermillion */
 
-  --background: var(--terminal-bg);
-  --foreground: var(--terminal-fg);
-  --card: var(--terminal-surface);
-  --card-foreground: var(--terminal-fg);
-  --popover: var(--terminal-surface);
-  --popover-foreground: var(--terminal-fg);
-  --primary: var(--terminal-accent);
-  --primary-foreground: var(--terminal-bg);
-  --secondary: var(--terminal-surface);
-  --secondary-foreground: var(--terminal-fg);
-  --muted: var(--terminal-surface);
-  --muted-foreground: var(--terminal-dim);
-  --accent: var(--terminal-accent);
-  --accent-foreground: var(--terminal-bg);
-  --destructive: oklch(0.65 0.24 27);
-  --destructive-foreground: var(--terminal-fg);
-  --border: var(--terminal-border);
-  --input: var(--terminal-border);
-  --ring: var(--terminal-accent);
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--paper);
+  --card-foreground: var(--ink);
+  --popover: var(--paper);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--paper);
+  --secondary: var(--paper-warm);
+  --secondary-foreground: var(--ink);
+  --muted: var(--paper-warm);
+  --muted-foreground: var(--ink-dim);
+  --accent: var(--mark);
+  --accent-foreground: var(--paper);
+  --destructive: oklch(0.6 0.22 27);
+  --destructive-foreground: var(--paper);
+  --border: var(--rule);
+  --input: var(--rule);
+  --ring: var(--ink);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: var(--terminal-surface);
-  --sidebar-foreground: var(--terminal-fg);
-  --sidebar-primary: var(--terminal-accent);
-  --sidebar-primary-foreground: var(--terminal-bg);
-  --sidebar-accent: var(--terminal-surface);
-  --sidebar-accent-foreground: var(--terminal-fg);
-  --sidebar-border: var(--terminal-border);
-  --sidebar-ring: var(--terminal-accent);
+  --sidebar: var(--paper);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--ink);
+  --sidebar-primary-foreground: var(--paper);
+  --sidebar-accent: var(--paper-warm);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--rule);
+  --sidebar-ring: var(--ink);
 }
 
 .dark {
@@ -170,38 +169,16 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-family: var(--font-mono);
-    background-image:
-      radial-gradient(ellipse at top, color-mix(in oklab, var(--terminal-accent) 6%, transparent), transparent 60%),
-      repeating-linear-gradient(0deg, transparent 0, transparent 3px, color-mix(in oklab, var(--terminal-fg) 2%, transparent) 3px, color-mix(in oklab, var(--terminal-fg) 2%, transparent) 4px);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
   ::selection {
-    background: var(--terminal-accent);
-    color: var(--terminal-bg);
+    background: var(--ink);
+    color: var(--paper);
   }
-}
-
-@utility text-glow {
-  text-shadow: 0 0 8px color-mix(in oklab, var(--terminal-accent) 60%, transparent);
-}
-
-@utility cursor-blink {
-  &::after {
-    content: "▮";
-    margin-left: 0.15em;
-    color: var(--terminal-accent);
-    animation: blink 1s steps(2, start) infinite;
-  }
-}
-
-@keyframes blink {
-  to { visibility: hidden; }
-}
-
-@keyframes scan {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100vh); }
 }
 
 @keyframes reveal-up {
@@ -215,4 +192,23 @@
   &.is-visible {
     animation: reveal-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
+}
+
+@utility font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.04em;
+  line-height: 0.9;
+}
+
+@utility font-mono {
+  font-family: var(--font-mono);
+}
+
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@utility ticker-track {
+  animation: ticker 60s linear infinite;
 }
