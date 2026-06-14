@@ -64,6 +64,7 @@ type Project = {
   comingSoon?: boolean;
 };
 
+
 type Category = {
   id: string;
   label: string;
