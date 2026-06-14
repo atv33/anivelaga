@@ -479,7 +479,6 @@ function HeroCircuits() {
     };
 
     resize();
-    raf = requestAnimationFrame(tick);
     const ro = new ResizeObserver(resize);
     ro.observe(canvas);
     return () => {
