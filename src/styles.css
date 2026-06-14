@@ -213,6 +213,35 @@
   animation: ticker 60s linear infinite;
 }
 
+@utility ticker-track-fast {
+  animation: ticker 22s linear infinite;
+}
+
+/* PCB-trace grid texture for hero */
+.hero-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(80, 200, 120, 0.15) 0 1px, transparent 1px 40px),
+    repeating-linear-gradient(90deg, rgba(80, 200, 120, 0.15) 0 1px, transparent 1px 40px);
+  mask-image: radial-gradient(ellipse at center, black 40%, transparent 85%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 85%);
+}
+
+/* Blinking terminal cursor */
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.blink-cursor {
+  display: inline-block;
+  margin-left: 4px;
+  color: var(--mark);
+  animation: blink 1s steps(1) infinite;
+}
+
 /* PCB trace divider: hairline with a square pad on each end */
 @utility pcb-divider {
   position: relative;
