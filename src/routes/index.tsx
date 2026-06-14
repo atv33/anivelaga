@@ -26,6 +26,13 @@ declare module "react" {
           alt?: string;
           "auto-rotate"?: boolean;
           "camera-controls"?: boolean;
+          "auto-rotate-delay"?: string | number;
+          "rotation-per-second"?: string;
+          "interaction-prompt"?: string;
+          "shadow-intensity"?: string | number;
+          loading?: string;
+          reveal?: string;
+          ar?: boolean;
         },
         HTMLElement
       >;
@@ -517,17 +524,37 @@ function SerialBoardGallery() {
 
 function ThrusterViewer() {
   return (
-    <div className="overflow-hidden rounded-md border border-border bg-secondary/40">
+    <div
+      className="relative overflow-hidden rounded-md border border-border"
+      style={{ backgroundColor: "#1a1a1a" }}
+    >
       {thrusterGlbSrc ? (
         <model-viewer
           src={thrusterGlbSrc}
-          alt="Thruster Board 3D"
+          alt="Thruster Board 3D model"
           auto-rotate
           camera-controls
-          style={{ width: "100%", height: "450px", borderRadius: "8px" }}
-        />
+          rotation-per-second="20deg"
+          interaction-prompt="none"
+          shadow-intensity="1"
+          loading="eager"
+          reveal="auto"
+          style={{
+            width: "100%",
+            height: "400px",
+            backgroundColor: "#1a1a1a",
+            "--poster-color": "#1a1a1a",
+          } as React.CSSProperties}
+        >
+          <div
+            slot="progress-bar"
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+          >
+            <div className="size-8 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />
+          </div>
+        </model-viewer>
       ) : (
-        <div className="flex h-[450px] items-center justify-center font-mono text-xs uppercase tracking-[0.25em] text-ink-faint">
+        <div className="flex h-[400px] items-center justify-center font-mono text-xs uppercase tracking-[0.25em] text-white/40">
           [ 3D model coming soon ]
         </div>
       )}
