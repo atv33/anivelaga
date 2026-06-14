@@ -276,21 +276,46 @@ function useMouseSpin(defaultSpeed = 20) {
   useEffect(() => {
     const el = ref.current as HTMLElement | null;
     if (!el) return;
+    let currentSpeed = defaultSpeed;
+    let rafId = 0;
     const setSpeed = (s: number) => {
+      currentSpeed = s;
       el.setAttribute("rotation-per-second", `${s}deg`);
     };
     setSpeed(defaultSpeed);
     const onMove = (e: MouseEvent) => {
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = 0;
+      }
       const r = el.getBoundingClientRect();
       const x = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
-      // Map left (0) -> -60deg/s (reverse), center -> 20deg/s, right (1) -> 120deg/s
       const speed = -60 + x * 180;
       setSpeed(speed);
     };
-    const onLeave = () => setSpeed(defaultSpeed);
+    const onLeave = () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      const startSpeed = currentSpeed;
+      const startTime = performance.now();
+      const duration = 1500;
+      const tick = (now: number) => {
+        const t = Math.min(1, (now - startTime) / duration);
+        // easeOutCubic
+        const eased = 1 - Math.pow(1 - t, 3);
+        const s = startSpeed + (defaultSpeed - startSpeed) * eased;
+        setSpeed(s);
+        if (t < 1) {
+          rafId = requestAnimationFrame(tick);
+        } else {
+          rafId = 0;
+        }
+      };
+      rafId = requestAnimationFrame(tick);
+    };
     el.addEventListener("mousemove", onMove);
     el.addEventListener("mouseleave", onLeave);
     return () => {
+      if (rafId) cancelAnimationFrame(rafId);
       el.removeEventListener("mousemove", onMove);
       el.removeEventListener("mouseleave", onLeave);
     };
