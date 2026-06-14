@@ -1,5 +1,37 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  serialBoard3d,
+  serialBoardFront,
+  serialBoardLayout,
+  serialBoardDiff,
+  thrusterGlbSrc,
+} from "@/lib/pcbImages";
+
+// Allow <model-viewer> custom element in JSX (React 19 uses React.JSX)
+declare module "react" {
+  namespace JSX {
+    interface IntrinsicElements {
+      "model-viewer": React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement> & {
+          src?: string;
+          alt?: string;
+          "auto-rotate"?: boolean;
+          "camera-controls"?: boolean;
+        },
+        HTMLElement
+      >;
+    }
+  }
+}
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -71,7 +103,6 @@ const CATEGORIES: Category[] = [
           { label: "Altium", href: "https://cuauv.365.altium.com/designs/91CB0DA0-70CB-4AD0-A772-2822C74EFC66#design" },
           { label: "Wiki", href: "https://wiki.cuauv.org/electrical/orion/documentation/Thrusters-Orion" },
         ],
-        embedUrl: "https://cuauv.365.altium.com/designs/91CB0DA0-70CB-4AD0-A772-2822C74EFC66#design",
       },
     ],
   },
@@ -245,6 +276,8 @@ function Work() {
 }
 
 function CategoryBlock({ category: c }: { category: Category }) {
+  const [openId, setOpenId] = useState<string | null>(null);
+  const openProject = c.projects.find((p) => p.id === openId) ?? null;
   return (
     <div>
       <div className="grid gap-6 sm:grid-cols-12">
@@ -261,20 +294,56 @@ function CategoryBlock({ category: c }: { category: Category }) {
       <ul className="mt-12 divide-y divide-border border-y border-border">
         {c.projects.map((p, i) => (
           <Reveal as="li" key={p.id} delay={i * 70}>
-            <ProjectRow project={p} categoryId={c.id} />
+            <ProjectRow
+              project={p}
+              categoryId={c.id}
+              onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
+            />
           </Reveal>
         ))}
       </ul>
+      <Sheet open={!!openProject} onOpenChange={(o) => !o && setOpenId(null)}>
+        <SheetContent
+          side="right"
+          className="w-full overflow-y-auto sm:max-w-2xl"
+        >
+          {openProject ? (
+            <ProjectDetails project={openProject} categoryId={c.id} />
+          ) : null}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
 
-function ProjectRow({ project: p, categoryId }: { project: Project; categoryId: string }) {
+function ProjectRow({
+  project: p,
+  categoryId,
+  onOpen,
+}: {
+  project: Project;
+  categoryId: string;
+  onOpen?: () => void;
+}) {
+  const clickable = !!onOpen;
   return (
     <article
+      onClick={onOpen}
+      role={clickable ? "button" : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onKeyDown={
+        clickable
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onOpen?.();
+              }
+            }
+          : undefined
+      }
       className={`group grid grid-cols-12 items-baseline gap-6 py-10 transition-colors ${
         p.comingSoon ? "opacity-50" : ""
-      }`}
+      } ${clickable ? "cursor-pointer hover:bg-secondary/40 -mx-4 px-4 rounded-sm" : ""}`}
     >
       <div className="col-span-12 font-mono text-xs uppercase tracking-[0.25em] text-ink-faint sm:col-span-2">
         {categoryId}.{p.id}
@@ -300,36 +369,16 @@ function ProjectRow({ project: p, categoryId }: { project: Project; categoryId: 
             ))}
           </div>
         ) : null}
-        {p.placeholderCaption ? (
-          <figure className="mt-6 max-w-xl">
-            <div className="flex aspect-[16/10] items-center justify-center rounded-md border border-border bg-secondary/60 font-mono text-xs uppercase tracking-[0.25em] text-ink-faint">
-              [ Image ]
-            </div>
-            <figcaption className="mt-2 font-mono text-[11px] uppercase tracking-[0.25em] text-ink-faint">
-              {p.placeholderCaption}
-            </figcaption>
-          </figure>
-        ) : null}
-        {p.embedUrl ? (
-          <figure className="mt-6">
-            <iframe
-              src={p.embedUrl}
-              title={`${p.name} interactive 3D viewer`}
-              allow="fullscreen"
-              style={{
-                width: "100%",
-                height: 480,
-                borderRadius: 8,
-                border: "1px solid #e5e5e5",
-              }}
-            />
-            <figcaption className="mt-2 font-mono text-[11px] uppercase tracking-[0.25em] text-ink-faint">
-              Interactive 3D — pan & rotate
-            </figcaption>
-          </figure>
+        {clickable ? (
+          <div className="mt-5 font-mono text-[11px] uppercase tracking-[0.25em] text-ink-faint transition-colors group-hover:text-mark">
+            → View details
+          </div>
         ) : null}
       </div>
-      <div className="col-span-12 flex flex-wrap gap-6 text-sm sm:col-span-3 sm:justify-end">
+      <div
+        className="col-span-12 flex flex-wrap gap-6 text-sm sm:col-span-3 sm:justify-end"
+        onClick={(e) => e.stopPropagation()}
+      >
         {p.links?.map((l) => (
           <a
             key={l.href}
@@ -351,6 +400,138 @@ function ProjectRow({ project: p, categoryId }: { project: Project; categoryId: 
         ) : null}
       </div>
     </article>
+  );
+}
+
+function ProjectDetails({
+  project: p,
+  categoryId,
+}: {
+  project: Project;
+  categoryId: string;
+}) {
+  const isSerial = p.name === "Serial Board";
+  const isThruster = p.name.startsWith("Thruster Board");
+
+  return (
+    <div className="flex flex-col gap-6">
+      <SheetHeader className="text-left">
+        <div className="font-mono text-[11px] uppercase tracking-[0.25em] text-ink-faint">
+          {categoryId}.{p.id}
+          {p.year ? <> / {p.year}</> : null}
+        </div>
+        <SheetTitle className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+          {p.name}
+        </SheetTitle>
+        <SheetDescription className="sr-only">
+          Project details for {p.name}
+        </SheetDescription>
+      </SheetHeader>
+
+      <p className="text-base leading-relaxed text-ink-dim">{p.tagline}</p>
+
+      {p.stack.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {p.stack.map((s) => (
+            <span
+              key={s}
+              className="rounded-full border border-border bg-secondary/60 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-foreground"
+            >
+              {s}
+            </span>
+          ))}
+        </div>
+      ) : null}
+
+      {isSerial ? <SerialBoardGallery /> : null}
+      {isThruster ? <ThrusterViewer /> : null}
+
+      {p.links?.length ? (
+        <div className="border-t border-border pt-4">
+          <div className="font-mono text-[11px] uppercase tracking-[0.25em] text-ink-faint">
+            Links
+          </div>
+          <div className="mt-3 flex flex-wrap gap-5 text-sm">
+            {p.links.map((l) => (
+              <a
+                key={l.href}
+                href={l.href}
+                target="_blank"
+                rel="noreferrer"
+                className="group/link inline-flex items-center gap-1.5 text-foreground transition hover:text-mark"
+              >
+                <span className="underline decoration-rule underline-offset-4 group-hover/link:decoration-mark">
+                  {l.label}
+                </span>
+                <span>↗</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function GalleryImage({ src, alt }: { src: string; alt: string }) {
+  if (!src) {
+    return (
+      <div className="flex aspect-[16/10] items-center justify-center rounded-md border border-border bg-secondary/60 font-mono text-xs uppercase tracking-[0.25em] text-ink-faint">
+        [ Image coming soon ]
+      </div>
+    );
+  }
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className="aspect-[16/10] w-full rounded-md border border-border object-cover"
+    />
+  );
+}
+
+function SerialBoardGallery() {
+  return (
+    <Tabs defaultValue="3d" className="w-full">
+      <TabsList className="flex w-full flex-wrap justify-start gap-1 bg-secondary/60">
+        <TabsTrigger value="3d">3D View</TabsTrigger>
+        <TabsTrigger value="layout">PCB Layout</TabsTrigger>
+        <TabsTrigger value="front">Front View</TabsTrigger>
+        <TabsTrigger value="diff">Diff Pairs</TabsTrigger>
+      </TabsList>
+      <TabsContent value="3d">
+        <GalleryImage src={serialBoard3d} alt="Serial Board 3D render" />
+      </TabsContent>
+      <TabsContent value="layout">
+        <GalleryImage src={serialBoardLayout} alt="Serial Board PCB layout" />
+      </TabsContent>
+      <TabsContent value="front">
+        <GalleryImage src={serialBoardFront} alt="Serial Board front view" />
+      </TabsContent>
+      <TabsContent value="diff">
+        <GalleryImage src={serialBoardDiff} alt="Serial Board differential pairs" />
+      </TabsContent>
+    </Tabs>
+  );
+}
+
+function ThrusterViewer() {
+  return (
+    <div className="overflow-hidden rounded-md border border-border bg-secondary/40">
+      {thrusterGlbSrc ? (
+        <model-viewer
+          src={thrusterGlbSrc}
+          alt="Thruster Board 3D"
+          auto-rotate
+          camera-controls
+          style={{ width: "100%", height: "450px", borderRadius: "8px" }}
+        />
+      ) : (
+        <div className="flex h-[450px] items-center justify-center font-mono text-xs uppercase tracking-[0.25em] text-ink-faint">
+          [ 3D model coming soon ]
+        </div>
+      )}
+    </div>
   );
 }
 
