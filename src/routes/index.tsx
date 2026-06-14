@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -20,6 +21,8 @@ const PROJECTS = [
     stack: ["Go", "Redis", "gRPC", "Kubernetes"],
     metric: "12k jobs/s sustained",
     status: "live",
+    github: "https://github.com/anivelaga/atlas-queue",
+    demo: "https://atlas.velaga.dev",
   },
   {
     id: "02",
@@ -28,6 +31,8 @@ const PROJECTS = [
     stack: ["Rust", "WASM", "Cloudflare Workers"],
     metric: "p99 < 30ms",
     status: "live",
+    github: "https://github.com/anivelaga/pixie-cdn",
+    demo: "https://pixie.velaga.dev",
   },
   {
     id: "03",
@@ -36,6 +41,8 @@ const PROJECTS = [
     stack: ["TypeScript", "Postgres", "Terraform"],
     metric: "8 regions",
     status: "beta",
+    github: "https://github.com/anivelaga/loomctl",
+    demo: null,
   },
   {
     id: "04",
@@ -44,6 +51,8 @@ const PROJECTS = [
     stack: ["Rust", "OpenTelemetry"],
     metric: "<1% overhead",
     status: "wip",
+    github: "https://github.com/anivelaga/specter",
+    demo: null,
   },
 ];
 
@@ -69,7 +78,7 @@ function Index() {
         <Section id="projects" label="projects" cmd="ls -la ~/projects">
           <ProjectsGrid />
         </Section>
-        <Section id="stack" label="stack" cmd="cat ~/.config/stack.toml">
+        <Section id="about" label="about" cmd="cat ~/.config/stack.toml">
           <Stack />
         </Section>
         <Section id="experience" label="experience" cmd="git log --oneline --pretty=short">
@@ -99,7 +108,7 @@ function TopBar() {
         <nav className="flex items-center gap-5 text-xs uppercase tracking-[0.18em] text-terminal-dim">
           {[
             ["projects", "#projects"],
-            ["stack", "#stack"],
+            ["about", "#about"],
             ["xp", "#experience"],
             ["contact", "#contact"],
           ].map(([label, href]) => (
@@ -193,35 +202,92 @@ function Section({
 function ProjectsGrid() {
   return (
     <ul className="grid gap-4 md:grid-cols-2">
-      {PROJECTS.map((p) => (
-        <li
-          key={p.id}
-          className="group relative border border-terminal-border bg-terminal-surface/60 p-6 transition hover:border-terminal-accent hover:bg-terminal-surface"
-        >
-          <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.25em] text-terminal-dim">
-            <span>proj_{p.id}</span>
-            <StatusBadge status={p.status} />
-          </div>
-          <h3 className="mt-4 font-mono text-xl text-terminal-fg group-hover:text-terminal-accent">
-            {p.name}
-          </h3>
-          <p className="mt-2 text-sm leading-relaxed text-terminal-dim">{p.tagline}</p>
-          <div className="mt-5 flex flex-wrap gap-1.5">
-            {p.stack.map((s) => (
-              <span
-                key={s}
-                className="border border-terminal-border px-2 py-0.5 text-[11px] text-terminal-dim"
+      {PROJECTS.map((p, i) => (
+        <Reveal as="li" key={p.id} delay={i * 80}>
+          <article className="group relative flex h-full flex-col border border-terminal-border bg-terminal-surface/60 p-6 transition hover:border-terminal-accent hover:bg-terminal-surface">
+            <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.25em] text-terminal-dim">
+              <span>proj_{p.id}</span>
+              <StatusBadge status={p.status} />
+            </div>
+            <h3 className="mt-4 font-mono text-xl text-terminal-fg group-hover:text-terminal-accent">
+              {p.name}
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-terminal-dim">{p.tagline}</p>
+            <div className="mt-5 flex flex-wrap gap-1.5">
+              {p.stack.map((s) => (
+                <span
+                  key={s}
+                  className="border border-terminal-border px-2 py-0.5 text-[11px] text-terminal-dim"
+                >
+                  {s}
+                </span>
+              ))}
+            </div>
+            <div className="mt-5 flex-1 border-t border-terminal-border pt-3 text-[11px] text-terminal-dim">
+              <span className="text-terminal-accent">›</span> {p.metric}
+            </div>
+            <div className="mt-4 flex items-center gap-3 text-xs">
+              <a
+                href={p.github}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 border border-terminal-border px-3 py-1.5 text-terminal-fg transition hover:border-terminal-accent hover:text-terminal-accent"
               >
-                {s}
-              </span>
-            ))}
-          </div>
-          <div className="mt-5 border-t border-terminal-border pt-3 text-[11px] text-terminal-dim">
-            <span className="text-terminal-accent">›</span> {p.metric}
-          </div>
-        </li>
+                <span>[github]</span>
+                <span>↗</span>
+              </a>
+              {p.demo ? (
+                <a
+                  href={p.demo}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 border border-terminal-accent bg-terminal-accent/10 px-3 py-1.5 text-terminal-accent transition hover:bg-terminal-accent hover:text-terminal-bg"
+                >
+                  <span>[live demo]</span>
+                  <span>↗</span>
+                </a>
+              ) : (
+                <span className="text-terminal-dim">[demo: n/a]</span>
+              )}
+            </div>
+          </article>
+        </Reveal>
       ))}
     </ul>
+  );
+}
+
+function Reveal({
+  as: Tag = "div",
+  delay = 0,
+  children,
+}: {
+  as?: React.ElementType;
+  delay?: number;
+  children: React.ReactNode;
+}) {
+  const ref = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            (entry.target as HTMLElement).classList.add("is-visible");
+            io.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.15, rootMargin: "0px 0px -60px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <Tag ref={ref} className="reveal" style={{ animationDelay: `${delay}ms` }}>
+      {children}
+    </Tag>
   );
 }
 
