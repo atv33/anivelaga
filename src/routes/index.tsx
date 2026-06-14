@@ -16,9 +16,8 @@ import {
   thrusterGlbSrc,
 } from "@/lib/pcbImages";
 
-// Allow <model-viewer> custom element in JSX
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
+// Allow <model-viewer> custom element in JSX (React 19 uses React.JSX)
+declare module "react" {
   namespace JSX {
     interface IntrinsicElements {
       "model-viewer": React.DetailedHTMLProps<
