@@ -267,12 +267,12 @@ const SERIAL_INLINE_GLB = "https://files.catbox.moe/ktpy7q.glb";
 function InlineSerialModel({ embedded = false }: { embedded?: boolean }) {
   return (
     <div
-      className={embedded ? "" : "col-span-12 mt-4"}
+      className={embedded ? "h-full" : "col-span-12 mt-4"}
       onClick={(e) => e.stopPropagation()}
     >
       <div
-        className={embedded ? "scanline-wrap overflow-hidden" : "scanline-wrap overflow-hidden border border-border"}
-        style={{ backgroundColor: "#1a1a1a", width: "100%", height: 300 }}
+        className={embedded ? "overflow-hidden h-full" : "overflow-hidden border border-border"}
+        style={{ backgroundColor: "#111", width: "100%", height: embedded ? "100%" : 300, minHeight: embedded ? 350 : undefined }}
       >
         <model-viewer
           src={SERIAL_INLINE_GLB}
@@ -284,7 +284,7 @@ function InlineSerialModel({ embedded = false }: { embedded?: boolean }) {
           shadow-intensity="1"
           loading="eager"
           reveal="auto"
-          style={{ width: "100%", height: "100%", backgroundColor: "#1a1a1a", filter: "saturate(0.7) brightness(0.85)" } as React.CSSProperties}
+          style={{ width: "100%", height: "100%", backgroundColor: "#111" } as React.CSSProperties}
         />
       </div>
     </div>
@@ -426,21 +426,28 @@ function CategoryBlock({ category: c }: { category: Category }) {
           <Reveal as="li" key={p.id} delay={i * 70}>
             {c.id === "01" && p.id === "A" ? (
               <div
-                className="my-6 overflow-hidden"
+                className="my-6 overflow-hidden flex flex-col lg:flex-row"
                 style={{
-                  background: "#111",
+                  background: "#111111",
                   border: "1px solid rgba(255,255,255,0.08)",
                   borderRadius: 2,
+                  minHeight: 350,
                 }}
               >
-                <ProjectRow
-                  project={p}
-                  categoryId={c.id}
-                  onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
-                  bare
-                />
-                <div style={{ height: 1, background: "var(--mark)" }} />
-                <InlineSerialModel embedded />
+                <div className="lg:w-1/2">
+                  <ProjectRow
+                    project={p}
+                    categoryId={c.id}
+                    onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
+                    bare
+                  />
+                </div>
+                <div
+                  className="lg:w-1/2"
+                  style={{ borderLeft: "1px solid rgba(255,255,255,0.06)" }}
+                >
+                  <InlineSerialModel embedded />
+                </div>
               </div>
             ) : (
               <ProjectRow
