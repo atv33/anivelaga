@@ -193,15 +193,16 @@ function Index() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <TopBar />
+      <SideRail />
       <main>
         <Hero />
         <Ticker />
         <Work />
-        <Ticker reverse />
+        <PcbDivider />
         <About />
-        <Ticker />
+        <PcbDivider />
         <Experience />
-        <Ticker reverse />
+        <PcbDivider />
         <Contact />
       </main>
       <Footer />
