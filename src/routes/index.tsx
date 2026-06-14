@@ -284,7 +284,7 @@ function InlineSerialModel() {
           shadow-intensity="1"
           loading="eager"
           reveal="auto"
-          style={{ width: "100%", height: "100%", backgroundColor: "#1a1a1a" } as React.CSSProperties}
+          style={{ width: "100%", height: "100%", backgroundColor: "#1a1a1a", filter: "grayscale(40%) brightness(0.75) saturate(0.6)" } as React.CSSProperties}
         />
       </div>
     </div>
