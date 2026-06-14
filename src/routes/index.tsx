@@ -271,13 +271,58 @@ const SERIAL_INLINE_GLB = "https://files.catbox.moe/tgly0l.glb";
 const SERIAL_TEST_INLINE_GLB = "https://files.catbox.moe/dpd9ku.glb";
 const THRUSTER_INLINE_GLB = "https://files.catbox.moe/x54j79.glb";
 
+function useMouseOrbit(idleElevation: number) {
+  const ref = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const el = ref.current as (HTMLElement & { setAttribute: (k: string, v: string) => void }) | null;
+    if (!el) return;
+    const idle = { az: 0, el: idleElevation };
+    const target = { az: idle.az, el: idle.el };
+    const current = { az: idle.az, el: idle.el };
+    const setOrbit = () => {
+      el.setAttribute("camera-orbit", `${current.az}deg ${current.el}deg auto`);
+    };
+    setOrbit();
+    const onMove = (e: MouseEvent) => {
+      const r = el.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width;
+      const y = (e.clientY - r.top) / r.height;
+      target.az = (x - 0.5) * 120;
+      target.el = idle.el + (y - 0.5) * 30;
+    };
+    const onLeave = () => {
+      target.az = idle.az;
+      target.el = idle.el;
+    };
+    let raf = 0;
+    const tick = () => {
+      current.az += (target.az - current.az) * 0.12;
+      current.el += (target.el - current.el) * 0.12;
+      setOrbit();
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    el.addEventListener("mousemove", onMove);
+    el.addEventListener("mouseleave", onLeave);
+    return () => {
+      cancelAnimationFrame(raf);
+      el.removeEventListener("mousemove", onMove);
+      el.removeEventListener("mouseleave", onLeave);
+    };
+  }, [idleElevation]);
+  return ref;
+}
+
 function InlineSerialModel({
   embedded = false,
   src = SERIAL_INLINE_GLB,
+  idleElevation = 30,
 }: {
   embedded?: boolean;
   src?: string;
+  idleElevation?: number;
 }) {
+  const ref = useMouseOrbit(idleElevation);
   return (
     <div
       className={embedded ? "h-full" : "col-span-12 mt-4"}
@@ -288,9 +333,9 @@ function InlineSerialModel({
         style={{ backgroundColor: "#111", width: "100%", height: embedded ? "100%" : 300, minHeight: embedded ? 350 : undefined }}
       >
         <model-viewer
+          ref={ref as unknown as React.Ref<HTMLElement>}
           src={src}
           alt="Serial Board 3D model"
-          auto-rotate
           camera-controls
           rotation-per-second="20deg"
           interaction-prompt="none"
@@ -503,7 +548,7 @@ function CategoryBlock({ category: c }: { category: Category }) {
                       className="lg:w-1/2"
                       style={{ borderLeft: "1px solid rgba(255,255,255,0.06)" }}
                     >
-                      <InlineSerialModel embedded src={THRUSTER_INLINE_GLB} />
+                      <InlineSerialModel embedded src={THRUSTER_INLINE_GLB} idleElevation={15} />
                     </div>
                   </div>
                 </div>
@@ -828,6 +873,7 @@ function SerialBoardGallery() {
 }
 
 function SerialViewer() {
+  const ref = useMouseOrbit(30);
   return (
     <div
       className="relative overflow-hidden rounded-md border border-border"
@@ -835,9 +881,9 @@ function SerialViewer() {
     >
       {serialGlbSrc ? (
         <model-viewer
+          ref={ref as unknown as React.Ref<HTMLElement>}
           src={serialGlbSrc}
           alt="Serial Board 3D model"
-          auto-rotate
           camera-controls
           rotation-per-second="20deg"
           interaction-prompt="none"
@@ -868,6 +914,7 @@ function SerialViewer() {
 }
 
 function ThrusterViewer() {
+  const ref = useMouseOrbit(15);
   return (
     <div
       className="relative overflow-hidden rounded-md border border-border"
@@ -875,9 +922,9 @@ function ThrusterViewer() {
     >
       {thrusterGlbSrc ? (
         <model-viewer
+          ref={ref as unknown as React.Ref<HTMLElement>}
           src={thrusterGlbSrc}
           alt="Thruster Board 3D model"
-          auto-rotate
           camera-controls
           rotation-per-second="20deg"
           interaction-prompt="none"
