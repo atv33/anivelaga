@@ -330,7 +330,8 @@ function SectionHeader({ index, title, kicker }: { index: string; title: string;
   return (
     <div className="grid gap-6 sm:grid-cols-12">
       <div className="font-mono text-xs uppercase tracking-[0.28em] text-ink-dim sm:col-span-3">
-        <span className="text-mark">{index}</span> — {kicker}
+        <span className="font-bold text-mark">{index}</span>
+        <span className="text-ink-faint"> — {kicker}</span>
       </div>
       <h2 className="font-display text-5xl font-bold sm:col-span-9 sm:text-7xl">{title}</h2>
     </div>
@@ -338,13 +339,36 @@ function SectionHeader({ index, title, kicker }: { index: string; title: string;
 }
 
 function Work() {
+  const [tab, setTab] = useState(CATEGORIES[0].id);
+  const active = CATEGORIES.find((c) => c.id === tab) ?? CATEGORIES[0];
   return (
     <section id="work" className="mx-auto max-w-6xl px-6 py-28 sm:px-10 sm:py-40">
       <SectionHeader index="01" kicker="Selected Work" title="Things I've built." />
-      <div className="mt-20 space-y-24 sm:space-y-32">
-        {CATEGORIES.map((cat) => (
-          <CategoryBlock key={cat.id} category={cat} />
-        ))}
+      <div className="mt-16 flex flex-wrap gap-x-8 gap-y-3 border-b border-border pb-4">
+        {CATEGORIES.map((cat) => {
+          const isActive = cat.id === tab;
+          return (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => setTab(cat.id)}
+              className={`font-mono text-xs uppercase tracking-[0.28em] transition-colors ${
+                isActive ? "text-foreground" : "text-ink-faint hover:text-ink-dim"
+              }`}
+            >
+              <span className={isActive ? "font-bold text-mark" : "text-mark/70"}>
+                {cat.id}
+              </span>
+              <span className="ml-2">{cat.label.split(" — ")[0]}</span>
+              {isActive ? (
+                <span className="mt-2 block h-[2px] w-full bg-mark" />
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-12">
+        <CategoryBlock key={active.id} category={active} />
       </div>
     </section>
   );
