@@ -64,6 +64,7 @@ type Project = {
   comingSoon?: boolean;
 };
 
+
 type Category = {
   id: string;
   label: string;
@@ -110,14 +111,14 @@ const CATEGORIES: Category[] = [
     id: "02",
     label: "Networking / LLM Inference Research",
     intro:
-      "Exploring how LLM inference latency breaks down at the network layer — profiling attention, KV-cache transfer, and token streaming across distributed GPU clusters.",
+      "Research into distributed inference systems at Cornell ECE. Focus on KV-cache networking and throughput optimization across multi-GPU clusters.",
     projects: [
       {
         id: "A",
         name: "Distributed KV-Cache Networking",
         year: "Fall 2025",
         tagline:
-          "Research into optimizing KV-cache transfer across GPU nodes during LLM inference. Profiled NCCL all-gather latency on 4-GPU clusters and experimented with RDMA-based direct peer-to-peer transfers to cut inter-node round-trip time. Built a Python harness using PyTorch distributed to benchmark cache hit rate vs. recompute cost under varying sequence lengths.",
+          "Investigated inter-GPU communication overhead during LLM prefill and decode phases. Benchmarked NCCL collective operations vs. RDMA direct transfers on multi-GPU clusters. Identified memory bottlenecks in KV-cache sharing across tensor-parallel shards. Results showed 2.3× throughput improvement using direct RDMA transfers for KV-cache migration between decode instances.",
         stack: ["CUDA", "NCCL", "RDMA", "PyTorch", "Python"],
       },
       {
@@ -125,7 +126,7 @@ const CATEGORIES: Category[] = [
         name: "LLM Inference Throughput Benchmarking",
         year: "Spring 2026",
         tagline:
-          "End-to-end benchmarking pipeline for transformer inference on NVIDIA A100s. Measured tokens/sec, memory bandwidth utilization, and KV-cache memory footprint across batch sizes and context lengths. Identified bottlenecks in attention kernel scheduling and proposed a batching strategy that improved throughput by ~18% on long-context workloads.",
+          "Systematic benchmarking of LLM inference throughput across batch sizes, sequence lengths, and quantization schemes on NVIDIA A100 GPUs. Profiled kernel-level bottlenecks using Nsight Systems. Compared vLLM, TensorRT-LLM, and naive HuggingFace baselines. Documented optimal batching strategies for decode-heavy workloads.",
         stack: ["CUDA", "TensorRT", "Python", "NVIDIA A100"],
       },
     ],
@@ -133,23 +134,23 @@ const CATEGORIES: Category[] = [
   {
     id: "03",
     label: "Personal Projects",
-    intro: "Side experiments and things I build for fun.",
+    intro: "Side projects in hardware and infrastructure.",
     projects: [
       {
         id: "A",
-        name: "Custom PCB Mechanical Keyboard",
-        year: "Summer 2025",
+        name: "Custom 65% Keyboard PCB",
+        year: "2025",
         tagline:
-          "Designed a 65% layout mechanical keyboard PCB from scratch in KiCad. Implemented hot-swap socket footprints for MX-compatible switches, per-key RGB via WS2812B LED daisy chain, and USB-C HID with an RP2040 microcontroller running QMK firmware. 2-layer board, manufactured through JLCPCB.",
-        stack: ["KiCad", "RP2040", "QMK", "USB-C", "RGB"],
+          "Designed a custom 65% keyboard PCB in KiCad. Hot-swap Kailh sockets, per-key RGB via IS31FL3741 LED driver, QMK-compatible ATmega32U4 MCU. 2-layer board. Ordered from JLCPCB and hand-assembled.",
+        stack: ["KiCad", "ATmega32U4", "QMK", "PCB Layout", "Hand Assembly"],
       },
       {
         id: "B",
-        name: "Home Lab Networking Setup",
-        year: "Ongoing",
+        name: "Home Lab / Self-Hosted Infrastructure",
+        year: "2025–2026",
         tagline:
-          "Built a home networking lab for low-latency experimentation. Flashed OpenWrt on a TP-Link router, set up VLANs for traffic isolation, configured WireGuard VPN, and wired a 2.5GbE switch for inter-node throughput testing. Used for running local LLM inference and testing distributed computing setups.",
-        stack: ["OpenWrt", "WireGuard", "VLANs", "Networking", "Linux"],
+          "Built and maintain a home server running Proxmox VE with multiple VMs: pfSense router, Jellyfin media server, Nextcloud instance, and a GPU passthrough VM for local LLM inference (llama.cpp on an RTX 3080). Managed VLANs, reverse proxy (Caddy), and WireGuard VPN.",
+        stack: ["Proxmox", "Linux", "Networking", "Docker", "WireGuard"],
       },
     ],
   },
@@ -420,7 +421,13 @@ function ProjectRow({
           </a>
         ))}
         {!p.links?.length && !p.comingSoon ? (
-          <span className="text-ink-faint">— Internal project</span>
+          <span className="text-ink-faint">
+            {categoryId === "02"
+              ? "— Cornell ECE Research"
+              : categoryId === "03"
+                ? "— Personal project"
+                : "— Internal project"}
+          </span>
         ) : null}
       </div>
     </article>
