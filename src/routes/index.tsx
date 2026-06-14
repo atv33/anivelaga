@@ -16,12 +16,13 @@ export const Route = createFileRoute("/")({
 const PROJECTS = [
   {
     id: "01",
-    name: "Atlas Queue",
-    tagline: "Distributed job queue with at-least-once semantics, designed for high-throughput backends.",
-    stack: ["Go", "Redis", "gRPC", "Kubernetes"],
-    year: "2024",
-    github: "https://github.com/anivelaga/atlas-queue",
-    demo: "https://atlas.velaga.dev",
+    name: "Serial Board",
+    tagline:
+      "Central comms hub for CUAUV's autonomous submarine — bridges 16 RS-232 RX/TX subsystem pairs to a single USB-C on the Jetson, with USB ESD protection, flexible DVL connectivity, and pluggable EEPROM for easier debugging.",
+    stack: ["KiCad", "4-Layer PCB", "USB-C", "RS-232", "SMF05CT1G TVS"],
+    year: "Spring 2026",
+    github: null,
+    demo: null,
   },
   {
     id: "02",
@@ -39,15 +40,6 @@ const PROJECTS = [
     stack: ["TypeScript", "Postgres", "Terraform"],
     year: "2023",
     github: "https://github.com/anivelaga/loomctl",
-    demo: null,
-  },
-  {
-    id: "04",
-    name: "Specter",
-    tagline: "Observability SDK with low-overhead tracing and adaptive sampling under load.",
-    stack: ["Rust", "OpenTelemetry"],
-    year: "2023",
-    github: "https://github.com/anivelaga/specter",
     demo: null,
   },
 ];
