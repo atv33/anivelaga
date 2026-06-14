@@ -8,7 +8,6 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   serialBoardFront,
   serialBoardLayout,
@@ -216,10 +215,10 @@ function TopBar() {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5 sm:px-10">
-        <a href="#top" className="font-display text-base font-bold tracking-tight">
+        <a href="#top" className="font-mono text-sm font-bold tracking-tight uppercase">
           Ani Velaga
         </a>
-        <nav className="flex items-center gap-7 text-sm">
+        <nav className="flex items-center gap-7 font-mono text-xs uppercase tracking-[0.18em]">
           {NAV.map(([label, href]) => (
             <a
               key={href}
@@ -240,24 +239,20 @@ function Hero() {
     <section
       id="top"
       data-section="00"
-      className="relative mx-auto flex h-screen max-w-6xl flex-col justify-center px-6 sm:px-10"
+      className="hero-bg relative mx-auto flex h-screen max-w-6xl flex-col justify-center px-6 sm:px-10"
     >
-      <div className="grid items-center gap-12 lg:grid-cols-12">
-        <div className="lg:col-span-8">
-          <h1 className="font-display text-[clamp(3rem,10vw,9rem)] font-black uppercase">
-            Ani
-            <br />
-            Velaga<span className="text-mark">.</span>
-          </h1>
-          <p className="mt-8 max-w-xl text-lg leading-relaxed text-ink-dim sm:text-xl">
-            <span className="text-foreground">Electrical & computer engineer</span> — I design
-            hardware at the board level, then push it through the networking stack into LLM
-            inference systems. Currently on CUAUV building PCBs for an autonomous submarine.
-          </p>
-        </div>
-        <div className="lg:col-span-4">
-          <HeroBoardViewer />
-        </div>
+      <div className="relative z-10">
+        <h1 className="font-display text-[clamp(3rem,10vw,9rem)] font-black uppercase">
+          Ani
+          <br />
+          Velaga
+        </h1>
+        <p className="mt-8 max-w-2xl text-lg leading-relaxed text-ink-dim sm:text-xl">
+          <span className="text-foreground">Electrical & computer engineer</span> — I design
+          hardware at the board level, then push it through the networking stack into LLM
+          inference systems. Currently on CUAUV building PCBs for an autonomous submarine.
+          <span className="blink-cursor">_</span>
+        </p>
       </div>
       <div className="absolute inset-x-0 bottom-8 flex items-center justify-center gap-3 px-6 font-mono text-xs uppercase tracking-[0.28em] text-ink-dim sm:px-10">
         <span className="size-1.5 rounded-full bg-mark" />
@@ -267,31 +262,29 @@ function Hero() {
   );
 }
 
-const HERO_GLB = "https://files.catbox.moe/0vyi4l.glb";
-const HERO_SPECS: Array<[string, string]> = [
-  ["Board", "4-layer 3.701\" × 4.291\""],
-  ["ICs", "FTDI USB-UART"],
-  ["Channels", "16× RS-232"],
-  ["ESD", "SMF05CT1G TVS"],
-  ["Connector", "USB-C + DVL header"],
-];
+const SERIAL_INLINE_GLB = "https://files.catbox.moe/ktpy7q.glb";
 
-function HeroBoardViewer() {
+function InlineSerialModel() {
   const [open, setOpen] = useState(false);
   return (
-    <>
+    <div
+      className="col-span-12 mt-4"
+      onClick={(e) => e.stopPropagation()}
+    >
       <button
         type="button"
-        onClick={() => setOpen(true)}
-        className="group block w-full text-left"
-        aria-label="Open Serial Board 3D viewer"
+        onClick={() => setOpen((v) => !v)}
+        className="font-mono text-[11px] uppercase tracking-[0.25em] text-ink-dim transition-colors hover:text-mark"
       >
+        {open ? "Hide 3D Model ✕" : "View 3D Model ↗"}
+      </button>
+      {open ? (
         <div
-          className="relative overflow-hidden border border-border transition-transform duration-200 group-hover:scale-[1.02]"
-          style={{ backgroundColor: "#1a1a1a", width: 300, height: 300, maxWidth: "100%" }}
+          className="mt-4 overflow-hidden border border-border"
+          style={{ backgroundColor: "#1a1a1a", width: "100%", height: 280 }}
         >
           <model-viewer
-            src={HERO_GLB}
+            src={SERIAL_INLINE_GLB}
             alt="Serial Board 3D model"
             auto-rotate
             camera-controls
@@ -303,44 +296,8 @@ function HeroBoardViewer() {
             style={{ width: "100%", height: "100%", backgroundColor: "#1a1a1a" } as React.CSSProperties}
           />
         </div>
-        <div className="mt-3 font-mono text-[11px] uppercase tracking-[0.28em] text-ink-faint group-hover:text-mark">
-          Serial Board — CUAUV 2026
-        </div>
-      </button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-[90vw] p-6 sm:max-w-[90vw]">
-          <DialogTitle className="font-display text-2xl font-bold">Serial Board — CUAUV 2026</DialogTitle>
-          <DialogDescription className="sr-only">Interactive 3D viewer and specs</DialogDescription>
-          <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
-            <div className="border border-border" style={{ backgroundColor: "#1a1a1a", width: "80vw", maxWidth: "100%", height: "60vh" }}>
-              <model-viewer
-                src={HERO_GLB}
-                alt="Serial Board 3D model"
-                auto-rotate
-                camera-controls
-                rotation-per-second="20deg"
-                interaction-prompt="none"
-                shadow-intensity="1"
-                loading="eager"
-                reveal="auto"
-                style={{ width: "100%", height: "100%", backgroundColor: "#1a1a1a" } as React.CSSProperties}
-              />
-            </div>
-            <div>
-              <div className="font-mono text-[11px] uppercase tracking-[0.28em] text-ink-faint">Specs</div>
-              <dl className="mt-4 space-y-3">
-                {HERO_SPECS.map(([k, v]) => (
-                  <div key={k} className="border-b border-border pb-3">
-                    <dt className="font-mono text-[10px] uppercase tracking-[0.25em] text-ink-faint">{k}</dt>
-                    <dd className="mt-1 text-sm text-foreground">{v}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
+      ) : null}
+    </div>
   );
 }
 
@@ -353,7 +310,7 @@ function Ticker({ reverse = false }: { reverse?: boolean }) {
   return (
     <div className="overflow-hidden border-y border-border" style={{ background: "#050505" }}>
       <div
-        className="ticker-track flex whitespace-nowrap py-3 font-mono text-[11px] tracking-widest text-ink-faint"
+        className="ticker-track-fast flex whitespace-nowrap py-3 font-mono text-[11px] tracking-widest text-mark"
         style={reverse ? { animationDirection: "reverse" } : undefined}
       >
         <span className="px-6">{content}</span>
@@ -413,9 +370,9 @@ function SideRail() {
 function SectionHeader({ index, title, kicker }: { index: string; title: string; kicker: string }) {
   return (
     <div className="grid gap-6 sm:grid-cols-12">
-      <div className="font-mono text-xs uppercase tracking-[0.28em] text-ink-dim sm:col-span-3">
+      <div className="font-mono text-xs uppercase tracking-[0.28em] text-ink-dim sm:col-span-3 pl-3" style={{ borderLeft: "2px solid var(--mark)" }}>
         <span className="font-bold text-mark">{index}</span>
-        <span className="text-ink-faint"> — {kicker}</span>
+        <span className="text-ink-faint"> | {kicker}</span>
       </div>
       <h2 className="font-display text-5xl font-bold sm:col-span-9 sm:text-7xl">{title}</h2>
     </div>
@@ -482,6 +439,7 @@ function CategoryBlock({ category: c }: { category: Category }) {
               categoryId={c.id}
               onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
             />
+            {c.id === "01" && p.id === "A" ? <InlineSerialModel /> : null}
           </Reveal>
         ))}
       </ul>
@@ -782,26 +740,30 @@ function About() {
       <SectionHeader index="02" kicker="About" title="Who I am." />
       <div className="mt-20 grid gap-16 sm:grid-cols-12">
         <div className="sm:col-span-7">
-          <img
-            src={headshotAsset.url}
-            alt="Ani Velaga"
-            width={220}
-            height={220}
-            className="mb-8 size-[220px] object-cover"
-            style={{ borderRadius: 12 }}
-          />
-          <p className="text-lg leading-relaxed text-ink-dim">
+          <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-start sm:gap-8">
+            <img
+              src={headshotAsset.url}
+              alt="Ani Velaga"
+              width={180}
+              height={180}
+              className="size-[180px] shrink-0 object-cover border border-border"
+              style={{ borderRadius: "50%" }}
+            />
+            <div>
+              <p className="text-lg leading-relaxed text-ink-dim">
             I'm an electrical and computer engineering student at Cornell, currently on CUAUV —
             Cornell's autonomous underwater vehicle team. I design production PCBs in Altium
             Designer: 4-layer stackups, differential pair routing, ESD protection, high-speed USB.
             The submarine goes in real water, so the boards have to work.
-          </p>
-          <p className="mt-6 text-lg leading-relaxed text-ink-dim">
+              </p>
+              <p className="mt-6 text-lg leading-relaxed text-ink-dim">
             My work runs from board-level hardware through the networking stack up into LLM
             inference systems. I care about the full path: what the silicon is doing, how data
             moves between nodes, and where inference bottlenecks actually live. I'm looking for
             roles where that end-to-end view matters.
-          </p>
+              </p>
+            </div>
+          </div>
         </div>
         <div className="sm:col-span-5 sm:pl-12">
           <div className="font-mono text-xs uppercase tracking-[0.28em] text-ink-faint">
