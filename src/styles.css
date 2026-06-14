@@ -78,13 +78,13 @@
 :root {
   --radius: 0rem;
 
-  /* Engineering-native dark palette */
-  --paper: oklch(0.16 0 0);             /* #0d0d0d-ish near-black background */
-  --paper-warm: oklch(0.21 0.003 90);   /* subtle raised panel */
-  --ink: oklch(0.93 0.01 95);           /* #e8e8e0 off-white text */
+  /* Engineering / PCB dark palette */
+  --paper: oklch(0.14 0.025 258);       /* #080c14 deep PCB-substrate */
+  --paper-warm: oklch(0.20 0.03 258);   /* subtle raised panel */
+  --ink: oklch(0.93 0.01 95);           /* off-white text */
   --ink-dim: oklch(0.72 0.008 95);      /* secondary text */
   --ink-faint: oklch(0.5 0.005 95);     /* tertiary / captions */
-  --rule: oklch(0.28 0.005 90);         /* hairline rules */
+  --rule: oklch(0.38 0.15 263);         /* deep navy hairline (#0d47a1-ish) */
   --mark: oklch(0.66 0.22 28);          /* vermillion accent */
 
   --background: var(--paper);
@@ -168,6 +168,10 @@
 
   body {
     background-color: var(--color-background);
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'><g fill='none' stroke='%231a6bff' stroke-opacity='0.5' stroke-width='1'><path d='M0 20 H80 M0 60 H80 M20 0 V80 M60 0 V80'/></g><g fill='%231a6bff' fill-opacity='0.7'><circle cx='20' cy='20' r='1.6'/><circle cx='60' cy='20' r='1.6'/><circle cx='20' cy='60' r='1.6'/><circle cx='60' cy='60' r='1.6'/></g></svg>");
+    background-repeat: repeat;
+    background-attachment: fixed;
+    background-size: 80px 80px;
     color: var(--color-foreground);
     font-family: var(--font-sans);
     font-feature-settings: "ss01", "cv11";
