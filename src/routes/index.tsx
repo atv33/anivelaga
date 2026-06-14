@@ -715,6 +715,8 @@ function SubProjectRow({
             src={modelSrc}
             alt={`${p.name} 3D model`}
             camera-controls
+            auto-rotate
+            auto-rotate-delay={0}
             rotation-per-second="20deg"
             interaction-prompt="none"
             loading="eager"
@@ -871,6 +873,8 @@ function SerialViewer() {
           src={serialGlbSrc}
           alt="Serial Board 3D model"
           camera-controls
+          auto-rotate
+          auto-rotate-delay={0}
           rotation-per-second="20deg"
           interaction-prompt="none"
           shadow-intensity="1"
@@ -912,6 +916,8 @@ function ThrusterViewer() {
           src={thrusterGlbSrc}
           alt="Thruster Board 3D model"
           camera-controls
+          auto-rotate
+          auto-rotate-delay={0}
           rotation-per-second="20deg"
           interaction-prompt="none"
           shadow-intensity="1"
