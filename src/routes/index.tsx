@@ -298,14 +298,17 @@ function HeroCircuits() {
     let branches: Branch[] = [];
 
     const STROKE = 1.5;
-    const MAX_OPACITY = 0.15;
+    const MAX_OPACITY = 0.07;
     const MARGIN = 6;
+    const MAX_BRANCHES_TOTAL = 20;
 
+    // Only draw in the top 40% of hero height; fade gently in the last quarter of that zone.
     const fadeForY = (y: number) => {
-      const t = y / H;
-      if (t < 0.55) return 1;
-      if (t > 0.98) return 0;
-      return (0.98 - t) / 0.43;
+      const zone = H * 0.4;
+      if (y >= zone) return 0;
+      const t = y / zone;
+      if (t < 0.7) return 1;
+      return (1 - t) / 0.3;
     };
 
     const stroke = (x1: number, y1: number, x2: number, y2: number, alpha: number) => {
@@ -353,7 +356,7 @@ function HeroCircuits() {
 
     const seed = () => {
       branches = [];
-      const count = 8;
+      const count = 3;
       for (let i = 0; i < count; i++) {
         const slot = (i + 0.5) / count;
         const jitter = (Math.random() - 0.5) * (0.5 / count);
@@ -399,14 +402,15 @@ function HeroCircuits() {
         const nx = b.x + dx * STEP_PER_FRAME;
         const ny = b.y + dy * STEP_PER_FRAME;
 
-        // bounds check
-        if (nx < MARGIN || nx > W - MARGIN || ny > H - 2) {
+        // bounds check — also stop once past the top-40% zone
+        const zoneBottom = H * 0.4;
+        if (nx < MARGIN || nx > W - MARGIN || ny > zoneBottom) {
           // draw final partial + terminal via if inside
           const cx = Math.min(W - MARGIN, Math.max(MARGIN, nx));
-          const cy = Math.min(H, ny);
+          const cy = Math.min(zoneBottom, ny);
           const a = MAX_OPACITY * fadeForY(cy);
           stroke(b.x, b.y, cx, cy, a);
-          if (cy < H) via(cx, cy, a);
+          if (cy < zoneBottom) via(cx, cy, a);
           b.alive = false;
           continue;
         }
@@ -436,7 +440,8 @@ function HeroCircuits() {
           const roll = Math.random();
           const perps = perpendicular(b.dir);
 
-          if (b.depth < 7 && b.dir === 0 && roll < 0.25) {
+          const canSpawn = branches.length < MAX_BRANCHES_TOTAL;
+          if (canSpawn && b.depth < 4 && b.dir === 0 && roll < 0.2) {
             // T-split: parent dies, two perpendicular children (left + right)
             b.alive = false;
             for (const nd of [1, 2] as Dir[]) {
@@ -452,7 +457,7 @@ function HeroCircuits() {
                 depth: b.depth + 1,
               });
             }
-          } else if (b.depth < 7 && roll < 0.65) {
+          } else if (canSpawn && b.depth < 4 && roll < 0.55) {
             // branch: spawn a perpendicular child, parent continues
             const nd = perps[Math.floor(Math.random() * perps.length)];
             branches.push({
