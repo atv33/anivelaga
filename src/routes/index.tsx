@@ -1596,7 +1596,6 @@ function SectionHeader({ index, title, kicker }: { index: string; title: string;
 }
 
 function Work() {
-function Work() {
   const [selected, setSelected] = useState<string | null>(null);
   const active = selected ? CATEGORIES.find((c) => c.id === selected) ?? null : null;
 
