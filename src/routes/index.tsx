@@ -1265,12 +1265,32 @@ function CircuitHero() {
               >
                 <style>{`
                   @keyframes hwBoxPulse {
-                    0%, 100% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); border-color: #2c2c2c; }
-                    50%      { box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); border-color: #3a3a3a; }
+                    0%, 100% {
+                      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04),
+                                  0 0 0 1px rgba(251,191,36,0.10),
+                                  0 0 10px rgba(251,191,36,0.10);
+                      border-color: #3a3a3a;
+                    }
+                    50% {
+                      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06),
+                                  0 0 0 1px rgba(251,191,36,0.45),
+                                  0 0 18px rgba(251,191,36,0.35);
+                      border-color: #a07720;
+                    }
                   }
-                  @keyframes hwHaloPulse {
-                    0%, 100% { opacity: 0.35; transform: scale(0.96); }
-                    50%      { opacity: 0.85; transform: scale(1.04); }
+                  @keyframes hwCapPulse {
+                    0%, 100% {
+                      box-shadow: 0 3px 4px rgba(0,0,0,0.55),
+                                  0 0 0 1px rgba(251,191,36,0.10),
+                                  0 0 10px rgba(251,191,36,0.15),
+                                  inset 0 -2px 3px rgba(0,0,0,0.5);
+                    }
+                    50% {
+                      box-shadow: 0 3px 4px rgba(0,0,0,0.55),
+                                  0 0 0 1px rgba(251,191,36,0.45),
+                                  0 0 16px rgba(251,191,36,0.40),
+                                  inset 0 -2px 3px rgba(0,0,0,0.5);
+                    }
                   }
                   @keyframes hwBtnBob {
                     0%, 100% { transform: translateX(-50%) translateY(0); }
@@ -1278,30 +1298,11 @@ function CircuitHero() {
                   }
                   .hw-module { animation: hwBoxPulse 2.0s ease-in-out infinite; }
                   .hw-module.is-hot { animation-duration: 1.2s; }
-                  .hw-halo { animation: hwHaloPulse 2.0s ease-in-out infinite; }
-                  .hw-halo.is-hot { animation-duration: 1.2s; }
+                  .hw-cap { animation: hwCapPulse 2.0s ease-in-out infinite; }
+                  .hw-cap.is-hot { animation-duration: 1.2s; }
                   .hw-btn-wrap { animation: hwBtnBob 1.8s ease-in-out infinite; }
                   .hw-btn-wrap.is-pressed { animation: none; }
                 `}</style>
-
-                {/* glow halo that pulses around the button + box */}
-                <span
-                  aria-hidden
-                  className={`hw-halo${hovering || charging || lampOn ? " is-hot" : ""}`}
-                  style={{
-                    position: "absolute",
-                    left: "50%",
-                    bottom: 8,
-                    transform: "translateX(-50%)",
-                    width: 180,
-                    height: 92,
-                    borderRadius: 16,
-                    pointerEvents: "none",
-                    background:
-                      "radial-gradient(ellipse at center, rgba(251,191,36,0.22) 0%, rgba(251,191,36,0.10) 45%, rgba(251,191,36,0) 75%)",
-                    filter: "blur(2px)",
-                  }}
-                />
 
                 {/* rectangular control housing */}
                 <div
