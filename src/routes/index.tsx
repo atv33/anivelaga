@@ -2002,6 +2002,42 @@ function SerialBoardGallery() {
     { id: "front", label: "3D Front", src: serialFrontAsset.url, alt: "Serial Board 3D front render" },
     { id: "back", label: "3D Back", src: serialBackAsset.url, alt: "Serial Board 3D back render" },
   ];
+
+  return <BoardGallery images={images} />;
+}
+
+function FabricatedBoard({ name, front, back }: { name: string; front: string; back: string }) {
+  return (
+    <div className="mt-2">
+      <div className="font-mono text-[11px] uppercase tracking-[0.25em] text-ink-faint">
+        Fabricated + Soldered Board
+      </div>
+      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {[
+          { src: front, label: "Front" },
+          { src: back, label: "Back" },
+        ].map((img) => (
+          <div
+            key={img.label}
+            className="relative aspect-[4/3] overflow-hidden rounded-md border border-border"
+            style={{ backgroundColor: "#1a1a1a" }}
+          >
+            <img
+              src={img.src}
+              alt={`${name} fabricated and soldered, ${img.label.toLowerCase()}`}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <div className="absolute bottom-2 left-2 rounded bg-black/60 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.2em] text-white">
+              {img.label}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function BoardGallery({ images }: { images: { id: string; label: string; src: string; alt: string }[] }) {
   const [active, setActive] = useState(images[0].id);
   const current = images.find((i) => i.id === active) ?? images[0];
   return (
