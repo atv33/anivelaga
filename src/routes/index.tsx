@@ -1928,7 +1928,7 @@ function ProjectDetails({
       ) : null}
 
       {isSerial ? <SerialBoardGallery /> : null}
-      {isThruster ? <ThrusterViewer /> : null}
+      {isThruster ? <ThrusterBoardGallery /> : null}
 
       {p.links?.length ? (
         <div className="border-t border-border pt-4">
