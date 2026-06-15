@@ -395,6 +395,7 @@ function buildCircuit(seed: number): Built {
     { x: CHIP_A.x, y: CHIP_A.y, w: CHIP_A.w, h: CHIP_A.h, pad: 10 },
     { x: CHIP_B.x, y: CHIP_B.y, w: CHIP_B.w, h: CHIP_B.h, pad: 10 },
     { x: CHIP_C.x, y: CHIP_C.y, w: CHIP_C.w, h: CHIP_C.h, pad: 10 },
+    { x: CHIP_D.x, y: CHIP_D.y, w: CHIP_D.w, h: CHIP_D.h, pad: 10 },
     { x: EDGE_R.x, y: EDGE_R.y, w: EDGE_R.w, h: EDGE_R.h, pad: 10 },
     { x: HEADER_T.x, y: HEADER_T.y, w: HEADER_T.w, h: HEADER_T.h, pad: 10 },
     // lamp module above the name
