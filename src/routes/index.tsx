@@ -1092,16 +1092,55 @@ function CircuitHero() {
               strokeWidth={1.2}
             />
             <circle cx={BUTTON_PAD.x} cy={BUTTON_PAD.y} r={3.5} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.9} />
-            {/* hover echo rings around the button pad */}
-            {hovering && (
+            {/* idle invite-pulse around the button pad (always on, restrained).
+                Intensifies on hover. */}
+            {!charging && !lampOn && (
               <g style={{ pointerEvents: "none" }}>
-                <circle cx={BUTTON_PAD.x} cy={BUTTON_PAD.y} r={6} fill="none" stroke="#fbbf24" strokeWidth={0.8}>
-                  <animate attributeName="r" values="6;26" dur="1.6s" repeatCount="indefinite" />
-                  <animate attributeName="opacity" values="0.55;0" dur="1.6s" repeatCount="indefinite" />
+                <circle
+                  cx={BUTTON_PAD.x}
+                  cy={BUTTON_PAD.y}
+                  r={6}
+                  fill="none"
+                  stroke={hovering ? "#fbbf24" : "#6a6a6a"}
+                  strokeWidth={hovering ? 0.8 : 0.5}
+                  style={{ transition: "stroke 200ms ease, stroke-width 200ms ease" }}
+                >
+                  <animate
+                    attributeName="r"
+                    values={hovering ? "6;28" : "6;20"}
+                    dur={hovering ? "1.6s" : "2.4s"}
+                    repeatCount="indefinite"
+                  />
+                  <animate
+                    attributeName="opacity"
+                    values={hovering ? "0.6;0" : "0.35;0"}
+                    dur={hovering ? "1.6s" : "2.4s"}
+                    repeatCount="indefinite"
+                  />
                 </circle>
-                <circle cx={BUTTON_PAD.x} cy={BUTTON_PAD.y} r={6} fill="none" stroke="#fbbf24" strokeWidth={0.6}>
-                  <animate attributeName="r" values="6;22" dur="1.6s" begin="0.55s" repeatCount="indefinite" />
-                  <animate attributeName="opacity" values="0.4;0" dur="1.6s" begin="0.55s" repeatCount="indefinite" />
+                <circle
+                  cx={BUTTON_PAD.x}
+                  cy={BUTTON_PAD.y}
+                  r={6}
+                  fill="none"
+                  stroke={hovering ? "#fbbf24" : "#6a6a6a"}
+                  strokeWidth={hovering ? 0.6 : 0.4}
+                  style={{ transition: "stroke 200ms ease" }}
+                >
+                  <animate
+                    attributeName="r"
+                    values={hovering ? "6;24" : "6;17"}
+                    dur={hovering ? "1.6s" : "2.4s"}
+                    begin={hovering ? "0.55s" : "1.0s"}
+                    repeatCount="indefinite"
+                  />
+                  <animate
+                    attributeName="opacity"
+                    values={hovering ? "0.45;0" : "0.22;0"}
+                    dur={hovering ? "1.6s" : "2.4s"}
+                    begin={hovering ? "0.55s" : "1.0s"}
+                    repeatCount="indefinite"
+                  />
                 </circle>
               </g>
             )}
@@ -1168,7 +1207,7 @@ function CircuitHero() {
                       transition: "background 200ms ease, box-shadow 200ms ease",
                     }}
                   />
-                  Route Signal
+                  Click me :)
                 </button>
               </div>
             </foreignObject>
