@@ -316,6 +316,45 @@ function ptsToD(pts: Pt[]): string {
     .join(" ");
 }
 
+// Invisible routing grid. Intermediate bend points snap to this grid so
+// parallel runs share lanes and corners line up. Endpoints stay exact so
+// traces still terminate on real pad/pin tips.
+const GRID = 12;
+const snap = (v: number) => Math.round(v / GRID) * GRID;
+function snapPts(pts: Pt[]): Pt[] {
+  if (pts.length < 2) return pts.map((p) => ({ ...p }));
+  const out = pts.map((p, i) =>
+    i === 0 || i === pts.length - 1
+      ? { x: p.x, y: p.y }
+      : { x: snap(p.x), y: snap(p.y) },
+  );
+  for (let i = 1; i < out.length; i++) {
+    const prev = out[i - 1];
+    const cur = out[i];
+    const dx = Math.abs(cur.x - prev.x);
+    const dy = Math.abs(cur.y - prev.y);
+    if (dx === 0 || dy === 0) continue;
+    if (dx <= dy) cur.x = prev.x;
+    else cur.y = prev.y;
+  }
+  const cleaned: Pt[] = [out[0]];
+  for (let i = 1; i < out.length; i++) {
+    const p = out[i];
+    const last = cleaned[cleaned.length - 1];
+    if (p.x === last.x && p.y === last.y) continue;
+    if (cleaned.length >= 2) {
+      const a = cleaned[cleaned.length - 2];
+      const b = last;
+      if ((a.x === b.x && b.x === p.x) || (a.y === b.y && b.y === p.y)) {
+        cleaned[cleaned.length - 1] = p;
+        continue;
+      }
+    }
+    cleaned.push(p);
+  }
+  return cleaned;
+}
+
 // Procedural circuit builder. Every trace begins at a real pad/pin tip and
 // ends at another real pad/pin tip or the canvas edge. Bend coordinates are
 // chosen randomly within tight constraints — composition is preserved.
