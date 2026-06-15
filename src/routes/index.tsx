@@ -2023,6 +2023,55 @@ function SerialBoardGallery() {
   );
 }
 
+function ThrusterBoardGallery() {
+  const images = [
+    { id: "front", label: "3D Front", src: thrusterFrontAsset.url, alt: "Thruster Board 3D front render" },
+    { id: "back", label: "3D Back", src: thrusterBackAsset.url, alt: "Thruster Board 3D back render" },
+    { id: "layout", label: "2D Layout", src: thrusterLayoutAsset.url, alt: "Thruster Board 2D PCB schematic layout" },
+  ];
+  const [active, setActive] = useState(images[0].id);
+  const current = images.find((i) => i.id === active) ?? images[0];
+  return (
+    <div className="w-full">
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md border border-border" style={{ backgroundColor: "#1a1a1a" }}>
+        <img
+          src={current.src}
+          alt={current.alt}
+          className="absolute inset-0 h-full w-full object-contain"
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/40" />
+        <div className="absolute inset-x-0 bottom-0 p-4">
+          <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-mark">
+            {String(images.findIndex((i) => i.id === active) + 1).padStart(2, "0")} / {String(images.length).padStart(2, "0")}
+          </div>
+          <div className="mt-1 font-mono text-xs uppercase tracking-[0.22em] text-foreground">
+            {current.label}
+          </div>
+        </div>
+      </div>
+      <div className="mt-3 flex gap-2">
+        {images.map((img) => (
+          <button
+            key={img.id}
+            type="button"
+            onClick={() => setActive(img.id)}
+            className={`relative aspect-[4/3] flex-1 overflow-hidden rounded-sm border transition ${
+              active === img.id ? "border-mark" : "border-border opacity-60 hover:opacity-100"
+            }`}
+            style={{ backgroundColor: "#1a1a1a" }}
+          >
+            <img src={img.src} alt={img.alt} className="absolute inset-0 h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-black/40" />
+            <div className="absolute inset-x-0 bottom-0 p-1.5 font-mono text-[9px] uppercase tracking-[0.2em] text-foreground">
+              {img.label}
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function SerialViewer() {
   const ref = useMouseSpin(20);
   return (
