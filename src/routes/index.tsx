@@ -275,6 +275,10 @@ const VB_H = 900;
 // Portrait module — central component
 const PORT = { x: 1060, y: 270, w: 260, h: 320 };
 const PORT_INSET = 14;
+const MOBILE_PORT = { x: 410, y: 250, w: 420, h: 510 };
+const MOBILE_PORT_INSET = 16;
+const MOBILE_BUTTON_PAD = { x: 940, y: 500 };
+const MOBILE_LAMP = { cx: 170, cy: 330 };
 
 // Pin pad layout helpers
 const yPads = [296, 332, 368, 404, 440, 476, 512, 548];     // 8 vertical pad rows (left/right)
@@ -480,8 +484,14 @@ function buildCircuit(_seed: number): Built {
 }
 
 function HeroText() {
+  const isMobile = useIsMobile();
+
   return (
-    <div className="pointer-events-none absolute inset-0 z-[3] mx-auto flex max-w-6xl items-end px-6 pb-24 sm:px-10 sm:pb-28">
+    <div
+      className={`pointer-events-none absolute inset-0 z-[3] mx-auto flex max-w-6xl items-end px-6 ${
+        isMobile ? "pb-12" : "pb-24 sm:px-10 sm:pb-28"
+      }`}
+    >
       <div className="pointer-events-auto max-w-xl">
         <h1
           className="font-display font-black uppercase text-white"
@@ -506,19 +516,21 @@ function HeroText() {
   );
 }
 
-function PortraitModule() {
-  const ix = PORT.x + PORT_INSET;
-  const iy = PORT.y + PORT_INSET;
-  const iw = PORT.w - PORT_INSET * 2;
-  const ih = PORT.h - PORT_INSET * 2;
+function PortraitModule({ mobile = false }: { mobile?: boolean }) {
+  const frame = mobile ? MOBILE_PORT : PORT;
+  const inset = mobile ? MOBILE_PORT_INSET : PORT_INSET;
+  const ix = frame.x + inset;
+  const iy = frame.y + inset;
+  const iw = frame.w - inset * 2;
+  const ih = frame.h - inset * 2;
   return (
     <g>
       {/* outer dark package */}
       <rect
-        x={PORT.x}
-        y={PORT.y}
-        width={PORT.w}
-        height={PORT.h}
+        x={frame.x}
+        y={frame.y}
+        width={frame.w}
+        height={frame.h}
         fill="#141414"
         stroke="#2a2a2a"
         strokeWidth="1"
@@ -544,14 +556,14 @@ function PortraitModule() {
         style={{ filter: "grayscale(15%) brightness(0.92) contrast(1.03)" }}
       />
       {/* orientation notch */}
-      <circle cx={PORT.x + 10} cy={PORT.y + 10} r="2" fill="#3a3a3a" />
+      <circle cx={frame.x + 10} cy={frame.y + 10} r="2" fill="#3a3a3a" />
 
       {/* pads on all four sides */}
-      <g fill="#2b2b2b" stroke="#454545" strokeWidth="0.6">
+      {!mobile && <g fill="#2b2b2b" stroke="#454545" strokeWidth="0.6">
         {[...leftPads, ...rightPads, ...topPads, ...bottomPads].map((p, i) => (
           <rect key={i} x={p.x} y={p.y} width={p.w} height={p.h} rx="1" />
         ))}
-      </g>
+      </g>}
     </g>
   );
 }
@@ -614,9 +626,9 @@ const SIGNAL_D =
   `M ${BUTTON_PAD.x} ${BUTTON_PAD.y} V 740 H 700 V 470 H ${LAMP_PIN.x} V ${LAMP_PIN.y}`;
 const SIGNAL_DUR_MS = 1150;
 
-function Lamp({ on }: { on: boolean }) {
+function Lamp({ on, scale = 1 }: { on: boolean; scale?: number }) {
   return (
-    <g transform={`translate(${LAMP.cx} ${LAMP.cy})`}>
+    <g transform={`translate(${LAMP.cx} ${LAMP.cy}) scale(${scale})`}>
       {/* downward halo cone over the name */}
       {on && (
         <ellipse
@@ -905,12 +917,15 @@ function CircuitHero() {
   const [hoverPulseId, setHoverPulseId] = useState(0);
   const [pressed, setPressed] = useState(false);
   const isMobile = useIsMobile();
-  // On mobile, focus the viewBox on the meaningful widgets (lamp on the
-  // left, portrait + signal button on the right) and switch to `meet` so
-  // nothing important gets cropped. Desktop keeps the wide cinematic crop.
-  const mobileViewBox = `260 220 1100 560`;
+  // On mobile, compose a tighter hero board so the portrait, lamp, and button
+  // are intentionally placed instead of relying on the wide desktop crop.
+  const mobileViewBox = `120 190 1120 640`;
   const viewBox = isMobile ? mobileViewBox : `0 0 ${VB_W} ${VB_H}`;
   const preserve = isMobile ? "xMidYMid meet" : "xMidYMid slice";
+  const buttonPad = isMobile ? MOBILE_BUTTON_PAD : BUTTON_PAD;
+  const signalD = isMobile
+    ? `M ${MOBILE_BUTTON_PAD.x} ${MOBILE_BUTTON_PAD.y} H 700 V 520 H ${MOBILE_LAMP.cx} V ${MOBILE_LAMP.cy + LAMP.h / 2 + 14}`
+    : SIGNAL_D;
   const timers = useRef<number[]>([]);
   const clearAllTimers = () => {
     timers.current.forEach((t) => window.clearTimeout(t));
@@ -964,7 +979,7 @@ function CircuitHero() {
         className="pointer-events-none absolute left-0 right-0 z-[1]"
         style={
           isMobile
-            ? { top: "96px", height: "44vh" }
+            ? { top: "74px", height: "43vh" }
             : { top: 0, bottom: 0 }
         }
       >
@@ -1015,7 +1030,7 @@ function CircuitHero() {
           <g>
             {/* Base signal trace: button (S1) → lamp (D1) */}
             <path
-              d={SIGNAL_D}
+              d={signalD}
               fill="none"
               stroke="#3a3a3a"
               strokeOpacity={0.55}
@@ -1030,7 +1045,7 @@ function CircuitHero() {
             {/* Progressive signal fill: button → lamp, one continuous line
                 that fills via stroke-dashoffset. */}
             <path
-              d={SIGNAL_D}
+              d={signalD}
               fill="none"
               stroke="#fbbf24"
               strokeOpacity={signaling || lampOn ? 1 : 0}
@@ -1051,51 +1066,53 @@ function CircuitHero() {
 
             {/* Vias at every real bend in the signal path */}
             <g className="hero-part-in" style={{ animationDelay: "1.7s" }}>
-              <circle cx={BUTTON_PAD.x} cy={740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-              <circle cx={700} cy={740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-              <circle cx={700} cy={470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-              <circle cx={340} cy={470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={isMobile ? MOBILE_BUTTON_PAD.x : BUTTON_PAD.x} cy={isMobile ? 500 : 740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={700} cy={isMobile ? 520 : 740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={700} cy={isMobile ? 520 : 470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={isMobile ? MOBILE_LAMP.cx : 340} cy={isMobile ? 520 : 470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
             </g>
 
             {/* Leading dot — travels along SIGNAL with the fill */}
             {signaling && pulseId > 0 && (
               <g key={`dis-${pulseId}`} style={{ pointerEvents: "none" }}>
                 <circle r={3.4} fill="#fff4d6">
-                  <animateMotion dur={`${SIGNAL_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={SIGNAL_D} />
+                  <animateMotion dur={`${SIGNAL_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={signalD} />
                 </circle>
                 <circle r={8} fill="rgba(251,191,36,0.45)">
-                  <animateMotion dur={`${SIGNAL_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={SIGNAL_D} />
+                  <animateMotion dur={`${SIGNAL_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={signalD} />
                 </circle>
               </g>
             )}
 
             <g className="hero-part-in" style={{ animationDelay: "1.6s" }}>
-              <Lamp on={lampOn} />
+              <g transform={isMobile ? `translate(${MOBILE_LAMP.cx - LAMP.cx} ${MOBILE_LAMP.cy - LAMP.cy})` : undefined}>
+                <Lamp on={lampOn} scale={isMobile ? 1.8 : 1} />
+              </g>
             </g>
           </g>
 
           {/* layer 3: portrait module — always visible, above mask */}
-          <PortraitModule />
+          <PortraitModule mobile={isMobile} />
 
           {/* hardware-style trigger button under the portrait */}
           <g className="hero-part-in" style={{ animationDelay: "1.8s" }}>
             {/* button pad + leg into the routed trace */}
             <line
-              x1={BUTTON_PAD.x}
-              y1={620}
-              x2={BUTTON_PAD.x}
-              y2={BUTTON_PAD.y}
+              x1={buttonPad.x}
+              y1={isMobile ? buttonPad.y - 70 : 620}
+              x2={buttonPad.x}
+              y2={buttonPad.y}
               stroke="#3a3a3a"
               strokeWidth={1.2}
             />
-            <circle cx={BUTTON_PAD.x} cy={BUTTON_PAD.y} r={3.5} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.9} />
+            <circle cx={buttonPad.x} cy={buttonPad.y} r={3.5} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.9} />
             {/* idle invite-pulse around the button pad (always on, restrained).
                 Intensifies on hover. */}
             {!signaling && !lampOn && (
               <g style={{ pointerEvents: "none" }}>
                 <circle
-                  cx={BUTTON_PAD.x}
-                  cy={BUTTON_PAD.y}
+                  cx={buttonPad.x}
+                  cy={buttonPad.y}
                   r={6}
                   fill="none"
                   stroke={hovering ? "#fbbf24" : "#6a6a6a"}
@@ -1116,8 +1133,8 @@ function CircuitHero() {
                   />
                 </circle>
                 <circle
-                  cx={BUTTON_PAD.x}
-                  cy={BUTTON_PAD.y}
+                  cx={buttonPad.x}
+                  cy={buttonPad.y}
                   r={6}
                   fill="none"
                   stroke={hovering ? "#fbbf24" : "#6a6a6a"}
@@ -1142,8 +1159,8 @@ function CircuitHero() {
               </g>
             )}
             <foreignObject
-              x={BUTTON_PAD.x - 110}
-              y={585}
+              x={buttonPad.x - 110}
+              y={isMobile ? buttonPad.y - 70 : 585}
               width={220}
               height={140}
               style={{ overflow: "visible", pointerEvents: "auto" }}
