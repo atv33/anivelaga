@@ -1160,8 +1160,8 @@ function CircuitHero() {
               </g>
             )}
             <foreignObject
-              x={BUTTON_PAD.x - 110}
-              y={585}
+              x={buttonPad.x - 110}
+              y={isMobile ? buttonPad.y - 70 : 585}
               width={220}
               height={140}
               style={{ overflow: "visible", pointerEvents: "auto" }}
