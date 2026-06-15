@@ -232,10 +232,10 @@ function Index() {
         <div id="hero">
           <Hero />
         </div>
+        <About />
+        <PcbDivider />
         <Ticker />
         <Work />
-        <PcbDivider />
-        <About />
         <PcbDivider />
         <Experience />
         <PcbDivider />
@@ -853,19 +853,13 @@ function CircuitHero() {
   const isTablet = bp === "tablet";
   // On mobile, compose a tighter hero board so the portrait, lamp, and button
   // are intentionally placed instead of relying on the wide desktop crop.
-  const mobileViewBox = `30 180 980 980`;
-  const viewBox = isMobile ? mobileViewBox : `0 0 ${VB_W} ${VB_H}`;
-  // Tablet: keep the desktop composition but contain (no slice) so the
-  // portrait on the right is never clipped off-screen.
-  const preserve = isMobile
-    ? "xMidYMid meet"
-    : isTablet
-      ? "xMidYMin meet"
-      : "xMidYMid slice";
-  const buttonPad = isMobile ? MOBILE_BUTTON_PAD : BUTTON_PAD;
-  const signalD = isMobile
-    ? `M ${MOBILE_BUTTON_PAD.x} ${MOBILE_BUTTON_PAD.y} H ${MOBILE_SIGNAL_BUS_X} V ${MOBILE_TRACE_TOP_Y} H ${MOBILE_LAMP.cx} V ${MOBILE_LAMP.cy + (LAMP.h / 2 + 14) * MOBILE_LAMP_SCALE}`
-    : SIGNAL_D;
+  // One composition across all breakpoints — text-first hero. Mobile/tablet
+  // scale the desktop circuit board down with `meet` and anchor to the top so
+  // the headline sits in a clean band below.
+  const viewBox = `0 0 ${VB_W} ${VB_H}`;
+  const preserve = isMobile || isTablet ? "xMidYMin meet" : "xMidYMid slice";
+  const buttonPad = BUTTON_PAD;
+  const signalD = SIGNAL_D;
   const timers = useRef<number[]>([]);
   const clearAllTimers = () => {
     timers.current.forEach((t) => window.clearTimeout(t));
@@ -917,11 +911,7 @@ function CircuitHero() {
       {/* layer 2: circuit SVG */}
       <div
         className="pointer-events-none absolute left-0 right-0 z-[1]"
-        style={
-          isMobile
-            ? { top: "60px", height: "58vh" }
-            : { top: 0, bottom: 0 }
-        }
+        style={{ top: 0, bottom: 0 }}
       >
         <svg
           viewBox={viewBox}
@@ -943,8 +933,6 @@ function CircuitHero() {
             </radialGradient>
             <mask id="heroTraceMask" maskUnits="userSpaceOnUse" x="0" y="0" width={VB_W} height={VB_H}>
               <rect x="0" y="0" width={VB_W} height={VB_H} fill="url(#heroTextFade)" />
-              {/* always keep the portrait region fully visible */}
-              <rect x={PORT.x - 60} y={PORT.y - 60} width={PORT.w + 120} height={PORT.h + 120} fill="white" />
             </mask>
           </defs>
 
@@ -1005,12 +993,12 @@ function CircuitHero() {
             />
 
             {/* Vias at every real bend in the signal path */}
-            <g className="hero-part-in" style={{ animationDelay: "1.7s" }}>
-              <circle cx={isMobile ? MOBILE_BUTTON_PAD.x : BUTTON_PAD.x} cy={isMobile ? MOBILE_BUTTON_PAD.y : 740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-              <circle cx={isMobile ? MOBILE_SIGNAL_BUS_X : 700} cy={isMobile ? MOBILE_BUTTON_PAD.y : 740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-              <circle cx={isMobile ? MOBILE_SIGNAL_BUS_X : 700} cy={isMobile ? MOBILE_TRACE_TOP_Y : 470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-              <circle cx={isMobile ? MOBILE_LAMP.cx : 340} cy={isMobile ? MOBILE_TRACE_TOP_Y : 470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-              <circle cx={isMobile ? MOBILE_LAMP.cx : 340} cy={isMobile ? MOBILE_LAMP.cy + (LAMP.h / 2 + 14) * MOBILE_LAMP_SCALE : 470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+          <g className="hero-part-in" style={{ animationDelay: "1.7s" }}>
+              <circle cx={BUTTON_PAD.x} cy={740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={700} cy={740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={700} cy={470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={340} cy={470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={340} cy={470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
             </g>
 
             {/* Leading dot — travels along SIGNAL with the fill */}
@@ -1026,29 +1014,16 @@ function CircuitHero() {
             )}
 
             <g className="hero-part-in" style={{ animationDelay: "1.6s" }}>
-              <g transform={isMobile ? `translate(${MOBILE_LAMP.cx - LAMP.cx} ${MOBILE_LAMP.cy - LAMP.cy})` : undefined}>
-                <Lamp on={lampOn} scale={isMobile ? MOBILE_LAMP_SCALE : 1} />
-              </g>
+              <Lamp on={lampOn} scale={1} />
             </g>
           </g>
-
-          {/* layer 3: portrait module — always visible, above mask */}
-          {isMobile && (
-            <g fill="none" stroke="#333" strokeOpacity={0.62} strokeWidth={1.25} strokeLinecap="square" strokeLinejoin="round">
-              <path d={`M ${MOBILE_PORT.x + MOBILE_PORT.w} ${MOBILE_PORT.y + 130} H ${MOBILE_SIGNAL_BUS_X}`} />
-              <path d={`M ${MOBILE_PORT.x + MOBILE_PORT.w} ${MOBILE_PORT.y + 260} H ${MOBILE_SIGNAL_BUS_X}`} />
-              <path d={`M ${MOBILE_PORT.x + MOBILE_PORT.w} ${MOBILE_PORT.y + 390} H ${MOBILE_SIGNAL_BUS_X}`} />
-              <path d={`M ${MOBILE_PORT.x + MOBILE_PORT.w / 2} ${MOBILE_PORT.y} V ${MOBILE_TRACE_TOP_Y} H ${MOBILE_SIGNAL_BUS_X}`} />
-            </g>
-          )}
-          <PortraitModule mobile={isMobile} />
 
           {/* hardware-style trigger button under the portrait */}
           <g className="hero-part-in" style={{ animationDelay: "1.8s" }}>
             {/* button pad + leg into the routed trace */}
             <line
               x1={buttonPad.x}
-              y1={isMobile ? buttonPad.y - 70 : 620}
+              y1={620}
               x2={buttonPad.x}
               y2={buttonPad.y}
               stroke="#3a3a3a"
@@ -1109,7 +1084,7 @@ function CircuitHero() {
             )}
             <foreignObject
               x={buttonPad.x - 110}
-              y={isMobile ? buttonPad.y - 70 : 585}
+              y={585}
               width={220}
               height={140}
               style={{ overflow: "visible", pointerEvents: "auto" }}
@@ -2415,43 +2390,45 @@ function ThrusterViewer() {
 
 function About() {
   return (
-    <section id="about" className="mx-auto max-w-6xl px-6 py-28 sm:px-10 sm:py-40">
-      <SectionHeader index="02" kicker="About" title="Who I am." />
-      <div className="mt-20 grid gap-16 sm:grid-cols-12">
-        <div className="sm:col-span-7">
-          <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-start sm:gap-8">
+    <section
+      id="about"
+      className="relative mx-auto max-w-6xl px-6 py-24 sm:px-10 sm:py-32"
+    >
+      <SectionHeader index="02" kicker="About" title="About Me." />
+      <div className="mt-16 grid gap-10 md:grid-cols-12 md:gap-14">
+        <div className="md:col-span-5">
+          <div className="mx-auto w-full max-w-[440px] md:max-w-none">
             <img
               src={headshotAsset.url}
               alt="Ani Velaga"
-              width={180}
-              height={180}
-              className="size-[180px] shrink-0 object-cover border border-border"
-              style={{ borderRadius: "50%" }}
+              className="block h-auto w-full border border-border object-cover"
+              style={{ aspectRatio: "4 / 5" }}
+              loading="lazy"
             />
-            <div>
-              <p className="text-lg leading-relaxed text-ink-dim">
-            I'm an electrical and computer engineering student at Cornell, currently on CUAUV —
-            Cornell's autonomous underwater vehicle team. I design production PCBs in Altium
-            Designer: 4-layer stackups, differential pair routing, ESD protection, high-speed USB.
-            The submarine goes in real water, so the boards have to work.
-              </p>
-              <p className="mt-6 text-lg leading-relaxed text-ink-dim">
+          </div>
+        </div>
+        <div className="md:col-span-7">
+          <p className="text-base leading-relaxed text-ink-dim sm:text-lg">
+            I'm an electrical and computer engineering student at Cornell, currently on
+            CUAUV — Cornell's autonomous underwater vehicle team. I design production PCBs in
+            Altium Designer: 4-layer stackups, differential pair routing, ESD protection,
+            high-speed USB. The submarine goes in real water, so the boards have to work.
+          </p>
+          <p className="mt-6 text-base leading-relaxed text-ink-dim sm:text-lg">
             My work runs from board-level hardware through the networking stack up into LLM
             inference systems. I care about the full path: what the silicon is doing, how data
             moves between nodes, and where inference bottlenecks actually live. I'm looking for
             roles where that end-to-end view matters.
-              </p>
+          </p>
+          <div className="mt-10">
+            <div className="font-mono text-xs uppercase tracking-[0.28em] text-ink-faint">
+              Skills
             </div>
-          </div>
-        </div>
-        <div className="sm:col-span-5 sm:pl-12">
-          <div className="font-mono text-xs uppercase tracking-[0.28em] text-ink-faint">
-            Skills
-          </div>
-          <div className="mt-5 flex flex-wrap gap-2">
-            {SKILLS.map((s) => (
-              <span key={s} className="tag-pill">{s}</span>
-            ))}
+            <div className="mt-4 flex flex-wrap gap-2">
+              {SKILLS.map((s) => (
+                <span key={s} className="tag-pill">{s}</span>
+              ))}
+            </div>
           </div>
         </div>
       </div>
