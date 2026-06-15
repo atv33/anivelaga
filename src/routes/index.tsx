@@ -1198,9 +1198,7 @@ function CircuitHero() {
   const built = useMemo(() => buildCircuit(seed), [seed]);
   const pulses = built.traces.filter((t) => t.pulse);
   const [lampOn, setLampOn] = useState(false);
-  const [charging, setCharging] = useState(false);
-  const [closing, setClosing] = useState(false);
-  const [discharging, setDischarging] = useState(false);
+  const [signaling, setSignaling] = useState(false);
   const [hovering, setHovering] = useState(false);
   const [pulseId, setPulseId] = useState(0);
   const [hoverPulseId, setHoverPulseId] = useState(0);
@@ -1215,46 +1213,32 @@ function CircuitHero() {
     clearAllTimers();
     setPressed(true);
     timers.current.push(window.setTimeout(() => setPressed(false), 180));
-    if (lampOn || charging) {
+    if (lampOn || signaling) {
       setLampOn(false);
-      setCharging(false);
-      setClosing(false);
-      setDischarging(false);
+      setSignaling(false);
       return;
     }
     setPulseId((n) => n + 1);
-    setCharging(true);
-    // 1) switch closes — brief flash on the PRE segment (button → cap)
-    setClosing(true);
+    // signal travels along SIGNAL_D from button to lamp
+    setSignaling(true);
+    // lamp lights when signal front reaches it
     timers.current.push(
-      window.setTimeout(() => setClosing(false), SWITCH_CLOSE_MS),
+      window.setTimeout(() => setLampOn(true), SIGNAL_DUR_MS),
     );
-    // 2) cap discharges through POST segment (cap → lamp)
-    timers.current.push(
-      window.setTimeout(() => setDischarging(true), SWITCH_CLOSE_MS),
-    );
-    // 3) lamp lights when discharge front reaches it
-    timers.current.push(
-      window.setTimeout(
-        () => setLampOn(true),
-        SWITCH_CLOSE_MS + DISCHARGE_DUR_MS,
-      ),
-    );
-    // 4) settle: lamp off, recharging resumes
+    // settle: lamp off
     timers.current.push(
       window.setTimeout(
         () => {
           setLampOn(false);
-          setCharging(false);
-          setDischarging(false);
+          setSignaling(false);
         },
-        SWITCH_CLOSE_MS + DISCHARGE_DUR_MS + 4000,
+        SIGNAL_DUR_MS + 4000,
       ),
     );
   };
 
   const onButtonEnter = () => {
-    if (charging || lampOn) return;
+    if (signaling || lampOn) return;
     setHovering(true);
     setHoverPulseId((n) => n + 1);
   };
