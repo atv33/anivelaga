@@ -1247,9 +1247,8 @@ function CircuitHero() {
                     border: "1px solid #2c2c2c",
                     borderRadius: 3,
                     display: "flex",
-                    alignItems: "flex-end",
+                    alignItems: "center",
                     justifyContent: "center",
-                    paddingBottom: 8,
                     position: "relative",
                   }}
                 >
@@ -1275,10 +1274,14 @@ function CircuitHero() {
                   ))}
                   <span
                     style={{
+                      display: "block",
+                      textAlign: "center",
+                      lineHeight: 1,
                       fontFamily:
                         "JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, monospace",
-                      fontSize: 10,
-                      letterSpacing: "0.22em",
+                      fontSize: 11,
+                      letterSpacing: "0.24em",
+                      paddingLeft: "0.24em",
                       textTransform: "uppercase",
                       color:
                         lampOn || charging
