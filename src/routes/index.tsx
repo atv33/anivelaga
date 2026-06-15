@@ -681,9 +681,9 @@ function StatusLamp({ on }: { on: boolean }) {
       <rect x={-20} y={LAMP.h / 2} width={7} height={5} fill="#262626" stroke="#3d3d3d" strokeWidth={0.5} />
       <rect x={13}  y={LAMP.h / 2} width={7} height={5} fill="#262626" stroke="#3d3d3d" strokeWidth={0.5} />
       <line x1={0} y1={LAMP.h / 2} x2={0} y2={LAMP.h / 2 + 14} stroke="#3d3d3d" strokeWidth={1} />
-      <rect x={-LAMP.w / 2} y={-LAMP.h / 2} width={LAMP.w} height={LAMP.h} rx={7} fill="#0e0e0e" stroke="#3d3d3d" strokeWidth={1} />
-      <text x={LAMP.w / 2 - 5} y={-LAMP.h / 2 - 4} fill="#555" fontFamily="ui-monospace, monospace" fontSize={7} textAnchor="end">D1</text>
-      <circle r={11} fill={on ? "#fbbf24" : "#181818"} stroke={on ? "#fde68a" : "#5a5a5a"} strokeWidth={1} style={{ transition: "fill 250ms ease, stroke 250ms ease" }} />
+      <rect x={-LAMP.w / 2} y={-LAMP.h / 2} width={LAMP.w} height={LAMP.h} rx={9} fill="#0e0e0e" stroke="#5a5a5a" strokeWidth={1.2} />
+      <text x={LAMP.w / 2 - 6} y={-LAMP.h / 2 - 4} fill="#7a7a7a" fontFamily="ui-monospace, monospace" fontSize={9} textAnchor="end" letterSpacing="0.2em">D1</text>
+      <circle r={15} fill={on ? "#fbbf24" : "#1f1a14"} stroke={on ? "#fde68a" : "#7a6a3a"} strokeWidth={1.4} style={{ transition: "fill 250ms ease, stroke 250ms ease" }} />
       {on && (
         <g style={{ pointerEvents: "none" }}>
           <circle r={16} fill="#fbbf24" opacity={0.45} />
