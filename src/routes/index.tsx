@@ -1674,7 +1674,13 @@ function CategoryBlock({ category: c }: { category: Category }) {
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-dim">{c.intro}</p>
         </div>
       </div>
-      <ul className="mt-12 divide-y divide-border border-y border-border">
+      <ul
+        className={
+          c.id === "01"
+            ? "mt-12 grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+            : "mt-12 divide-y divide-border border-y border-border"
+        }
+      >
         {c.projects.map((p, i) => {
           // Serial Test Board (01.B) is rendered as a sub-project inside the Serial Board (01.A) card.
           if (c.id === "01" && p.id === "B") return null;
@@ -1695,20 +1701,20 @@ function CategoryBlock({ category: c }: { category: Category }) {
                     borderRadius: 2,
                   }}
                 >
-                  <div className="flex flex-col lg:flex-row" style={{ minHeight: 160 }}>
-                    <div className="lg:w-1/2">
+                  <div className="flex flex-col">
+                    <div
+                      className="w-full"
+                      style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", minHeight: 140 }}
+                    >
+                      <InlineSerialModel embedded src={SERIAL_INLINE_GLB} />
+                    </div>
+                    <div className="w-full">
                       <ProjectRow
                         project={p}
                         categoryId={c.id}
                         onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
                         bare
                       />
-                    </div>
-                    <div
-                      className="lg:w-1/2"
-                      style={{ borderLeft: "1px solid rgba(255,255,255,0.06)" }}
-                    >
-                      <InlineSerialModel embedded src={SERIAL_INLINE_GLB} />
                     </div>
                   </div>
                   {testBoard ? (
@@ -1731,20 +1737,20 @@ function CategoryBlock({ category: c }: { category: Category }) {
                     borderRadius: 2,
                   }}
                 >
-                  <div className="flex flex-col lg:flex-row" style={{ minHeight: 160 }}>
-                    <div className="lg:w-1/2">
+                  <div className="flex flex-col">
+                    <div
+                      className="w-full"
+                      style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", minHeight: 140 }}
+                    >
+                      <InlineSerialModel embedded src={THRUSTER_INLINE_GLB} idleElevation={15} />
+                    </div>
+                    <div className="w-full">
                       <ProjectRow
                         project={p}
                         categoryId={c.id}
                         onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
                         bare
                       />
-                    </div>
-                    <div
-                      className="lg:w-1/2"
-                      style={{ borderLeft: "1px solid rgba(255,255,255,0.06)" }}
-                    >
-                      <InlineSerialModel embedded src={THRUSTER_INLINE_GLB} idleElevation={15} />
                     </div>
                   </div>
                 </div>
@@ -1800,17 +1806,19 @@ function ProjectRow({
             }
           : undefined
       }
-      className={`group grid grid-cols-12 items-baseline transition-colors ${
-        bare ? "gap-3 py-3 px-4" : "gap-6 py-10"
+      className={`group transition-colors ${
+        bare
+          ? "flex flex-col gap-2 py-3 px-4"
+          : "grid grid-cols-12 items-baseline gap-6 py-10"
       } ${
         p.comingSoon ? "opacity-50" : ""
       } ${clickable ? (bare ? "cursor-pointer" : "cursor-pointer hover:bg-secondary/40 -mx-4 px-4 rounded-sm transition-transform duration-200 hover:scale-[1.02]") : ""}`}
     >
-      <div className={`col-span-12 font-mono uppercase tracking-[0.25em] text-ink-faint sm:col-span-2 ${bare ? "text-[10px]" : "text-xs"}`}>
+      <div className={`font-mono uppercase tracking-[0.25em] text-ink-faint ${bare ? "text-[10px]" : "col-span-12 text-xs sm:col-span-2"}`}>
         {categoryId}.{p.id}
         {p.year ? <> / {p.year}</> : null}
       </div>
-      <div className="col-span-12 sm:col-span-7">
+      <div className={bare ? "" : "col-span-12 sm:col-span-7"}>
         <h4 className={`font-display font-bold tracking-tight text-foreground ${bare ? "text-base sm:text-lg" : "text-2xl sm:text-3xl"}`}>
           {p.name}
           {p.comingSoon ? (
@@ -1853,7 +1861,7 @@ function ProjectRow({
         ) : null}
       </div>
       <div
-        className="col-span-12 flex flex-wrap gap-6 text-sm sm:col-span-3 sm:justify-end"
+        className={`flex flex-wrap text-sm ${bare ? "gap-3" : "col-span-12 gap-6 sm:col-span-3 sm:justify-end"}`}
         onClick={(e) => e.stopPropagation()}
       >
         {p.links?.map((l) => (
@@ -1903,7 +1911,7 @@ function SubProjectRow({
       style={{
         borderTop: "1px solid rgba(255,255,255,0.06)",
       }}
-      className="flex flex-col lg:flex-row"
+      className="flex flex-col"
     >
       <div
         onClick={onOpen}
@@ -1919,7 +1927,7 @@ function SubProjectRow({
               }
             : undefined
         }
-        className={`lg:w-1/2 px-4 py-3 ${clickable ? "cursor-pointer" : ""}`}
+        className={`w-full px-4 py-3 ${clickable ? "cursor-pointer" : ""}`}
       >
         <div className="font-mono text-[9px] uppercase tracking-[0.28em] text-ink-faint">
           ↳ Sub-project &nbsp;·&nbsp; {categoryId}.{p.id}
@@ -1945,8 +1953,8 @@ function SubProjectRow({
         ) : null}
       </div>
       <div
-        className="lg:w-1/2"
-        style={{ borderLeft: "1px solid rgba(255,255,255,0.06)", minHeight: 120 }}
+        className="w-full"
+        style={{ borderTop: "1px solid rgba(255,255,255,0.06)", minHeight: 120 }}
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ width: "100%", height: "100%", minHeight: 120 }} className="overflow-hidden">
