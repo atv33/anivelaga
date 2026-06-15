@@ -554,6 +554,34 @@ function buildCircuit(seed: number): Built {
     add("FR4", [{x:660,y},{x:x3,y},{x:x3,y:y-irand(40,80)}], 1.0, 0.28);
     addVia({x:x3, y:y-60});
   }
+  // Lower-left run from text-zone edge eastward then down off-canvas
+  {
+    const y = irand(820, 860);
+    const x = irand(900, 1020);
+    add("FR5", [{x:860,y},{x,y},{x,y:900}], 1.0, 0.30);
+  }
+  // Upper-left bus: connects CHIP_C left side area up to top edge
+  {
+    const x = irand(140, 220);
+    const y = irand(60, 110);
+    add("FR6", [{x:0,y},{x,y},{x,y:irand(200,260)}], 1.0, 0.30);
+    addVia({x, y:irand(200,260)});
+  }
+  // Mid-right secondary: from EDGE_R area inward to a CHIP_A right pin region
+  {
+    const y = irand(420, 470);
+    const x = irand(1080, 1170);
+    add("FR7", [{x:1540,y},{x,y},{x,y:y-irand(50,90)}], 1.0, 0.28);
+    addVia({x, y:y-70});
+  }
+  // Top-mid: header-area outward bus going right
+  {
+    const y = irand(40, 80);
+    const x1 = irand(820, 880);
+    const x2 = irand(980, 1060);
+    add("FR8", [{x:x1,y:0},{x:x1,y},{x:x2,y},{x:x2,y:irand(120,160)}], 1.0, 0.28);
+    addVia({x:x2, y:irand(120,160)});
+  }
 
   // ── Inline parts placed on actual segments (text-zone + chip keep-out) ──
   const KEEP_OUT: { x:number; y:number; w:number; h:number }[] = [
@@ -1224,15 +1252,15 @@ function CircuitHero() {
                 <style>{`
                   @keyframes hwBoxPulse {
                     0%, 100% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 0 0 rgba(251,191,36,0); border-color: #2c2c2c; }
-                    50%      { box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 0 14px rgba(251,191,36,0.10); border-color: #3a3a3a; }
+                    50%      { box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 0 22px rgba(251,191,36,0.18); border-color: #4a4030; }
                   }
                   @keyframes hwBtnBob {
                     0%, 100% { transform: translateY(0); }
-                    50%      { transform: translateY(-2px); }
+                    50%      { transform: translateY(-5px); }
                   }
-                  .hw-module { animation: hwBoxPulse 2.8s ease-in-out infinite; }
-                  .hw-module.is-hot { animation-duration: 1.4s; }
-                  .hw-btn-wrap { animation: hwBtnBob 2.8s ease-in-out infinite; }
+                  .hw-module { animation: hwBoxPulse 2.0s ease-in-out infinite; }
+                  .hw-module.is-hot { animation-duration: 1.2s; }
+                  .hw-btn-wrap { animation: hwBtnBob 1.8s ease-in-out infinite; }
                   .hw-btn-wrap.is-pressed { animation: none; }
                 `}</style>
 
@@ -1342,10 +1370,10 @@ function CircuitHero() {
                     aria-pressed={lampOn}
                     style={{
                       position: "relative",
-                      width: 52,
-                      height: 26,
+                      width: 56,
+                      height: 16,
                       marginBottom: 6,
-                      borderRadius: 4,
+                      borderRadius: 3,
                       border: "none",
                       padding: 0,
                       cursor: "pointer",
@@ -1372,15 +1400,15 @@ function CircuitHero() {
                         left: 2,
                         right: 2,
                         top: 2,
-                        bottom: 4,
-                        borderRadius: 3,
+                        bottom: 3,
+                        borderRadius: 2,
                         background:
                           "linear-gradient(180deg, #ff5a5a 0%, #e02a2a 45%, #a51414 100%)",
                         boxShadow: pressed
                           ? "inset 0 2px 3px rgba(0,0,0,0.5), inset 0 -1px 1px rgba(255,255,255,0.04)"
                           : "inset 0 -2px 3px rgba(0,0,0,0.45), inset 0 1px 1px rgba(255,255,255,0.22)",
                         transform: pressed
-                          ? "translateY(2px)"
+                          ? "translateY(1.5px)"
                           : "translateY(0)",
                         transition:
                           "transform 100ms ease, box-shadow 200ms ease",
@@ -1391,10 +1419,10 @@ function CircuitHero() {
                       aria-hidden
                       style={{
                         position: "absolute",
-                        top: 4,
+                        top: 3,
                         left: 6,
                         right: 6,
-                        height: 3,
+                        height: 2,
                         borderRadius: 2,
                         background:
                           "linear-gradient(180deg, rgba(255,255,255,0.55), rgba(255,255,255,0))",
