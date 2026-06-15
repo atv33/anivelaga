@@ -321,14 +321,14 @@ function buildCircuit(_seed: number): Built {
   // ── Portrait LEFT pads (x=1052) — buses out to chips / header ──
   // L1 y=296 → top header pin (922,20), routed north over CHIP_A
   add("L1", [{x:1052,y:296},{x:984,y:296},{x:984,y:72},{x:922,y:72},{x:922,y:20}], 1.5, 0.55, 6200);
-  // L2 y=332 → CHIP_A right pin (824,134)
-  add("L2", [{x:1052,y:332},{x:984,y:332},{x:984,y:134},{x:824,y:134}], 1.25, 0.5);
-  // L3 y=368 → CHIP_A right pin (824,158)
-  add("L3", [{x:1052,y:368},{x:960,y:368},{x:960,y:158},{x:824,y:158}], 1.25, 0.5, 7400);
-  // L4 y=404 → CHIP_B right pin (640,400)
-  add("L4", [{x:1052,y:404},{x:912,y:404},{x:912,y:400},{x:640,y:400}], 1.25, 0.5);
-  // L5 y=440 → CHIP_B right pin (640,420)
-  add("L5", [{x:1052,y:440},{x:936,y:440},{x:936,y:420},{x:640,y:420}], 1.0, 0.45);
+  // L2 y=332 → CHIP_A right pin tip (828,134)
+  add("L2", [{x:1052,y:332},{x:984,y:332},{x:984,y:134},{x:828,y:134}], 1.25, 0.5);
+  // L3 y=368 → CHIP_A right pin tip (828,158)
+  add("L3", [{x:1052,y:368},{x:960,y:368},{x:960,y:158},{x:828,y:158}], 1.25, 0.5, 7400);
+  // L4 y=404 → CHIP_B right pin tip (644,400)
+  add("L4", [{x:1052,y:404},{x:912,y:404},{x:912,y:400},{x:644,y:400}], 1.25, 0.5);
+  // L5 y=440 → CHIP_B right pin tip (644,420)
+  add("L5", [{x:1052,y:440},{x:936,y:440},{x:936,y:420},{x:644,y:420}], 1.0, 0.45);
   // L6 y=476 → CHIP_D top pin (808,484)
   add("L6", [{x:1052,y:476},{x:984,y:476},{x:984,y:484},{x:808,y:484}], 1.25, 0.5);
   // L7 y=512 → CHIP_D top pin (872,484)
@@ -369,14 +369,14 @@ function buildCircuit(_seed: number): Built {
   add("FA1", [{x:938,y:20},{x:938,y:72},{x:752,y:72},{x:752,y:106}], 1.0, 0.4);
 
   // ── CHIP_C fanout (upper-left chip) ──
-  // C1 top pin (404,240) → canvas top
-  add("C1", [{x:404,y:240},{x:404,y:72},{x:312,y:72},{x:312,y:0}], 1.0, 0.4);
-  // C2 left pin (380,262) → canvas left
-  add("C2", [{x:380,y:262},{x:264,y:262},{x:264,y:168},{x:0,y:168}], 1.0, 0.4);
-  // C3 bottom pin (404,306) → CHIP_B top pin (560,380)
-  add("C3", [{x:404,y:306},{x:404,y:360},{x:560,y:360},{x:560,y:380}], 1.0, 0.4);
-  // C4 top pin (452,240) → CHIP_A left pin (680,134)
-  add("C4", [{x:452,y:240},{x:452,y:134},{x:680,y:134}], 1.0, 0.42);
+  // C1 top pin tip (404,236) → canvas top
+  add("C1", [{x:404,y:236},{x:404,y:72},{x:312,y:72},{x:312,y:0}], 1.0, 0.4);
+  // C2 left pin tip (376,262) → canvas left
+  add("C2", [{x:376,y:262},{x:264,y:262},{x:264,y:168},{x:0,y:168}], 1.0, 0.4);
+  // C3 bottom pin tip (404,310) → CHIP_B top pin tip (560,376)
+  add("C3", [{x:404,y:310},{x:404,y:360},{x:560,y:360},{x:560,y:376}], 1.0, 0.4);
+  // C4 top pin tip (452,236) → CHIP_A left pin tip (676,134)
+  add("C4", [{x:452,y:236},{x:452,y:134},{x:676,y:134}], 1.0, 0.42);
 
   return { traces, vias: [], parts: [] };
 }
