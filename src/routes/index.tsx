@@ -1717,11 +1717,11 @@ function Work() {
               exit={{ opacity: 0, y: 8 }}
               transition={{ duration: 0.35, ease: "easeOut" }}
             >
-              <div className="mb-8 flex flex-wrap items-center gap-3">
+              <div className="relative mb-8 flex flex-wrap items-center justify-center gap-3">
                 <button
                   type="button"
                   onClick={() => setSelected(null)}
-                  className="inline-flex items-center gap-2 rounded-sm border border-rule px-3 py-2 font-mono text-[11px] uppercase tracking-[0.25em] text-ink-dim transition-all hover:border-mark hover:text-mark"
+                  className="inline-flex items-center gap-2 rounded-sm border border-rule px-3 py-2 font-mono text-[11px] uppercase tracking-[0.25em] text-ink-dim transition-all hover:border-mark hover:text-mark sm:absolute sm:left-0"
                 >
                   <span>←</span>
                   <span>Back</span>
@@ -1775,18 +1775,16 @@ function CategoryBlock({ category: c }: { category: Category }) {
   const openProject = c.projects.find((p) => p.id === openId) ?? null;
   return (
     <div>
-      <div className="grid gap-6 sm:grid-cols-12">
-        <div className="font-mono text-xs uppercase tracking-[0.28em] text-ink-dim sm:col-span-3">
+      <div className="flex flex-col items-center text-center">
+        <div className="font-mono text-xs uppercase tracking-[0.28em] text-ink-dim">
           <span className="text-mark">{c.id}</span> / Category
         </div>
-        <div className="sm:col-span-9">
-          <h3 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
-            {c.label}
-          </h3>
-          {c.intro ? (
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-dim">{c.intro}</p>
-          ) : null}
-        </div>
+        <h3 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">
+          {c.label}
+        </h3>
+        {c.intro ? (
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-dim">{c.intro}</p>
+        ) : null}
       </div>
       {c.projects.length === 0 ? (
         <div className="mt-12 flex items-center justify-center border-y border-border px-6 py-20">
