@@ -334,10 +334,10 @@ const TRACES: Trace[] = [
   // ── CHIP_C fanout (remaining pin tips) ─────────────────────────────
   { id: "C1", d: "M 404 236 V 60 H 200 V 0",             w: 1.0,  o: 0.4  },               // off-canvas (top)
   { id: "C2", d: "M 376 262 H 0",                        w: 1.0,  o: 0.36 },               // off-canvas (left)
-  { id: "C3", d: "M 404 310 V 400 H 520",                w: 1.0,  o: 0.4  },               // → CHIP_B left pin 1
+  { id: "C3", d: "M 404 310 V 400 H 516",                w: 1.0,  o: 0.4  },               // → CHIP_B left pin 1
 
   // ── CHIP_B fanout (remaining pin tips) ─────────────────────────────
-  { id: "BB1", d: "M 520 420 H 200 V 460 H 0",           w: 1.0,  o: 0.38 },               // off-canvas (left)
+  { id: "BB1", d: "M 516 420 H 200 V 460 H 0",           w: 1.0,  o: 0.38 },               // off-canvas (left)
 ];
 
 // Vias — every coord is either a trace corner, a trace endpoint that is not
@@ -594,7 +594,7 @@ function CircuitTraceLayer() {
     <g>
       {/* secondary chips (rendered before traces so trace endpoints sit on them) */}
       <g opacity="0.85">
-        <SecondaryChip {...CHIP_A} pinsTop={5} pinsBot={5} pinsLeft={3} pinsRight={3} />
+        <SecondaryChip {...CHIP_A} pinsTop={5} pinsBot={5} pinsLeft={2} pinsRight={2} />
         <SecondaryChip {...CHIP_C} pinsTop={3} pinsBot={3} pinsLeft={2} pinsRight={2} />
         <SecondaryChip {...CHIP_B} pinsTop={2} pinsBot={2} pinsLeft={2} pinsRight={2} />
         {/* right-edge connector — partially off-screen */}
