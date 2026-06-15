@@ -275,15 +275,16 @@ const VB_H = 900;
 // Portrait module — central component
 const PORT = { x: 1060, y: 270, w: 260, h: 320 };
 const PORT_INSET = 14;
-// Mobile circuit layout: portrait is the large centerpiece (left-of-center,
-// lower in the frame), lamp sits top-left, button is on the right and routes
-// up & over the portrait into the lamp.
-const MOBILE_PORT = { x: 150, y: 470, w: 620, h: 600 };
-const MOBILE_PORT_INSET = 18;
-const MOBILE_BUTTON_PAD = { x: 960, y: 920 };
-const MOBILE_LAMP = { cx: 230, cy: 240 };
-const MOBILE_LAMP_SCALE = 1.8;
-const MOBILE_TRACE_TOP_Y = 360;
+// Mobile circuit layout: a deliberate phone-first composition. The portrait is
+// slightly smaller and lower-left, with the button close enough to read and a
+// continuous routed bus tying the button, portrait pads, and lamp together.
+const MOBILE_PORT = { x: 120, y: 535, w: 540, h: 520 };
+const MOBILE_PORT_INSET = 16;
+const MOBILE_BUTTON_PAD = { x: 835, y: 835 };
+const MOBILE_LAMP = { cx: 220, cy: 315 };
+const MOBILE_LAMP_SCALE = 1.45;
+const MOBILE_TRACE_TOP_Y = 490;
+const MOBILE_SIGNAL_BUS_X = MOBILE_PORT.x + MOBILE_PORT.w + 20;
 
 // Pin pad layout helpers
 const yPads = [296, 332, 368, 404, 440, 476, 512, 548];     // 8 vertical pad rows (left/right)
