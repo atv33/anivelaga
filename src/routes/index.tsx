@@ -386,12 +386,14 @@ function buildCircuit(seed: number): Built {
   // Bodies that should not get an endpoint via dropped on top of them
   // (chips, headers, edge connectors, control & lamp modules).
   const VIA_BODIES: { x: number; y: number; w: number; h: number; pad: number }[] = [
-    { x: PORT.x, y: PORT.y, w: PORT.w, h: PORT.h, pad: 4 },
-    { x: CHIP_A.x, y: CHIP_A.y, w: CHIP_A.w, h: CHIP_A.h, pad: 8 },
-    { x: CHIP_B.x, y: CHIP_B.y, w: CHIP_B.w, h: CHIP_B.h, pad: 8 },
-    { x: CHIP_C.x, y: CHIP_C.y, w: CHIP_C.w, h: CHIP_C.h, pad: 8 },
-    { x: EDGE_R.x, y: EDGE_R.y, w: EDGE_R.w, h: EDGE_R.h, pad: 6 },
-    { x: HEADER_T.x, y: HEADER_T.y, w: HEADER_T.w, h: HEADER_T.h, pad: 6 },
+    // pad ≥ pin length so trace endpoints landing on a real pad/pin tip
+    // never get an extra via dot dropped on top of the pad.
+    { x: PORT.x, y: PORT.y, w: PORT.w, h: PORT.h, pad: 14 },
+    { x: CHIP_A.x, y: CHIP_A.y, w: CHIP_A.w, h: CHIP_A.h, pad: 10 },
+    { x: CHIP_B.x, y: CHIP_B.y, w: CHIP_B.w, h: CHIP_B.h, pad: 10 },
+    { x: CHIP_C.x, y: CHIP_C.y, w: CHIP_C.w, h: CHIP_C.h, pad: 10 },
+    { x: EDGE_R.x, y: EDGE_R.y, w: EDGE_R.w, h: EDGE_R.h, pad: 10 },
+    { x: HEADER_T.x, y: HEADER_T.y, w: HEADER_T.w, h: HEADER_T.h, pad: 10 },
     // lamp module above the name
     { x: 340 - 28 - 4, y: 320 - 16 - 4, w: 56 + 8, h: 32 + 8, pad: 4 },
     // control module footprint under the portrait
@@ -452,11 +454,8 @@ function buildCircuit(seed: number): Built {
   add("L7", [{x:1052,y:512},{x:L7bx,y:512},{x:L7bx,y:236},{x:452,y:236}], 1.0, 0.4);
 
   // L8 (y=548): occasional NC short stub into a via on a long horizontal trace
-  if (rnd() < 0.4) {
-    const stubX = irand(960, 1020);
-    add("L8", [{x:1052,y:548},{x:stubX,y:548}], 1.0, 0.34);
-    addVia({x:stubX,y:548});
-  }
+  // L8 (y=548): direct pad→chip trace down to CHIP_B top pin (x=560)
+  add("L8", [{x:1052,y:548},{x:680,y:548},{x:680,y:360},{x:560,y:360},{x:560,y:376}], 1.0, 0.38);
 
   // ── Portrait TOP pads ──
   const T1pin = pick([922, 938, 954] as const);
@@ -553,18 +552,9 @@ function buildCircuit(seed: number): Built {
   add("A8", [{x:704,y:186},{x:704,y:A8my},{x:560,y:A8my},{x:560,y:376}], 1.25, 0.45);
 
   // Bonus chip A bottom-pin extension to a via in the mid plane
-  if (rnd() < 0.7) {
-    const ax = irand(820, 920);
-    const ay = irand(230, 300);
-    add("Ax", [{x:728,y:186},{x:728,y:ay},{x:ax,y:ay}], 1.0, 0.38);
-    addVia({x:ax, y:ay});
-  }
-  if (rnd() < 0.5) {
-    const by = irand(210, 260);
-    const bx = irand(940, 1010);
-    add("Ay", [{x:752,y:186},{x:752,y:by},{x:bx,y:by}], 1.0, 0.36);
-    addVia({x:bx, y:by});
-  }
+  // CHIP_A bottom pins → portrait top pads (direct pad-to-pad)
+  add("Ax", [{x:728,y:186},{x:728,y:240},{x:1103,y:240},{x:1103,y:262}], 1.0, 0.42);
+  add("Ay", [{x:752,y:186},{x:752,y:216},{x:1147,y:216},{x:1147,y:262}], 1.0, 0.40);
 
   // ── CHIP_C fanout ──
   const C1bx = irand(160, 260);
@@ -572,9 +562,8 @@ function buildCircuit(seed: number): Built {
   add("C1", [{x:404,y:236},{x:404,y:C1my},{x:C1bx,y:C1my},{x:C1bx,y:0}], 1.0, 0.4);
 
   if (rnd() < 0.65) {
-    const cmy = irand(170, 220);
-    const cbx = irand(260, 340);
-    add("C1b", [{x:428,y:236},{x:428,y:cmy},{x:cbx,y:cmy},{x:cbx,y:0}], 1.0, 0.36);
+    // direct CHIP_C top pin → top edge (off-canvas)
+    add("C1b", [{x:428,y:236},{x:428,y:60},{x:300,y:60},{x:300,y:0}], 1.0, 0.36);
   }
 
   const C2my = irand(240, 290);
@@ -582,9 +571,8 @@ function buildCircuit(seed: number): Built {
   add("C2", [{x:376,y:262},{x:C2bx,y:262},{x:C2bx,y:C2my},{x:0,y:C2my}], 1.0, 0.36);
 
   if (rnd() < 0.6) {
-    const c2my = irand(300, 360);
-    const c2bx = irand(220, 320);
-    add("C2b", [{x:376,y:284},{x:c2bx,y:284},{x:c2bx,y:c2my},{x:0,y:c2my}], 1.0, 0.34);
+    // direct CHIP_C left pin → left canvas edge
+    add("C2b", [{x:376,y:284},{x:240,y:284},{x:240,y:336},{x:0,y:336}], 1.0, 0.34);
   }
 
   add("C3", [{x:404,y:310},{x:404,y:400},{x:516,y:400}], 1.0, 0.4);
@@ -599,52 +587,23 @@ function buildCircuit(seed: number): Built {
   const BBbx = irand(180, 280);
   add("BB1", [{x:516,y:420},{x:BBbx,y:420},{x:BBbx,y:BBmy},{x:0,y:BBmy}], 1.0, 0.38);
 
-  if (rnd() < 0.5) {
-    const bby = irand(460, 500);
-    const bbx = irand(820, 920);
-    add("BBb", [{x:600,y:444},{x:600,y:bby},{x:bbx,y:bby}], 1.0, 0.36);
-    addVia({x:bbx, y:bby});
-  }
-  if (rnd() < 0.5) {
-    const bby = irand(465, 505);
-    const bbx = irand(700, 800);
-    add("BBc", [{x:560,y:444},{x:560,y:bby},{x:bbx,y:bby}], 1.0, 0.34);
-    addVia({x:bbx, y:bby});
-  }
+  // CHIP_B bottom pins → portrait left pads (direct pad-to-pad)
+  add("BBb", [{x:600,y:444},{x:600,y:488},{x:1052,y:488},{x:1052,y:476}], 1.0, 0.42);
+  add("BBc", [{x:560,y:444},{x:560,y:524},{x:1052,y:524},{x:1052,y:512}], 1.0, 0.40);
 
   // ── Filler routing in emptier regions (deterministic with light jitter) ──
   // Upper-right gap between CHIP_A and the right edge
-  {
-    const y = irand(190, 230);
-    const vx = irand(1050, 1130);
-    const vy = y + irand(40, 80);
-    add("FR1", [{x:1180,y:60},{x:1180,y},{x:vx,y},{x:vx,y:vy}], 1.0, 0.32);
-    addVia({x:vx, y:vy});
-  }
+  // Upper-right: HEADER_T pin → portrait top pad (direct pad-to-pad)
+  add("FR1", [{x:970,y:20},{x:970,y:204},{x:1277,y:204},{x:1277,y:262}], 1.0, 0.36);
   // Upper-mid gap between CHIP_A and CHIP_C
-  {
-    const y = irand(120, 170);
-    const x1 = irand(480, 560);
-    const x2 = irand(620, 660);
-    add("FR2", [{x:x1,y:20},{x:x1,y},{x:x2,y}], 1.0, 0.30);
-    addVia({x:x2, y});
-  }
+  // CHIP_C top pin → CHIP_A left pin (direct pad-to-pad)
+  add("FR2", [{x:452,y:236},{x:452,y:144},{x:676,y:144},{x:676,y:158}], 1.0, 0.36);
   // Mid-right gap below CHIP_A toward the lower-right
-  if (rnd() < 0.9) {
-    const y = irand(320, 370);
-    const x2 = irand(960, 1050);
-    const vy = y + irand(50, 90);
-    add("FR3", [{x:1180,y},{x:x2,y},{x:x2,y:vy}], 1.0, 0.30);
-    addVia({x:x2, y:vy});
-  }
+  // CHIP_A right pin → portrait top pad (direct pad-to-pad)
+  add("FR3", [{x:828,y:158},{x:996,y:158},{x:996,y:228},{x:1190,y:228},{x:1190,y:262}], 1.0, 0.34);
   // Lower-mid gap (well above the control module footprint y<560)
-  {
-    const y = irand(500, 540);
-    const x3 = irand(780, 880);
-    const vy = y - irand(40, 80);
-    add("FR4", [{x:660,y},{x:x3,y},{x:x3,y:vy}], 1.0, 0.28);
-    addVia({x:x3, y:vy});
-  }
+  // CHIP_B right pin → portrait left pad (direct pad-to-pad)
+  add("FR4", [{x:644,y:400},{x:828,y:400},{x:828,y:404},{x:1052,y:404}], 1.0, 0.32);
   // Lower-left run from text-zone edge eastward then down off-canvas
   {
     const y = irand(820, 860);
@@ -652,30 +611,14 @@ function buildCircuit(seed: number): Built {
     add("FR5", [{x:860,y},{x,y},{x,y:900}], 1.0, 0.30);
   }
   // Upper-left bus: connects CHIP_C left side area up to top edge
-  {
-    const x = irand(140, 220);
-    const y = irand(60, 110);
-    const vy = irand(200, 260);
-    add("FR6", [{x:0,y},{x,y},{x,y:vy}], 1.0, 0.30);
-    addVia({x, y:vy});
-  }
+  // Left canvas edge → CHIP_C left pin (direct edge-to-pad)
+  add("FR6", [{x:0,y:72},{x:180,y:72},{x:180,y:262},{x:376,y:262}], 1.0, 0.32);
   // Mid-right secondary: from EDGE_R area inward to a CHIP_A right pin region
-  {
-    const y = irand(420, 470);
-    const x = irand(1080, 1170);
-    const vy = y - irand(50, 90);
-    add("FR7", [{x:1540,y},{x,y},{x,y:vy}], 1.0, 0.28);
-    addVia({x, y:vy});
-  }
+  // EDGE_R pin → CHIP_A right pin (direct pad-to-pad)
+  add("FR7", [{x:1536,y:470},{x:1416,y:470},{x:1416,y:134},{x:828,y:134}], 1.0, 0.30);
   // Top-mid: header-area outward bus going right
-  {
-    const y = irand(40, 80);
-    const x1 = irand(820, 880);
-    const x2 = irand(980, 1060);
-    const vy = irand(120, 160);
-    add("FR8", [{x:x1,y:0},{x:x1,y},{x:x2,y},{x:x2,y:vy}], 1.0, 0.28);
-    addVia({x:x2, y:vy});
-  }
+  // HEADER_T pin → CHIP_A top pin (direct pad-to-pad)
+  add("FR8", [{x:890,y:20},{x:890,y:84},{x:752,y:84},{x:752,y:106}], 1.0, 0.34);
 
   // ── Inline parts placed on actual segments (text-zone + chip keep-out) ──
   const KEEP_OUT: { x:number; y:number; w:number; h:number }[] = [
