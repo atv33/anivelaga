@@ -533,6 +533,15 @@ function buildCircuit(seed: number): Built {
     { x: CHIP_C.x, y: CHIP_C.y, w: CHIP_C.w, h: CHIP_C.h },
     { x: EDGE_R.x, y: EDGE_R.y, w: EDGE_R.w, h: EDGE_R.h },
     { x: HEADER_T.x, y: HEADER_T.y, w: HEADER_T.w, h: HEADER_T.h },
+    // Lamp module above the name
+    { x: 340 - 28 - 8, y: 320 - 16 - 8, w: 56 + 16, h: 32 + 16 },
+    // Hard-coded signal-path inline components (avoid overlap)
+    { x: 920 - 16, y: 690 - 10, w: 32, h: 20 },
+    { x: 740 - 10, y: 580 - 16, w: 20, h: 32 },
+    { x: 430 - 14, y: 470 - 10, w: 28, h: 20 },
+    { x: 600 - 14, y: 470 - 10, w: 28, h: 20 },
+    // Control module footprint under the portrait
+    { x: 1190 - 110, y: 585, w: 220, h: 140 },
   ];
   const inAnyBody = (cx: number, cy: number, pad = 8) =>
     KEEP_OUT.some(
@@ -540,6 +549,22 @@ function buildCircuit(seed: number): Built {
         cx > r.x - pad && cx < r.x + r.w + pad &&
         cy > r.y - pad && cy < r.y + r.h + pad,
     );
+  // Avoid placing inline parts on top of the active signal trace.
+  // SIGNAL_PATH_D: V from (1190,700) to (1190,730), H to (700,730),
+  // V to (700,470), H to (340,470), V to (340, LAMP_PIN.y=350).
+  const onSignalPath = (cx: number, cy: number, pad = 14) => {
+    // vertical: x=1190, y 700..730
+    if (Math.abs(cx - 1190) < pad && cy > 700 - pad && cy < 730 + pad) return true;
+    // horizontal: y=730, x 700..1190
+    if (Math.abs(cy - 730) < pad && cx > 700 - pad && cx < 1190 + pad) return true;
+    // vertical: x=700, y 470..730
+    if (Math.abs(cx - 700) < pad && cy > 470 - pad && cy < 730 + pad) return true;
+    // horizontal: y=470, x 340..700
+    if (Math.abs(cy - 470) < pad && cx > 340 - pad && cx < 700 + pad) return true;
+    // vertical: x=340, y 350..470
+    if (Math.abs(cx - 340) < pad && cy > 350 - pad && cy < 470 + pad) return true;
+    return false;
+  };
   const parts: Inline[] = [];
   const usedCenters = new Set<string>();
   const kinds: Inline["kind"][] = ["resistor", "capacitor", "inductor", "diode"];
@@ -558,6 +583,8 @@ function buildCircuit(seed: number): Built {
     if (cx < 860 && cy > 560) continue;
     // skip if inside or hugging any chip / portrait / connector body
     if (inAnyBody(cx, cy)) continue;
+    // skip if it would sit on top of the live signal trace
+    if (onSignalPath(cx, cy)) continue;
     const key = `${cx},${cy}`;
     if (usedCenters.has(key)) continue;
     usedCenters.add(key);
