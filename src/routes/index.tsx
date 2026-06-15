@@ -665,65 +665,22 @@ function buildCircuit(seed: number): Built {
     return false;
   };
   const parts: Inline[] = [];
-  const usedCenters = new Set<string>();
-  const kinds: Inline["kind"][] = ["resistor", "capacitor", "inductor", "diode"];
-  for (const s of segs) {
-    // skip faint traces — inline parts on them read as floating
-    if (s.o < 0.4) continue;
-    // skip segments that exit the visible canvas — a part on a trace whose
-    // other end vanishes off-screen reads as floating
-    const exitsCanvas =
-      s.a.x <= 20 || s.a.x >= 1580 || s.a.y <= 20 || s.a.y >= 880 ||
-      s.b.x <= 20 || s.b.x >= 1580 || s.b.y <= 20 || s.b.y >= 880;
-    if (exitsCanvas) continue;
-    const isH = s.a.y === s.b.y;
-    const len = isH ? Math.abs(s.b.x - s.a.x) : Math.abs(s.b.y - s.a.y);
-    if (len < 50) continue;
-    if (rnd() > 0.22) continue;
-    const margin = 26;
-    if (len < margin * 2) continue;
-    const t = rand(margin, len - margin);
-    const dir = isH ? Math.sign(s.b.x - s.a.x) : Math.sign(s.b.y - s.a.y);
-    const cx = isH ? Math.round(s.a.x + dir * t) : s.a.x;
-    const cy = isH ? s.a.y : Math.round(s.a.y + dir * t);
-    // skip lower-left text zone
-    if (cx < 860 && cy > 560) continue;
-    // skip if inside or hugging any chip / portrait / connector body
-    if (inAnyBody(cx, cy)) continue;
-    // skip if it would sit on top of the live signal trace
-    if (onSignalPath(cx, cy)) continue;
-    // extra clearance for the lower-right region near the portrait/control —
-    // any inline part here tends to read as floating
-    if (cx > 1000 && cy > 600) continue;
-    if (cx > 700 && cx < 1100 && cy > 540 && cy < 720) continue;
-    const key = `${cx},${cy}`;
-    if (usedCenters.has(key)) continue;
-    usedCenters.add(key);
-    const kind = pick(kinds);
-    let rot: 0 | 90 | 180 | 270 = 0;
-    if (kind === "diode") {
-      // anode-to-cathode points in the direction of signal flow (segment dir)
-      if (isH) rot = dir > 0 ? 0 : 180;
-      else rot = dir > 0 ? 90 : 270;
-    } else {
-      rot = isH ? 0 : 90;
-    }
-    parts.push({ kind, x: cx, y: cy, rot } as Inline);
-  }
-
-  // sprinkle a few extra testpads on existing vias (so the ring is more obvious)
+  // Curated, intentional inline parts. Each one sits on a real pad-to-pad
+  // trace at a coordinate we already know exists and isn't on the signal path.
+  const curated: Inline[] = [
+    // Series resistor on the long EDGE_R → CHIP_A trace (FR7, y=134, x 828..1416)
+    { kind: "resistor", x: 1200, y: 134, rot: 0 },
+    // Bypass capacitor on the FR2 trace into CHIP_A left pin (vertical x=452, y 144..236)
+    { kind: "capacitor", x: 452, y: 192, rot: 90 },
+    // Inductor on the portrait T3 power trace (vertical x=1190, y 0..262)
+    { kind: "inductor", x: 1190, y: 156, rot: 90 },
+    // Series resistor on the CHIP_D ↔ CHIP_A trace D1 (vertical x=808)
+    { kind: "resistor", x: 808, y: 360, rot: 90 },
+    // Diode on CHIP_D power rail D4 going down to the bottom edge
+    { kind: "diode", x: 808, y: 820, rot: 90 },
+  ];
   const viaList = Array.from(viaMap.values());
-  const tpCount = Math.min(viaList.length, 1 + Math.floor(rnd() * 2));
-  for (let i = 0; i < tpCount; i++) {
-    const v = viaList[Math.floor(rnd() * viaList.length)];
-    if (!v) continue;
-    if (v.x < 860 && v.y > 560) continue;
-    if (inAnyBody(v.x, v.y, 4)) continue;
-    const key = `tp:${v.x},${v.y}`;
-    if (usedCenters.has(key)) continue;
-    usedCenters.add(key);
-    parts.push({ kind: "testpad", x: v.x, y: v.y });
-  }
+  parts.push(...curated);
 
   return { traces, vias: viaList, parts };
 }
