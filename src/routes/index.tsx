@@ -600,8 +600,6 @@ function buildCircuit(seed: number): Built {
     // Lamp module above the name
     { x: 340 - 28 - 8, y: 320 - 16 - 8, w: 56 + 16, h: 32 + 16 },
     // Hard-coded signal-path inline components (avoid overlap)
-    { x: 920 - 16, y: 690 - 10, w: 32, h: 20 },
-    { x: 740 - 10, y: 580 - 16, w: 20, h: 32 },
     { x: 430 - 14, y: 470 - 10, w: 28, h: 20 },
     { x: 600 - 14, y: 470 - 10, w: 28, h: 20 },
     // Control module footprint under the portrait
