@@ -275,10 +275,15 @@ const VB_H = 900;
 // Portrait module — central component
 const PORT = { x: 1060, y: 270, w: 260, h: 320 };
 const PORT_INSET = 14;
-const MOBILE_PORT = { x: 410, y: 250, w: 420, h: 510 };
-const MOBILE_PORT_INSET = 16;
-const MOBILE_BUTTON_PAD = { x: 940, y: 500 };
-const MOBILE_LAMP = { cx: 170, cy: 330 };
+// Mobile circuit layout: portrait is the large centerpiece (left-of-center,
+// lower in the frame), lamp sits top-left, button is on the right and routes
+// up & over the portrait into the lamp.
+const MOBILE_PORT = { x: 150, y: 470, w: 620, h: 600 };
+const MOBILE_PORT_INSET = 18;
+const MOBILE_BUTTON_PAD = { x: 960, y: 920 };
+const MOBILE_LAMP = { cx: 230, cy: 240 };
+const MOBILE_LAMP_SCALE = 1.8;
+const MOBILE_TRACE_TOP_Y = 360;
 
 // Pin pad layout helpers
 const yPads = [296, 332, 368, 404, 440, 476, 512, 548];     // 8 vertical pad rows (left/right)
@@ -919,12 +924,12 @@ function CircuitHero() {
   const isMobile = useIsMobile();
   // On mobile, compose a tighter hero board so the portrait, lamp, and button
   // are intentionally placed instead of relying on the wide desktop crop.
-  const mobileViewBox = `120 190 1120 640`;
+  const mobileViewBox = `60 120 1080 1080`;
   const viewBox = isMobile ? mobileViewBox : `0 0 ${VB_W} ${VB_H}`;
   const preserve = isMobile ? "xMidYMid meet" : "xMidYMid slice";
   const buttonPad = isMobile ? MOBILE_BUTTON_PAD : BUTTON_PAD;
   const signalD = isMobile
-    ? `M ${MOBILE_BUTTON_PAD.x} ${MOBILE_BUTTON_PAD.y} H 700 V 520 H ${MOBILE_LAMP.cx} V ${MOBILE_LAMP.cy + LAMP.h / 2 + 14}`
+    ? `M ${MOBILE_BUTTON_PAD.x} ${MOBILE_BUTTON_PAD.y} V ${MOBILE_TRACE_TOP_Y} H ${MOBILE_LAMP.cx} V ${MOBILE_LAMP.cy + (LAMP.h / 2 + 14) * MOBILE_LAMP_SCALE}`
     : SIGNAL_D;
   const timers = useRef<number[]>([]);
   const clearAllTimers = () => {
@@ -979,7 +984,7 @@ function CircuitHero() {
         className="pointer-events-none absolute left-0 right-0 z-[1]"
         style={
           isMobile
-            ? { top: "74px", height: "43vh" }
+            ? { top: "64px", height: "60vh" }
             : { top: 0, bottom: 0 }
         }
       >
@@ -1066,10 +1071,10 @@ function CircuitHero() {
 
             {/* Vias at every real bend in the signal path */}
             <g className="hero-part-in" style={{ animationDelay: "1.7s" }}>
-              <circle cx={isMobile ? MOBILE_BUTTON_PAD.x : BUTTON_PAD.x} cy={isMobile ? 500 : 740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-              <circle cx={700} cy={isMobile ? 520 : 740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-              <circle cx={700} cy={isMobile ? 520 : 470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-              <circle cx={isMobile ? MOBILE_LAMP.cx : 340} cy={isMobile ? 520 : 470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={isMobile ? MOBILE_BUTTON_PAD.x : BUTTON_PAD.x} cy={isMobile ? MOBILE_BUTTON_PAD.y : 740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={isMobile ? MOBILE_BUTTON_PAD.x : 700} cy={isMobile ? MOBILE_TRACE_TOP_Y : 740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={isMobile ? MOBILE_LAMP.cx : 700} cy={isMobile ? MOBILE_TRACE_TOP_Y : 470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={isMobile ? MOBILE_LAMP.cx : 340} cy={isMobile ? MOBILE_LAMP.cy + (LAMP.h / 2 + 14) * MOBILE_LAMP_SCALE : 470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
             </g>
 
             {/* Leading dot — travels along SIGNAL with the fill */}
@@ -1086,7 +1091,7 @@ function CircuitHero() {
 
             <g className="hero-part-in" style={{ animationDelay: "1.6s" }}>
               <g transform={isMobile ? `translate(${MOBILE_LAMP.cx - LAMP.cx} ${MOBILE_LAMP.cy - LAMP.cy})` : undefined}>
-                <Lamp on={lampOn} scale={isMobile ? 1.8 : 1} />
+                <Lamp on={lampOn} scale={isMobile ? MOBILE_LAMP_SCALE : 1} />
               </g>
             </g>
           </g>
