@@ -944,6 +944,7 @@ function CircuitHero() {
   return (
     <section
       id="top"
+      data-hero
       data-section="00"
       className="relative w-full overflow-hidden"
       style={{ minHeight: "100vh", background: "#060606" }}
