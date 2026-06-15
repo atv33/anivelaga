@@ -907,9 +907,18 @@ function SignalPulse({ d, dur, accent }: { d: string; dur: number; accent?: "blu
 const BUTTON_PAD = { x: 1190, y: 700 };
 const LAMP = { cx: 340, cy: 320, w: 56, h: 32 };
 const LAMP_PIN = { x: LAMP.cx, y: LAMP.cy + LAMP.h / 2 + 14 }; // 340, 350
-const SIGNAL_PATH_D =
-  `M ${BUTTON_PAD.x} ${BUTTON_PAD.y} V 730 H 700 V 470 H ${LAMP_PIN.x} V ${LAMP_PIN.y}`;
-const SIGNAL_DUR_MS = 1400;
+// Capacitor C1 sits on the vertical leg of the signal path between the
+// switch (button) and the lamp. PRE = switch → cap; POST = cap → lamp.
+const CAP_PT = { x: 700, y: 600 };
+const CAP_GAP = 14; // pixels of bare lead on each side of the cap symbol
+const SIGNAL_PATH_PRE = `M ${BUTTON_PAD.x} ${BUTTON_PAD.y} V 730 H ${CAP_PT.x} V ${CAP_PT.y + CAP_GAP / 2}`;
+const SIGNAL_PATH_POST = `M ${CAP_PT.x} ${CAP_PT.y - CAP_GAP / 2} V 470 H ${LAMP_PIN.x} V ${LAMP_PIN.y}`;
+// Charge-feed branch: a short trace coming in from the right side of the
+// board into the top plate of C1. This visualises where the stored energy
+// comes from while the switch is open.
+const CHARGE_FEED_D = `M 880 540 H ${CAP_PT.x} V ${CAP_PT.y - CAP_GAP / 2}`;
+const DISCHARGE_DUR_MS = 950;
+const SWITCH_CLOSE_MS = 180;
 
 function Lamp({ on }: { on: boolean }) {
   return (
