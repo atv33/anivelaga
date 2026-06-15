@@ -1319,10 +1319,11 @@ function CircuitHero() {
                   }}
                 >
                   <path
-                    d="M 46 86 H 80 V 32 Q 80 28 84 28 H 136 Q 140 28 140 32 V 86 H 174 Q 178 86 178 90 V 118 Q 178 122 174 122 H 46 Q 42 122 42 118 V 90 Q 42 86 46 86 Z"
+                    d="M 84 62 H 136 Q 140 62 140 66 V 77 H 142 V 86 H 174 Q 178 86 178 90 V 118 Q 178 122 174 122 H 46 Q 42 122 42 118 V 90 Q 42 86 46 86 H 78 V 77 H 80 V 66 Q 80 62 84 62 Z"
                     fill="none"
                     stroke={hovering || charging || lampOn ? "#fbbf24" : "#c89832"}
                     strokeWidth="1.2"
+                    strokeLinejoin="round"
                     style={{
                       filter:
                         "drop-shadow(0 0 4px rgba(251,191,36,0.55)) drop-shadow(0 0 10px rgba(251,191,36,0.35))",
