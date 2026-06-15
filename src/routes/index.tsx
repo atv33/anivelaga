@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -283,144 +283,294 @@ const EDGE_R_PINS = [380, 410, 440, 470, 500, 530, 560]; // y tips, x tip = 1536
 // Top edge header — 6 pins, tip y = -10 + 26 + 4 = 20, pin xs are pin centers
 const HEADER_T = { x: 880, y: -10, w: 100, h: 26, pins: [890, 906, 922, 938, 954, 970] };
 
-// Curated trace list — every path begins at a real pad/pin tip and ends at
-// another real pad/pin tip, a defined via, or the canvas edge (intentional
-// off-board continuation). All segments are strictly orthogonal.
-const TRACES: Trace[] = [
-  // ── Portrait LEFT pads (tip x=1052) ────────────────────────────────
-  { id: "L1", d: "M 1052 296 H 940 V 134 H 828",         w: 1.5,  o: 0.6,  pulse: 6200 }, // → CHIP_A right pin 1
-  { id: "L2", d: "M 1052 332 H 900 V 158 H 828",         w: 1.25, o: 0.5  },               // → CHIP_A right pin 2
-  { id: "L3", d: "M 1052 368 H 890 V 20",                w: 1.5,  o: 0.58 },               // → HEADER_T pin 1
-  { id: "L4", d: "M 1052 404 H 800 V 400 H 644",         w: 1.25, o: 0.5,  pulse: 7400 }, // → CHIP_B right pin 1
-  { id: "L5", d: "M 1052 440 H 840 V 420 H 644",         w: 1.25, o: 0.48 },               // → CHIP_B right pin 2
-  { id: "L6", d: "M 1052 476 H 880 V 380 H 480 V 284",   w: 1.25, o: 0.45 },               // → CHIP_C right pin 2
-  { id: "L7", d: "M 1052 512 H 600 V 236 H 452",         w: 1.0,  o: 0.4  },               // → CHIP_C top pin 3
-  // L8 (y=548) intentionally NC
-
-  // ── Portrait TOP pads (tip y=262) ──────────────────────────────────
-  { id: "T1", d: "M 1103 262 V 180 H 954 V 20",          w: 1.25, o: 0.5  },               // → HEADER_T pin 5
-  { id: "T2", d: "M 1147 262 V 160 H 970 V 20",          w: 1.5,  o: 0.55, pulse: 5600 }, // → HEADER_T pin 6
-  { id: "T3", d: "M 1190 262 V 0",                       w: 1.75, o: 0.6,  pulse: 4800 }, // off-canvas
-  { id: "T4", d: "M 1233 262 V 100 H 1400 V 0",          w: 1.25, o: 0.5  },               // off-canvas (top)
-  { id: "T5", d: "M 1277 262 V 140 H 1500 V 0",          w: 1.0,  o: 0.45 },               // off-canvas (top)
-
-  // ── Portrait RIGHT pads (tip x=1328) ───────────────────────────────
-  { id: "R1", d: "M 1328 296 H 1600",                    w: 1.5,  o: 0.55, pulse: 6800 }, // off-canvas (right)
-  { id: "R2", d: "M 1328 332 H 1460 V 380 H 1536",       w: 1.25, o: 0.5  },               // → EDGE_R pin 1
-  { id: "R3", d: "M 1328 368 H 1500 V 410 H 1536",       w: 1.25, o: 0.5  },               // → EDGE_R pin 2
-  { id: "R4", d: "M 1328 404 H 1480 V 440 H 1536",       w: 1.25, o: 0.5  },               // → EDGE_R pin (y=440)
-  { id: "R5", d: "M 1328 440 H 1600",                    w: 1.5,  o: 0.55 },               // off-canvas (right)
-  { id: "R6", d: "M 1328 476 H 1500 V 470 H 1536",       w: 1.25, o: 0.48 },               // → EDGE_R pin (y=470)
-  { id: "R7", d: "M 1328 512 H 1460 V 500 H 1536",       w: 1.0,  o: 0.42 },               // → EDGE_R pin (y=500)
-  { id: "R8", d: "M 1328 548 H 1480 V 530 H 1536",       w: 1.25, o: 0.5,  pulse: 7800 }, // → EDGE_R pin (y=530)
-
-  // ── Portrait BOTTOM pads (tip y=598) — lower-right only ────────────
-  { id: "B1", d: "M 1103 598 V 720 H 1000 V 900",        w: 1.25, o: 0.45 },               // off-canvas (bottom)
-  { id: "B2", d: "M 1147 598 V 760 H 1600",              w: 1.0,  o: 0.42 },               // off-canvas (right)
-  { id: "B3", d: "M 1190 598 V 900",                     w: 1.5,  o: 0.55, pulse: 5200 }, // off-canvas (bottom)
-  { id: "B4", d: "M 1233 598 V 680 H 1500 V 900",        w: 1.25, o: 0.48 },               // off-canvas (bottom)
-  { id: "B5", d: "M 1277 598 V 720 H 1600",              w: 1.0,  o: 0.42 },               // off-canvas (right)
-
-  // ── CHIP_A fanout (top/left/bottom pin tips) ───────────────────────
-  { id: "A1", d: "M 704 106 V 40 H 500 V 0",             w: 1.0,  o: 0.4  },               // off-canvas (top)
-  { id: "A2", d: "M 728 106 V 0",                        w: 1.0,  o: 0.38 },               // off-canvas (top)
-  { id: "A3", d: "M 752 106 V 60 H 1080 V 0",            w: 1.0,  o: 0.4  },               // off-canvas (top)
-  { id: "A4", d: "M 776 106 V 80 H 922 V 20",            w: 1.0,  o: 0.4  },               // → HEADER_T pin 3
-  { id: "A5", d: "M 800 106 V 60 H 938 V 20",            w: 1.0,  o: 0.4  },               // → HEADER_T pin 4
-  { id: "A6", d: "M 676 134 H 580 V 262 H 480",          w: 1.0,  o: 0.4  },               // → CHIP_C right pin 1
-  { id: "A7", d: "M 676 158 H 0",                        w: 1.0,  o: 0.36 },               // off-canvas (left)
-  { id: "A8", d: "M 704 186 V 320 H 560 V 376",          w: 1.25, o: 0.45 },               // → CHIP_B top pin 1
-
-  // ── CHIP_C fanout (remaining pin tips) ─────────────────────────────
-  { id: "C1", d: "M 404 236 V 60 H 200 V 0",             w: 1.0,  o: 0.4  },               // off-canvas (top)
-  { id: "C2", d: "M 376 262 H 0",                        w: 1.0,  o: 0.36 },               // off-canvas (left)
-  { id: "C3", d: "M 404 310 V 400 H 516",                w: 1.0,  o: 0.4  },               // → CHIP_B left pin 1
-
-  // ── CHIP_B fanout (remaining pin tips) ─────────────────────────────
-  { id: "BB1", d: "M 516 420 H 200 V 460 H 0",           w: 1.0,  o: 0.38 },               // off-canvas (left)
-];
-
-// Vias — every coord is either a trace corner, a trace endpoint that is not
-// already a chip pad, or sits on a defined trace segment. No floating points.
-const ENDPOINTS: { x: number; y: number; r?: number }[] = [
-  // L-series corners
-  { x: 940, y: 296 }, { x: 940, y: 134 },
-  { x: 900, y: 332 }, { x: 900, y: 158 },
-  { x: 890, y: 368 },
-  { x: 800, y: 400 }, { x: 840, y: 420 },
-  { x: 880, y: 476 }, { x: 880, y: 380 }, { x: 480, y: 380 },
-  { x: 600, y: 236 },
-  // T-series corners
-  { x: 954, y: 180 }, { x: 970, y: 160 },
-  { x: 1400, y: 100 }, { x: 1500, y: 140 },
-  // R-series corners
-  { x: 1460, y: 380 }, { x: 1500, y: 410 }, { x: 1480, y: 440 },
-  { x: 1500, y: 470 }, { x: 1460, y: 500 }, { x: 1480, y: 530 },
-  // B-series corners
-  { x: 1000, y: 720 }, { x: 1500, y: 680 },
-  // CHIP_A corners
-  { x: 500, y: 40 }, { x: 1080, y: 60 }, { x: 922, y: 80 }, { x: 938, y: 60 },
-  { x: 580, y: 134 }, { x: 580, y: 262 },
-  { x: 704, y: 320 }, { x: 560, y: 320 },
-  // CHIP_C corners
-  { x: 200, y: 60 }, { x: 404, y: 400 },
-  // CHIP_B corners
-  { x: 200, y: 420 }, { x: 200, y: 460 },
-];
-
-// Inline component placements — every coord lies exactly on a real trace segment.
+// Inline component types
 type Inline =
-  | { kind: "resistor";  x: number; y: number; rot?: 0 | 90 }
-  | { kind: "capacitor"; x: number; y: number; rot?: 0 | 90 }
-  | { kind: "inductor";  x: number; y: number; rot?: 0 | 90 }
+  | { kind: "resistor";  x: number; y: number; rot?: 0 | 90 | 180 | 270 }
+  | { kind: "capacitor"; x: number; y: number; rot?: 0 | 90 | 180 | 270 }
+  | { kind: "inductor";  x: number; y: number; rot?: 0 | 90 | 180 | 270 }
   | { kind: "diode";     x: number; y: number; rot?: 0 | 90 | 180 | 270 }
   | { kind: "testpad";   x: number; y: number };
 
-// Every inline part is placed on a real trace segment. Horizontal parts (rot 0)
-// sit on horizontal segments, rot 90 sit on vertical segments.
-const INLINE_PARTS: Inline[] = [
-  // L1 H1 segment (y=296, x 940..1052)
-  { kind: "resistor", x: 996, y: 296 },
-  // L2 H1 segment (y=332, x 900..1052)
-  { kind: "resistor", x: 980, y: 332 },
-  // L2 vertical (x=900, y 158..332)
-  { kind: "capacitor", x: 900, y: 245, rot: 90 },
-  // L4 H1 segment (y=404, x 800..1052)
-  { kind: "resistor", x: 920, y: 404 },
-  // L4 H2 segment (y=400, x 644..800)
-  { kind: "diode", x: 720, y: 400 },
-  // L5 H2 segment (y=420, x 644..840)
-  { kind: "inductor", x: 750, y: 420 },
-  // L6 vertical (x=480, y 262..380)
-  { kind: "capacitor", x: 480, y: 330, rot: 90 },
-  // T1 H segment (y=180, x 954..1103)
-  { kind: "capacitor", x: 1020, y: 180 },
-  // T4 H segment (y=100, x 1233..1400)
-  { kind: "diode", x: 1320, y: 100 },
-  // R4 V segment (x=1480, y 404..440)
-  { kind: "resistor", x: 1480, y: 422, rot: 90 },
-  // R5 horizontal (y=440, x 1328..1600)
-  { kind: "resistor", x: 1432, y: 440 },
-  // R8 horizontal (y=530, x 1480..1536)
-  { kind: "capacitor", x: 1508, y: 530 },
-  // B3 vertical (x=1190, y 598..900)
-  { kind: "capacitor", x: 1190, y: 760, rot: 90 },
-  // B5 horizontal (y=720, x 1277..1600)
-  { kind: "inductor", x: 1500, y: 720 },
-  // A6 horizontal (y=262, x 480..580)
-  { kind: "resistor", x: 540, y: 262 },
-  // C1 vertical (x=404, y 60..236)
-  { kind: "capacitor", x: 404, y: 150, rot: 90 },
-  // C3 horizontal (y=400, x 404..520)
-  { kind: "resistor", x: 470, y: 400 },
-  // BB1 horizontal (y=460, x 0..200)
-  { kind: "resistor", x: 130, y: 460 },
-  // Test pads at notable on-trace junctions
-  { kind: "testpad", x: 880, y: 476 },
-  { kind: "testpad", x: 1480, y: 530 },
-  { kind: "testpad", x: 1400, y: 100 },
-  { kind: "testpad", x: 560, y: 320 },
-];
+type Pt = { x: number; y: number };
+type Built = {
+  traces: Trace[];
+  vias: Pt[];
+  parts: Inline[];
+};
+
+// Seeded PRNG so the layout is repeatable per seed.
+function mulberry32(seed: number) {
+  let a = (seed >>> 0) || 1;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function ptsToD(pts: Pt[]): string {
+  return pts
+    .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`)
+    .join(" ");
+}
+
+// Procedural circuit builder. Every trace begins at a real pad/pin tip and
+// ends at another real pad/pin tip or the canvas edge. Bend coordinates are
+// chosen randomly within tight constraints — composition is preserved.
+function buildCircuit(seed: number): Built {
+  const rnd = mulberry32(seed);
+  const rand = (min: number, max: number) => min + rnd() * (max - min);
+  const irand = (min: number, max: number) => Math.round(rand(min, max));
+  const pick = <T,>(arr: readonly T[]): T => arr[Math.floor(rnd() * arr.length)]!;
+
+  const traces: Trace[] = [];
+  type Seg = { a: Pt; b: Pt };
+  const segs: Seg[] = [];
+  const viaMap = new Map<string, Pt>();
+  const addVia = (p: Pt) => viaMap.set(`${p.x},${p.y}`, p);
+
+  const add = (id: string, pts: Pt[], w: number, o: number, pulse?: number) => {
+    traces.push({ id, d: ptsToD(pts), w, o, pulse });
+    for (let i = 1; i < pts.length - 1; i++) addVia(pts[i]);
+    for (let i = 0; i < pts.length - 1; i++) segs.push({ a: pts[i], b: pts[i + 1] });
+  };
+
+  // pulses ~ 30% of routes
+  const maybePulse = (base: number) => (rnd() < 0.35 ? base + irand(-600, 600) : undefined);
+
+  // ── Portrait LEFT pads → CHIP_A / CHIP_B / CHIP_C / header ──
+  add("L1", [{x:1052,y:296},{x:irand(880,960),y:296},null!,{x:828,y:134}].map((p,i,a)=>p ?? {x:(a[1] as Pt).x,y:134}), 1.5, 0.6, maybePulse(6200) ?? 6200);
+  add("L2", [{x:1052,y:332},{x:irand(840,920),y:332},null!,{x:828,y:158}].map((p,i,a)=>p ?? {x:(a[1] as Pt).x,y:158}), 1.25, 0.5, maybePulse(7000));
+
+  const headerPinL3 = pick([890, 906, 922] as const);
+  add("L3", [{x:1052,y:368},{x:headerPinL3,y:368},{x:headerPinL3,y:20}], 1.5, 0.58);
+
+  const L4bx = irand(720, 820);
+  add("L4", [{x:1052,y:404},{x:L4bx,y:404},{x:L4bx,y:400},{x:644,y:400}], 1.25, 0.5, 7400);
+
+  const L5bx = irand(720, 860);
+  add("L5", [{x:1052,y:440},{x:L5bx,y:440},{x:L5bx,y:420},{x:644,y:420}], 1.25, 0.48, maybePulse(8200));
+
+  const L6bx1 = irand(840, 940);
+  const L6my = irand(360, 400);
+  add("L6", [
+    {x:1052,y:476},{x:L6bx1,y:476},{x:L6bx1,y:L6my},{x:480,y:L6my},{x:480,y:284}
+  ], 1.25, 0.45);
+
+  const L7bx = irand(560, 660);
+  add("L7", [{x:1052,y:512},{x:L7bx,y:512},{x:L7bx,y:236},{x:452,y:236}], 1.0, 0.4);
+
+  // L8 (y=548): occasional NC short stub into a via on a long horizontal trace
+  if (rnd() < 0.4) {
+    const stubX = irand(960, 1020);
+    add("L8", [{x:1052,y:548},{x:stubX,y:548}], 1.0, 0.34);
+    addVia({x:stubX,y:548});
+  }
+
+  // ── Portrait TOP pads ──
+  const T1pin = pick([922, 938, 954] as const);
+  add("T1", [{x:1103,y:262},{x:1103,y:irand(170,200)},null!,{x:T1pin,y:20}].map((p,i,a)=>{
+    if (p) return p;
+    const midY = (a[1] as Pt).y;
+    return {x:T1pin,y:midY};
+  }), 1.25, 0.5);
+
+  const T2pin = pick([954, 970] as const);
+  const T2my = irand(140, 175);
+  add("T2", [{x:1147,y:262},{x:1147,y:T2my},{x:T2pin,y:T2my},{x:T2pin,y:20}], 1.5, 0.55, 5600);
+
+  add("T3", [{x:1190,y:262},{x:1190,y:0}], 1.75, 0.6, 4800);
+
+  const T4my = irand(80, 130);
+  const T4bx = irand(1340, 1440);
+  add("T4", [{x:1233,y:262},{x:1233,y:T4my},{x:T4bx,y:T4my},{x:T4bx,y:0}], 1.25, 0.5, maybePulse(6400));
+
+  const T5my = irand(120, 180);
+  const T5bx = irand(1440, 1540);
+  add("T5", [{x:1277,y:262},{x:1277,y:T5my},{x:T5bx,y:T5my},{x:T5bx,y:0}], 1.0, 0.45);
+
+  // ── Portrait RIGHT pads → EDGE_R or canvas right ──
+  add("R1", [{x:1328,y:296},{x:1600,y:296}], 1.5, 0.55, 6800);
+
+  const R2bx = irand(1400, 1490);
+  add("R2", [{x:1328,y:332},{x:R2bx,y:332},{x:R2bx,y:380},{x:1536,y:380}], 1.25, 0.5);
+
+  const R3bx = irand(1440, 1520);
+  add("R3", [{x:1328,y:368},{x:R3bx,y:368},{x:R3bx,y:410},{x:1536,y:410}], 1.25, 0.5);
+
+  const R4bx = irand(1440, 1510);
+  add("R4", [{x:1328,y:404},{x:R4bx,y:404},{x:R4bx,y:440},{x:1536,y:440}], 1.25, 0.5, maybePulse(6800));
+
+  add("R5", [{x:1328,y:440},{x:1600,y:440}], 1.5, 0.55);
+
+  const R6bx = irand(1420, 1510);
+  add("R6", [{x:1328,y:476},{x:R6bx,y:476},{x:R6bx,y:500},{x:1536,y:500}], 1.25, 0.48);
+
+  const R7bx = irand(1400, 1480);
+  add("R7", [{x:1328,y:512},{x:R7bx,y:512},{x:R7bx,y:530},{x:1536,y:530}], 1.0, 0.42);
+
+  const R8bx = irand(1430, 1500);
+  add("R8", [{x:1328,y:548},{x:R8bx,y:548},{x:R8bx,y:560},{x:1536,y:560}], 1.25, 0.5, 7800);
+
+  // ── Portrait BOTTOM pads ──
+  const B1my = irand(680, 760);
+  const B1bx = irand(960, 1040);
+  add("B1", [{x:1103,y:598},{x:1103,y:B1my},{x:B1bx,y:B1my},{x:B1bx,y:900}], 1.25, 0.45);
+
+  const B2my = irand(700, 800);
+  add("B2", [{x:1147,y:598},{x:1147,y:B2my},{x:1600,y:B2my}], 1.0, 0.42);
+
+  add("B3", [{x:1190,y:598},{x:1190,y:900}], 1.5, 0.55, 5200);
+
+  const B4my = irand(640, 720);
+  const B4bx = irand(1440, 1540);
+  add("B4", [{x:1233,y:598},{x:1233,y:B4my},{x:B4bx,y:B4my},{x:B4bx,y:900}], 1.25, 0.48);
+
+  const B5my = irand(700, 780);
+  add("B5", [{x:1277,y:598},{x:1277,y:B5my},{x:1600,y:B5my}], 1.0, 0.42);
+
+  // ── CHIP_A pin fanout ──
+  const A1my = irand(20, 60);
+  const A1bx = irand(420, 540);
+  add("A1", [{x:704,y:106},{x:704,y:A1my},{x:A1bx,y:A1my},{x:A1bx,y:0}], 1.0, 0.4);
+
+  add("A2", [{x:728,y:106},{x:728,y:0}], 1.0, 0.38);
+
+  const A3my = irand(40, 80);
+  const A3bx = irand(1020, 1100);
+  add("A3", [{x:752,y:106},{x:752,y:A3my},{x:A3bx,y:A3my},{x:A3bx,y:0}], 1.0, 0.4);
+
+  const A4pin = pick([906, 922, 938] as const);
+  const A4my = irand(50, 90);
+  add("A4", [{x:776,y:106},{x:776,y:A4my},{x:A4pin,y:A4my},{x:A4pin,y:20}], 1.0, 0.4);
+
+  const A5candidates: readonly number[] = [938, 954, 970];
+  const A4pinNum: number = A4pin;
+  const A5pool = A5candidates.filter((p) => p !== A4pinNum);
+  const A5pin = pick(A5pool);
+  const A5my = irand(40, 80);
+  add("A5", [{x:800,y:106},{x:800,y:A5my},{x:A5pin,y:A5my},{x:A5pin,y:20}], 1.0, 0.4);
+
+  const A6bx = irand(520, 620);
+  add("A6", [{x:676,y:134},{x:A6bx,y:134},{x:A6bx,y:262},{x:480,y:262}], 1.0, 0.4);
+
+  const A7my = irand(140, 220);
+  add("A7", [{x:676,y:158},{x:irand(260, 360),y:158},null!,{x:0,y:A7my}].map((p,i,a)=>p ?? {x:(a[1] as Pt).x,y:A7my}), 1.0, 0.36);
+
+  const A8my = irand(280, 340);
+  add("A8", [{x:704,y:186},{x:704,y:A8my},{x:560,y:A8my},{x:560,y:376}], 1.25, 0.45);
+
+  // Bonus chip A bottom-pin extension to a via in the mid plane
+  if (rnd() < 0.7) {
+    const ax = irand(820, 920);
+    const ay = irand(230, 300);
+    add("Ax", [{x:728,y:186},{x:728,y:ay},{x:ax,y:ay}], 1.0, 0.38);
+    addVia({x:ax, y:ay});
+  }
+  if (rnd() < 0.5) {
+    const by = irand(210, 260);
+    const bx = irand(940, 1010);
+    add("Ay", [{x:752,y:186},{x:752,y:by},{x:bx,y:by}], 1.0, 0.36);
+    addVia({x:bx, y:by});
+  }
+
+  // ── CHIP_C fanout ──
+  const C1bx = irand(160, 260);
+  const C1my = irand(40, 100);
+  add("C1", [{x:404,y:236},{x:404,y:C1my},{x:C1bx,y:C1my},{x:C1bx,y:0}], 1.0, 0.4);
+
+  if (rnd() < 0.65) {
+    const cmy = irand(170, 220);
+    const cbx = irand(260, 340);
+    add("C1b", [{x:428,y:236},{x:428,y:cmy},{x:cbx,y:cmy},{x:cbx,y:0}], 1.0, 0.36);
+  }
+
+  const C2my = irand(240, 290);
+  const C2bx = irand(160, 260);
+  add("C2", [{x:376,y:262},{x:C2bx,y:262},{x:C2bx,y:C2my},{x:0,y:C2my}], 1.0, 0.36);
+
+  if (rnd() < 0.6) {
+    const c2my = irand(300, 360);
+    const c2bx = irand(220, 320);
+    add("C2b", [{x:376,y:284},{x:c2bx,y:284},{x:c2bx,y:c2my},{x:0,y:c2my}], 1.0, 0.34);
+  }
+
+  add("C3", [{x:404,y:310},{x:404,y:400},{x:516,y:400}], 1.0, 0.4);
+
+  if (rnd() < 0.7) {
+    const cmy = irand(330, 365);
+    add("C3b", [{x:428,y:310},{x:428,y:cmy},{x:600,y:cmy},{x:600,y:376}], 1.0, 0.38);
+  }
+
+  // ── CHIP_B fanout ──
+  const BBmy = irand(430, 480);
+  const BBbx = irand(180, 280);
+  add("BB1", [{x:516,y:420},{x:BBbx,y:420},{x:BBbx,y:BBmy},{x:0,y:BBmy}], 1.0, 0.38);
+
+  if (rnd() < 0.5) {
+    const bby = irand(460, 500);
+    const bbx = irand(820, 920);
+    add("BBb", [{x:600,y:444},{x:600,y:bby},{x:bbx,y:bby}], 1.0, 0.36);
+    addVia({x:bbx, y:bby});
+  }
+  if (rnd() < 0.5) {
+    const bby = irand(465, 505);
+    const bbx = irand(700, 800);
+    add("BBc", [{x:560,y:444},{x:560,y:bby},{x:bbx,y:bby}], 1.0, 0.34);
+    addVia({x:bbx, y:bby});
+  }
+
+  // ── Inline parts placed on actual segments (with text-zone guard) ──
+  const parts: Inline[] = [];
+  const usedCenters = new Set<string>();
+  const kinds: Inline["kind"][] = ["resistor", "capacitor", "inductor", "diode"];
+  for (const s of segs) {
+    const isH = s.a.y === s.b.y;
+    const len = isH ? Math.abs(s.b.x - s.a.x) : Math.abs(s.b.y - s.a.y);
+    if (len < 50) continue;
+    if (rnd() > 0.22) continue;
+    const margin = 26;
+    if (len < margin * 2) continue;
+    const t = rand(margin, len - margin);
+    const dir = isH ? Math.sign(s.b.x - s.a.x) : Math.sign(s.b.y - s.a.y);
+    const cx = isH ? Math.round(s.a.x + dir * t) : s.a.x;
+    const cy = isH ? s.a.y : Math.round(s.a.y + dir * t);
+    // skip lower-left text zone
+    if (cx < 860 && cy > 560) continue;
+    // skip inside portrait region
+    if (cx > PORT.x - 20 && cx < PORT.x + PORT.w + 20 && cy > PORT.y - 20 && cy < PORT.y + PORT.h + 20) continue;
+    const key = `${cx},${cy}`;
+    if (usedCenters.has(key)) continue;
+    usedCenters.add(key);
+    const kind = pick(kinds);
+    let rot: 0 | 90 | 180 | 270 = 0;
+    if (kind === "diode") {
+      // anode-to-cathode points in the direction of signal flow (segment dir)
+      if (isH) rot = dir > 0 ? 0 : 180;
+      else rot = dir > 0 ? 90 : 270;
+    } else {
+      rot = isH ? 0 : 90;
+    }
+    parts.push({ kind, x: cx, y: cy, rot } as Inline);
+  }
+
+  // sprinkle a few extra testpads on existing vias (so the ring is more obvious)
+  const viaList = Array.from(viaMap.values());
+  const tpCount = Math.min(viaList.length, 3 + Math.floor(rnd() * 3));
+  for (let i = 0; i < tpCount; i++) {
+    const v = viaList[Math.floor(rnd() * viaList.length)];
+    if (!v) continue;
+    if (v.x < 860 && v.y > 560) continue;
+    const key = `tp:${v.x},${v.y}`;
+    if (usedCenters.has(key)) continue;
+    usedCenters.add(key);
+    parts.push({ kind: "testpad", x: v.x, y: v.y });
+  }
+
+  return { traces, vias: viaList, parts };
+}
 
 function HeroText() {
   return (
@@ -589,7 +739,7 @@ function InlineComponent(c: Inline) {
   );
 }
 
-function CircuitTraceLayer() {
+function CircuitTraceLayer({ built }: { built: Built }) {
   return (
     <g>
       {/* secondary chips (rendered before traces so trace endpoints sit on them) */}
@@ -615,7 +765,7 @@ function CircuitTraceLayer() {
 
       {/* traces — drawn in with stroke-dashoffset, staggered */}
       <g fill="none" strokeLinecap="square" strokeLinejoin="round">
-        {TRACES.map((t, i) => (
+        {built.traces.map((t, i) => (
           <path
             key={t.id}
             id={`trace-${t.id}`}
@@ -632,17 +782,17 @@ function CircuitTraceLayer() {
 
       {/* inline components — fade in after traces finish */}
       <g className="hero-part-in" style={{ animationDelay: "2s" }}>
-        {INLINE_PARTS.map((p, i) => (
+        {built.parts.map((p, i) => (
           <InlineComponent key={i} {...p} />
         ))}
       </g>
 
       {/* endpoint vias — also fade in after traces */}
       <g className="hero-part-in" style={{ animationDelay: "1.8s" }}>
-        {ENDPOINTS.map((e, i) => (
+        {built.vias.map((e, i) => (
           <g key={i}>
-            <circle cx={e.x} cy={e.y} r={(e.r ?? 2.5) + 1.5} fill="none" stroke="#3a3a3a" strokeWidth="0.8" />
-            <circle cx={e.x} cy={e.y} r={e.r ?? 2.5} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth="0.8" />
+            <circle cx={e.x} cy={e.y} r={4} fill="none" stroke="#3a3a3a" strokeWidth="0.8" />
+            <circle cx={e.x} cy={e.y} r={2.5} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth="0.8" />
           </g>
         ))}
       </g>
@@ -651,8 +801,13 @@ function CircuitTraceLayer() {
 }
 
 function CircuitHero() {
-  // pulses — selected traces only
-  const pulses = TRACES.filter((t) => t.pulse);
+  // Seed: stable on server + initial client render, then randomized on mount.
+  const [seed, setSeed] = useState(1);
+  useEffect(() => {
+    setSeed(((Math.random() * 0xffffffff) >>> 0) || 1);
+  }, []);
+  const built = useMemo(() => buildCircuit(seed), [seed]);
+  const pulses = built.traces.filter((t) => t.pulse);
   return (
     <section
       id="top"
@@ -663,6 +818,7 @@ function CircuitHero() {
       {/* layer 2: circuit SVG */}
       <div className="pointer-events-none absolute inset-0 z-[1]">
         <svg
+          key={seed}
           viewBox={`0 0 ${VB_W} ${VB_H}`}
           preserveAspectRatio="xMidYMid slice"
           className="hero-circuit-fade absolute inset-0 h-full w-full"
@@ -684,7 +840,7 @@ function CircuitHero() {
 
           {/* circuit layer (under the mask) */}
           <g mask="url(#heroTraceMask)">
-            <CircuitTraceLayer />
+            <CircuitTraceLayer built={built} />
           </g>
 
           {/* pulses — above traces, also masked so they don't pop into the text zone */}
