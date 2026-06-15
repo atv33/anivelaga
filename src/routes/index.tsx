@@ -633,6 +633,8 @@ function buildCircuit(seed: number): Built {
   const usedCenters = new Set<string>();
   const kinds: Inline["kind"][] = ["resistor", "capacitor", "inductor", "diode"];
   for (const s of segs) {
+    // skip faint traces — inline parts on them read as floating
+    if (s.o < 0.4) continue;
     const isH = s.a.y === s.b.y;
     const len = isH ? Math.abs(s.b.x - s.a.x) : Math.abs(s.b.y - s.a.y);
     if (len < 50) continue;
@@ -666,7 +668,7 @@ function buildCircuit(seed: number): Built {
 
   // sprinkle a few extra testpads on existing vias (so the ring is more obvious)
   const viaList = Array.from(viaMap.values());
-  const tpCount = Math.min(viaList.length, 3 + Math.floor(rnd() * 3));
+  const tpCount = Math.min(viaList.length, 1 + Math.floor(rnd() * 2));
   for (let i = 0; i < tpCount; i++) {
     const v = viaList[Math.floor(rnd() * viaList.length)];
     if (!v) continue;
