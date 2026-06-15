@@ -241,38 +241,7 @@ function TopBar() {
 
 function Hero() {
   return (
-    <section
-      id="top"
-      data-section="00"
-      className="relative w-full overflow-hidden"
-      style={{ minHeight: "100vh", background: "#050505" }}
-    >
-      <CircuitBackground />
-      <div className="pointer-events-none absolute inset-0 z-[3] mx-auto flex max-w-6xl items-end px-6 pb-28 sm:px-10 sm:pb-32">
-        <div className="pointer-events-auto max-w-xl">
-          <h1
-            className="font-display font-black uppercase text-white"
-            style={{ fontSize: "clamp(3rem,10vw,7.5rem)", letterSpacing: "-0.04em", lineHeight: 0.88 }}
-          >
-            Ani
-            <br />
-            Velaga
-          </h1>
-          <p
-            className="mt-6 max-w-md font-mono text-[13px] leading-relaxed text-neutral-400 sm:text-sm"
-          >
-            <span className="text-neutral-100">Electrical &amp; computer engineer</span> — I design
-            hardware at the board level, then push it through the networking stack into LLM
-            inference systems. Currently on CUAUV building PCBs for an autonomous submarine.
-            <span className="blink-cursor">_</span>
-          </p>
-        </div>
-      </div>
-      <div className="pointer-events-none absolute inset-x-0 bottom-6 z-[3] flex items-center justify-center gap-3 px-6 font-mono text-[10px] uppercase tracking-[0.28em] text-neutral-500 sm:px-10">
-        <span className="size-1.5 rounded-full bg-neutral-300" />
-        Available for new work — 2026
-      </div>
-    </section>
+    <CircuitHero />
   );
 }
 
