@@ -917,12 +917,16 @@ function CircuitHero() {
   const [hoverPulseId, setHoverPulseId] = useState(0);
   const [pressed, setPressed] = useState(false);
   const isMobile = useIsMobile();
-  // On mobile, focus the viewBox on the meaningful widgets (lamp on the
-  // left, portrait + signal button on the right) and switch to `meet` so
-  // nothing important gets cropped. Desktop keeps the wide cinematic crop.
-  const mobileViewBox = `260 220 1100 560`;
+  // On mobile, compose a tighter hero board so the portrait, lamp, and button
+  // are intentionally placed instead of relying on the wide desktop crop.
+  const mobileViewBox = `120 190 1120 640`;
   const viewBox = isMobile ? mobileViewBox : `0 0 ${VB_W} ${VB_H}`;
   const preserve = isMobile ? "xMidYMid meet" : "xMidYMid slice";
+  const buttonPad = isMobile ? MOBILE_BUTTON_PAD : BUTTON_PAD;
+  const lampPoint = isMobile ? MOBILE_LAMP : LAMP;
+  const signalD = isMobile
+    ? `M ${MOBILE_BUTTON_PAD.x} ${MOBILE_BUTTON_PAD.y} H 700 V 520 H ${MOBILE_LAMP.cx} V ${MOBILE_LAMP.cy + LAMP.h / 2 + 14}`
+    : SIGNAL_D;
   const timers = useRef<number[]>([]);
   const clearAllTimers = () => {
     timers.current.forEach((t) => window.clearTimeout(t));
