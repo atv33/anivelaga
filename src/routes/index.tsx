@@ -1067,10 +1067,10 @@ function CircuitHero() {
 
             {/* Vias at every real bend in the signal path */}
             <g className="hero-part-in" style={{ animationDelay: "1.7s" }}>
-              <circle cx={BUTTON_PAD.x} cy={740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-              <circle cx={700} cy={740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-              <circle cx={700} cy={470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-              <circle cx={340} cy={470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={isMobile ? MOBILE_BUTTON_PAD.x : BUTTON_PAD.x} cy={isMobile ? 500 : 740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={700} cy={isMobile ? 520 : 740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={700} cy={isMobile ? 520 : 470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={isMobile ? MOBILE_LAMP.cx : 340} cy={isMobile ? 520 : 470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
             </g>
 
             {/* Leading dot — travels along SIGNAL with the fill */}
@@ -1099,14 +1099,14 @@ function CircuitHero() {
           <g className="hero-part-in" style={{ animationDelay: "1.8s" }}>
             {/* button pad + leg into the routed trace */}
             <line
-              x1={BUTTON_PAD.x}
-              y1={620}
-              x2={BUTTON_PAD.x}
-              y2={BUTTON_PAD.y}
+              x1={buttonPad.x}
+              y1={isMobile ? buttonPad.y - 70 : 620}
+              x2={buttonPad.x}
+              y2={buttonPad.y}
               stroke="#3a3a3a"
               strokeWidth={1.2}
             />
-            <circle cx={BUTTON_PAD.x} cy={BUTTON_PAD.y} r={3.5} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.9} />
+            <circle cx={buttonPad.x} cy={buttonPad.y} r={3.5} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.9} />
             {/* idle invite-pulse around the button pad (always on, restrained).
                 Intensifies on hover. */}
             {!signaling && !lampOn && (
