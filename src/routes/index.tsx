@@ -1695,7 +1695,7 @@ function CategoryBlock({ category: c }: { category: Category }) {
                     borderRadius: 2,
                   }}
                 >
-                  <div className="flex flex-col lg:flex-row" style={{ minHeight: 350 }}>
+                  <div className="flex flex-col lg:flex-row" style={{ minHeight: 160 }}>
                     <div className="lg:w-1/2">
                       <ProjectRow
                         project={p}
@@ -1731,7 +1731,7 @@ function CategoryBlock({ category: c }: { category: Category }) {
                     borderRadius: 2,
                   }}
                 >
-                  <div className="flex flex-col lg:flex-row" style={{ minHeight: 350 }}>
+                  <div className="flex flex-col lg:flex-row" style={{ minHeight: 160 }}>
                     <div className="lg:w-1/2">
                       <ProjectRow
                         project={p}
@@ -1919,15 +1919,15 @@ function SubProjectRow({
               }
             : undefined
         }
-        className={`lg:w-1/2 px-6 py-5 ${clickable ? "cursor-pointer" : ""}`}
+        className={`lg:w-1/2 px-4 py-3 ${clickable ? "cursor-pointer" : ""}`}
       >
-        <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-ink-faint">
+        <div className="font-mono text-[9px] uppercase tracking-[0.28em] text-ink-faint">
           ↳ Sub-project &nbsp;·&nbsp; {categoryId}.{p.id}
         </div>
-        <h5 className="mt-2 font-display text-sm font-bold tracking-tight text-foreground sm:text-base">
+        <h5 className="mt-1 font-display text-xs font-bold tracking-tight text-foreground sm:text-sm">
           {p.name}
         </h5>
-        <p className="mt-1.5 max-w-md text-xs leading-relaxed text-ink-dim">
+        <p className="mt-1 max-w-md text-[11px] leading-relaxed text-ink-dim">
           {p.tagline.split(".")[0]}.
         </p>
         {clickable ? (
@@ -1937,7 +1937,7 @@ function SubProjectRow({
               e.stopPropagation();
               onOpen?.();
             }}
-            className="mt-4 inline-flex items-center gap-2 rounded-sm border-2 border-rule bg-secondary/40 px-5 py-2.5 font-mono text-xs uppercase tracking-[0.25em] text-foreground transition-all hover:border-mark hover:bg-mark/10 hover:text-mark"
+            className="mt-2 inline-flex items-center gap-1.5 rounded-sm border-2 border-rule bg-secondary/40 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-foreground transition-all hover:border-mark hover:bg-mark/10 hover:text-mark"
           >
             <span>View details</span>
             <span>→</span>
@@ -1946,10 +1946,10 @@ function SubProjectRow({
       </div>
       <div
         className="lg:w-1/2"
-        style={{ borderLeft: "1px solid rgba(255,255,255,0.06)", minHeight: 200 }}
+        style={{ borderLeft: "1px solid rgba(255,255,255,0.06)", minHeight: 120 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ width: "100%", height: "100%", minHeight: 200 }} className="overflow-hidden">
+        <div style={{ width: "100%", height: "100%", minHeight: 120 }} className="overflow-hidden">
           <model-viewer
             src={modelSrc}
             alt={`${p.name} 3D model`}
