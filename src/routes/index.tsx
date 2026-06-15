@@ -98,6 +98,10 @@ const CATEGORIES: Category[] = [
         name: "Serial Communication Board",
         tagline:
           "Central communication hub for the submarine. Aggregates 16 RS-232 RX/TX channels from sensors and peripherals into a single USB-C connection to the Jetson AI computer. Uses FTDI USB-to-UART ICs with RS-232 level shifting. Spring 2026 added SMF05CT1G TVS diode arrays for ESD protection on all 32 signal lines, DVL direct-connect header, and hot-swap EEPROM footprint. 4-layer PCB, 3.701\" x 4.291\".",
+        bullets: [
+          "16 RS-232 channels → USB-C via FTDI ICs",
+          "4-layer PCB, 3.701\" x 4.291\" with ESD protection",
+        ],
         stack: ["Altium Designer", "4-Layer PCB", "RS-232", "USB-C", "FTDI", "ESD Protection"],
         placeholderCaption: "Serial Board 3D Render",
       },
@@ -106,6 +110,10 @@ const CATEGORIES: Category[] = [
         name: "Serial Test Board",
         tagline:
           "Breakout and validation board for the Serial Board. Exposes all 16 RS-232 channels as labeled headers for bench testing without the full submarine harness. Used during bring-up to verify level-shifter voltages, FTDI enumeration, and loopback integrity on each channel pair.",
+        bullets: [
+          "Bench harness for the Serial Board",
+          "Per-channel headers for loopback + level-shifter validation",
+        ],
         stack: ["Altium Designer", "Test & Validation", "RS-232", "Breakout Board"],
       },
       {
@@ -113,6 +121,10 @@ const CATEGORIES: Category[] = [
         name: "High-Power Thruster Control Board",
         tagline:
           "Motor driver PCB for the Orion vehicle's thruster array. Receives PWM/CAN commands from the Jetson via backplane connector and drives 8 brushless DC thrusters. Handles power distribution, overcurrent protection, and ESC signal conditioning.",
+        bullets: [
+          "Drives 8 brushless DC thrusters via PWM/CAN",
+          "Power distribution + overcurrent protection",
+        ],
         stack: ["Altium Designer", "Motor Control", "CAN Bus", "PWM", "Power Distribution"],
       },
     ],
@@ -129,6 +141,10 @@ const CATEGORIES: Category[] = [
         year: "Fall 2025",
         tagline:
           "Research into optimizing KV-cache transfer across GPU nodes during LLM inference. Profiled NCCL all-gather latency on 4-GPU clusters and experimented with RDMA-based direct peer-to-peer transfers to cut inter-node round-trip time. Built a Python harness using PyTorch distributed to benchmark cache hit rate vs. recompute cost under varying sequence lengths.",
+        bullets: [
+          "RDMA peer-to-peer KV-cache transfer across 4-GPU clusters",
+          "PyTorch harness profiling NCCL all-gather latency",
+        ],
         stack: ["CUDA", "NCCL", "RDMA", "PyTorch", "Python"],
       },
       {
@@ -137,6 +153,10 @@ const CATEGORIES: Category[] = [
         year: "Spring 2026",
         tagline:
           "End-to-end benchmarking pipeline for transformer inference on NVIDIA A100s. Measured tokens/sec, memory bandwidth utilization, and KV-cache memory footprint across batch sizes and context lengths. Identified bottlenecks in attention kernel scheduling and proposed a batching strategy that improved throughput by ~18% on long-context workloads.",
+        bullets: [
+          "End-to-end transformer inference benchmarks on A100s",
+          "~18% throughput gain on long-context workloads",
+        ],
         stack: ["CUDA", "TensorRT", "Python", "NVIDIA A100"],
       },
     ],
@@ -152,6 +172,10 @@ const CATEGORIES: Category[] = [
         year: "Summer 2025",
         tagline:
           "Designed a 65% layout mechanical keyboard PCB from scratch in KiCad. Implemented hot-swap socket footprints for MX-compatible switches, per-key RGB via WS2812B LED daisy chain, and USB-C HID with an RP2040 microcontroller running QMK firmware. 2-layer board, manufactured through JLCPCB.",
+        bullets: [
+          "65% hot-swap PCB in KiCad with RP2040 + QMK firmware",
+          "Per-key WS2812B RGB, USB-C HID, manufactured via JLCPCB",
+        ],
         stack: ["KiCad", "RP2040", "QMK", "USB-C", "RGB"],
       },
       {
@@ -160,6 +184,10 @@ const CATEGORIES: Category[] = [
         year: "Ongoing",
         tagline:
           "Built a home networking lab for low-latency experimentation. Flashed OpenWrt on a TP-Link router, set up VLANs for traffic isolation, configured WireGuard VPN, and wired a 2.5GbE switch for inter-node throughput testing. Used for running local LLM inference and testing distributed computing setups.",
+        bullets: [
+          "OpenWrt router + VLANs + WireGuard VPN",
+          "2.5GbE switch for inter-node throughput testing",
+        ],
         stack: ["OpenWrt", "WireGuard", "VLANs", "Networking", "Linux"],
       },
     ],
