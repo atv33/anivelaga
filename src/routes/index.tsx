@@ -321,7 +321,6 @@ const HEADER_T = { x: 880, y: -10, w: 100, h: 26, pins: [890, 906, 922, 938, 954
 // Inline component types
 type Inline =
   | { kind: "resistor";  x: number; y: number; rot?: 0 | 90 | 180 | 270 }
-  | { kind: "capacitor"; x: number; y: number; rot?: 0 | 90 | 180 | 270 }
   | { kind: "inductor";  x: number; y: number; rot?: 0 | 90 | 180 | 270 }
   | { kind: "diode";     x: number; y: number; rot?: 0 | 90 | 180 | 270 }
   | { kind: "testpad";   x: number; y: number };
@@ -404,7 +403,7 @@ function buildCircuit(_seed: number): Built {
   add("FA2", [{x:728,y:186},{x:728,y:216},{x:840,y:216},{x:840,y:484}], 1.0, 0.42);
 
   // ── CHIP_C (upper-left connector) fanout (4) ──
-  add("C1", [{x:452,y:236},{x:452,y:72},{x:312,y:72},{x:312,y:0}], 1.0, 0.4);
+  add("CHIP_C_TOP", [{x:452,y:236},{x:452,y:72},{x:312,y:72},{x:312,y:0}], 1.0, 0.4);
   add("C2", [{x:424,y:262},{x:264,y:262},{x:264,y:168},{x:0,y:168}], 1.0, 0.4);
   // CHIP_C top pin (452,236) → CHIP_A left pin (676,134)
   add("C3", [{x:500,y:236},{x:500,y:134},{x:676,y:134}], 1.0, 0.42);
@@ -473,8 +472,6 @@ function buildCircuit(_seed: number): Built {
     { kind: "resistor",  x: 876,  y: 158, rot: 0 },   // on L3 segment y=158 x 828..960
     { kind: "resistor",  x: 1464, y: 296, rot: 0 },   // on R1 segment y=296 x 1328..1600
     { kind: "resistor",  x: 576,  y: 134, rot: 0 },   // on C3 segment y=134 x 452..676
-    // Capacitors (1) — vertical SMD on vertical runs
-    { kind: "capacitor", x: 600,  y: 576, rot: 90 },  // on CB2 trunk x=600 y 444..672
     // Diodes (2) — horizontal, both anode-left/cathode-right
     { kind: "diode",     x: 912,  y: 476, rot: 0 },   // on L6/L7/L8 shared y=476 lane (x 808..984)
     { kind: "diode",     x: 840,  y: 72,  rot: 0 },   // on FA1 segment y=72 x 752..938
