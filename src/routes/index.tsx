@@ -480,8 +480,14 @@ function buildCircuit(_seed: number): Built {
 }
 
 function HeroText() {
+  const isMobile = useIsMobile();
+
   return (
-    <div className="pointer-events-none absolute inset-0 z-[3] mx-auto flex max-w-6xl items-end px-6 pb-24 sm:px-10 sm:pb-28">
+    <div
+      className={`pointer-events-none absolute inset-0 z-[3] mx-auto flex max-w-6xl items-end px-6 ${
+        isMobile ? "pb-16" : "pb-24 sm:px-10 sm:pb-28"
+      }`}
+    >
       <div className="pointer-events-auto max-w-xl">
         <h1
           className="font-display font-black uppercase text-white"
