@@ -712,65 +712,90 @@ function SignalPulse({ d, dur, accent }: { d: string; dur: number; accent?: "blu
   );
 }
 
-// LED indicator — a small PCB-mounted amber lamp that pulses on when a signal
-// arrives. Pad geometry is exposed via LED_BODY/LED_PIN so the routing layer
-// can terminate the LED trace exactly on its pad.
-const LED_BODY = { cx: 270, cy: 440, w: 28, h: 14 };
-// Trace approaches the LED from below and lands on the lower pad center
-const LED_PIN = { x: LED_BODY.cx, y: LED_BODY.cy + LED_BODY.h / 2 + 3 }; // 270, 460
-// Dedicated trace: CHIP_C bottom pin 3 (452, 310) → corner → LED bottom pad
-const LED_TRACE_D = `M 452 310 V 360 H ${LED_PIN.x} V ${LED_PIN.y}`;
-const LED_PERIOD_MS = 3200;
+// ── Interactive lamp + button signal path ───────────────────────────────────
+// Button sits below the portrait module; trace routes around the portrait,
+// across the lower board, up past CHIP_B, and into the lamp above the name.
+const BUTTON_PAD = { x: 1190, y: 660 };
+const LAMP = { cx: 340, cy: 320, w: 56, h: 32 };
+const LAMP_PIN = { x: LAMP.cx, y: LAMP.cy + LAMP.h / 2 + 14 }; // 340, 350
+const SIGNAL_PATH_D =
+  `M ${BUTTON_PAD.x} ${BUTTON_PAD.y} V 690 H 700 V 470 H ${LAMP_PIN.x} V ${LAMP_PIN.y}`;
+const SIGNAL_DUR_MS = 1400;
 
-function LedIndicator({ period = LED_PERIOD_MS }: { period?: number }) {
-  const dur = `${period / 1000}s`;
+function Lamp({ on }: { on: boolean }) {
   return (
-    <g transform={`translate(${LED_BODY.cx} ${LED_BODY.cy})`}>
-      {/* solder pads top + bottom */}
-      <rect x={-3} y={LED_BODY.h / 2} width={6} height={4} fill="#262626" stroke="#3d3d3d" strokeWidth={0.5} />
-      <rect x={-3} y={-LED_BODY.h / 2 - 4} width={6} height={4} fill="#262626" stroke="#3d3d3d" strokeWidth={0.5} />
-      {/* body */}
+    <g transform={`translate(${LAMP.cx} ${LAMP.cy})`}>
+      {/* downward halo cone over the name */}
+      {on && (
+        <ellipse
+          cx={0}
+          cy={120}
+          rx={140}
+          ry={90}
+          fill="url(#lampHalo)"
+          opacity={0.55}
+          style={{ pointerEvents: "none" }}
+        />
+      )}
+      {/* solder pads */}
+      <rect x={-20} y={LAMP.h / 2} width={7} height={5} fill="#262626" stroke="#3d3d3d" strokeWidth={0.5} />
+      <rect x={13} y={LAMP.h / 2} width={7} height={5} fill="#262626" stroke="#3d3d3d" strokeWidth={0.5} />
+      {/* leg trace down to LAMP_PIN */}
+      <line x1={0} y1={LAMP.h / 2} x2={0} y2={LAMP.h / 2 + 14} stroke="#3d3d3d" strokeWidth={1} />
+      {/* body capsule */}
       <rect
-        x={-LED_BODY.w / 2}
-        y={-LED_BODY.h / 2}
-        width={LED_BODY.w}
-        height={LED_BODY.h}
-        rx={1.5}
-        fill="#101010"
+        x={-LAMP.w / 2}
+        y={-LAMP.h / 2}
+        width={LAMP.w}
+        height={LAMP.h}
+        rx={7}
+        fill="#0e0e0e"
         stroke="#3d3d3d"
         strokeWidth={1}
       />
-      {/* dim lens (off state) */}
-      <circle r={5} fill="#1a1a1a" stroke="#5a5a5a" strokeWidth={0.8} />
-      {/* polarity marker */}
-      <line x1={LED_BODY.w / 2 - 3} y1={-3} x2={LED_BODY.w / 2 - 3} y2={3} stroke="#555" strokeWidth={0.6} />
-      {/* glow layers — only briefly visible when the pulse arrives */}
-      <circle r={5} fill="#fbbf24" opacity={0}>
-        <animate
-          attributeName="opacity"
-          values="0;0;0;0.95;0.55;0.15;0"
-          keyTimes="0;0.75;0.9;0.94;0.97;0.99;1"
-          dur={dur}
-          repeatCount="indefinite"
-        />
+      {/* silkscreen label */}
+      <text
+        x={LAMP.w / 2 - 5}
+        y={-LAMP.h / 2 - 4}
+        fill="#555"
+        fontFamily="ui-monospace, monospace"
+        fontSize={6}
+        textAnchor="end"
+      >
+        D1
+      </text>
+      {/* lens */}
+      <circle
+        r={11}
+        fill={on ? "#fbbf24" : "#181818"}
+        stroke={on ? "#fde68a" : "#5a5a5a"}
+        strokeWidth={1}
+        style={{ transition: "fill 250ms ease, stroke 250ms ease" }}
+      />
+      {/* glow layers when on */}
+      {on && (
+        <g style={{ pointerEvents: "none" }}>
+          <circle r={16} fill="#fbbf24" opacity={0.45} />
+          <circle r={28} fill="#fbbf24" opacity={0.22} />
+          <circle r={48} fill="#fbbf24" opacity={0.1} />
+        </g>
+      )}
+    </g>
+  );
+}
+
+function SignalDot({ d, dur }: { d: string; dur: number }) {
+  const s = `${dur / 1000}s`;
+  return (
+    <g style={{ pointerEvents: "none" }}>
+      <circle r={3} fill="rgba(255,210,140,1)">
+        <animateMotion dur={s} repeatCount="1" fill="freeze" path={d} />
       </circle>
-      <circle r={11} fill="#fbbf24" opacity={0}>
-        <animate
-          attributeName="opacity"
-          values="0;0;0;0.4;0.22;0.08;0"
-          keyTimes="0;0.75;0.9;0.94;0.97;0.99;1"
-          dur={dur}
-          repeatCount="indefinite"
-        />
+      <circle r={7} fill="rgba(255,210,140,0.55)">
+        <animateMotion dur={s} repeatCount="1" fill="freeze" path={d} />
       </circle>
-      <circle r={20} fill="#fbbf24" opacity={0}>
-        <animate
-          attributeName="opacity"
-          values="0;0;0;0.18;0.1;0.03;0"
-          keyTimes="0;0.75;0.9;0.94;0.97;0.99;1"
-          dur={dur}
-          repeatCount="indefinite"
-        />
+      <circle r={14} fill="rgba(255,210,140,0.2)">
+        <animateMotion dur={s} repeatCount="1" fill="freeze" path={d} />
       </circle>
     </g>
   );
@@ -888,6 +913,25 @@ function CircuitHero() {
   }, []);
   const built = useMemo(() => buildCircuit(seed), [seed]);
   const pulses = built.traces.filter((t) => t.pulse);
+  const [lampOn, setLampOn] = useState(false);
+  const [pulseId, setPulseId] = useState(0);
+  const [pressed, setPressed] = useState(false);
+  const lampOffTimer = useRef<number | null>(null);
+  const lampOnTimer = useRef<number | null>(null);
+
+  const triggerSignal = () => {
+    if (lampOffTimer.current) window.clearTimeout(lampOffTimer.current);
+    if (lampOnTimer.current) window.clearTimeout(lampOnTimer.current);
+    setPressed(true);
+    window.setTimeout(() => setPressed(false), 180);
+    if (lampOn) {
+      setLampOn(false);
+      return;
+    }
+    setPulseId((n) => n + 1);
+    lampOnTimer.current = window.setTimeout(() => setLampOn(true), SIGNAL_DUR_MS - 80);
+    lampOffTimer.current = window.setTimeout(() => setLampOn(false), SIGNAL_DUR_MS + 5000);
+  };
   return (
     <section
       id="top"
@@ -910,6 +954,11 @@ function CircuitHero() {
               <stop offset="0%" stopColor="#000" />
               <stop offset="55%" stopColor="#1a1a1a" />
               <stop offset="100%" stopColor="#fff" />
+            </radialGradient>
+            <radialGradient id="lampHalo" cx="50%" cy="0%" r="75%">
+              <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.85" />
+              <stop offset="55%" stopColor="#fbbf24" stopOpacity="0.18" />
+              <stop offset="100%" stopColor="#fbbf24" stopOpacity="0" />
             </radialGradient>
             <mask id="heroTraceMask" maskUnits="userSpaceOnUse" x="0" y="0" width={VB_W} height={VB_H}>
               <rect x="0" y="0" width={VB_W} height={VB_H} fill="url(#heroTextFade)" />
@@ -935,30 +984,110 @@ function CircuitHero() {
             ))}
           </g>
 
-          {/* LED indicator + dedicated trace (drawn ABOVE the text mask so they
-              stay fully visible above the name). The trace originates at
-              CHIP_C bottom pin 3, which the procedural router leaves unused. */}
+          {/* Interactive signal path: button → board → lamp. Drawn ABOVE the
+              text mask so it stays fully visible. */}
           <g>
             <path
-              d={LED_TRACE_D}
+              d={SIGNAL_PATH_D}
               fill="none"
-              stroke="#4a4a4a"
-              strokeOpacity={0.55}
-              strokeWidth={1.25}
+              stroke={lampOn ? "#7a5a1a" : "#3a3a3a"}
+              strokeOpacity={lampOn ? 0.85 : 0.55}
+              strokeWidth={1.4}
               strokeLinecap="square"
               strokeLinejoin="round"
               pathLength={1}
               className="hero-trace-draw"
-              style={{ animationDelay: "1.4s" }}
+              style={{ animationDelay: "1.4s", transition: "stroke 300ms ease" }}
             />
+            {/* small inline parts along the routed path */}
             <g className="hero-part-in" style={{ animationDelay: "2s" }}>
-              <SignalPulse d={LED_TRACE_D} dur={LED_PERIOD_MS} accent="amber" />
-              <LedIndicator />
+              <InlineComponent kind="resistor" x={920} y={690} rot={0} />
+              <InlineComponent kind="capacitor" x={700} y={580} rot={90} />
+              <InlineComponent kind="diode" x={500} y={470} rot={180} />
+              {/* via at corners */}
+              <circle cx={700} cy={690} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={700} cy={470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={340} cy={470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+            </g>
+            {pulseId > 0 && (
+              <SignalDot key={pulseId} d={SIGNAL_PATH_D} dur={SIGNAL_DUR_MS} />
+            )}
+            <g className="hero-part-in" style={{ animationDelay: "1.6s" }}>
+              <Lamp on={lampOn} />
             </g>
           </g>
 
           {/* layer 3: portrait module — always visible, above mask */}
           <PortraitModule />
+
+          {/* hardware-style trigger button under the portrait */}
+          <g className="hero-part-in" style={{ animationDelay: "1.8s" }}>
+            {/* button pad + leg into the routed trace */}
+            <line
+              x1={BUTTON_PAD.x}
+              y1={620}
+              x2={BUTTON_PAD.x}
+              y2={BUTTON_PAD.y}
+              stroke="#3a3a3a"
+              strokeWidth={1.2}
+            />
+            <circle cx={BUTTON_PAD.x} cy={BUTTON_PAD.y} r={3.5} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.9} />
+            <foreignObject
+              x={BUTTON_PAD.x - 90}
+              y={595}
+              width={180}
+              height={42}
+              style={{ overflow: "visible", pointerEvents: "auto" }}
+            >
+              <div
+                style={{ display: "flex", justifyContent: "center", width: "100%" }}
+              >
+                <button
+                  type="button"
+                  onClick={triggerSignal}
+                  aria-pressed={lampOn}
+                  style={{
+                    fontFamily:
+                      "JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, monospace",
+                    fontSize: 10,
+                    letterSpacing: "0.22em",
+                    textTransform: "uppercase",
+                    color: lampOn ? "#fbbf24" : "#bdbdbd",
+                    background: pressed ? "#070707" : "#0d0d0d",
+                    border: `1px solid ${lampOn ? "#7a5a1a" : "#2c2c2c"}`,
+                    borderTopColor: pressed ? "#1c1c1c" : (lampOn ? "#a07720" : "#3a3a3a"),
+                    padding: "8px 14px",
+                    borderRadius: 2,
+                    cursor: "pointer",
+                    boxShadow: pressed
+                      ? "inset 0 1px 0 rgba(0,0,0,0.6)"
+                      : lampOn
+                      ? "0 0 12px rgba(251,191,36,0.25), inset 0 1px 0 rgba(255,255,255,0.04)"
+                      : "inset 0 1px 0 rgba(255,255,255,0.04)",
+                    transform: pressed ? "translateY(1px)" : "none",
+                    transition:
+                      "background 120ms ease, color 200ms ease, border-color 200ms ease, box-shadow 200ms ease, transform 80ms ease",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  <span
+                    style={{
+                      display: "inline-block",
+                      width: 6,
+                      height: 6,
+                      borderRadius: 999,
+                      background: lampOn ? "#fbbf24" : "#3a3a3a",
+                      boxShadow: lampOn ? "0 0 6px #fbbf24" : "none",
+                      transition: "background 200ms ease, box-shadow 200ms ease",
+                    }}
+                  />
+                  Route Signal
+                </button>
+              </div>
+            </foreignObject>
+          </g>
         </svg>
       </div>
 
