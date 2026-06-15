@@ -458,8 +458,8 @@ function buildCircuit(seed: number): Built {
   add("L7", [{x:1052,y:512},{x:L7bx,y:512},{x:L7bx,y:236},{x:452,y:236}], 1.0, 0.4);
 
   // L8 (y=548): occasional NC short stub into a via on a long horizontal trace
-  // L8 (y=548): direct pad→chip trace down to CHIP_B top pin (x=560)
-  add("L8", [{x:1052,y:548},{x:680,y:548},{x:680,y:360},{x:560,y:360},{x:560,y:376}], 1.0, 0.38);
+  // L8 (y=548): direct portrait pad → CHIP_D bottom-right pin
+  add("L8", [{x:1052,y:548},{x:904,y:548}], 1.25, 0.5);
 
   // ── Portrait TOP pads ──
   const T1pin = pick([922, 938, 954] as const);
@@ -608,12 +608,14 @@ function buildCircuit(seed: number): Built {
   // Lower-mid gap (well above the control module footprint y<560)
   // CHIP_B right pin → portrait left pad (direct pad-to-pad)
   add("FR4", [{x:644,y:400},{x:828,y:400},{x:828,y:404},{x:1052,y:404}], 1.0, 0.32);
-  // Lower-left run from text-zone edge eastward then down off-canvas
-  {
-    const y = irand(820, 860);
-    const x = irand(900, 1020);
-    add("FR5", [{x:860,y},{x,y},{x,y:900}], 1.0, 0.30);
-  }
+  // CHIP_D ↔ CHIP_A pad-to-pad routing (top of CHIP_D up to CHIP_A bottom pins)
+  add("D1", [{x:808,y:484},{x:808,y:220},{x:704,y:220},{x:704,y:186}], 1.25, 0.5);
+  add("D2", [{x:840,y:484},{x:840,y:244},{x:728,y:244},{x:728,y:186}], 1.0, 0.42);
+  add("D3", [{x:872,y:484},{x:872,y:268},{x:776,y:268},{x:776,y:186}], 1.0, 0.4);
+  // CHIP_D bottom-left pin → canvas bottom (power/ground rail)
+  add("D4", [{x:808,y:548},{x:808,y:900}], 1.5, 0.5);
+  // CHIP_D bottom-mid pin → CHIP_B right pin (short hop)
+  add("D5", [{x:840,y:548},{x:840,y:600},{x:680,y:600},{x:680,y:420},{x:644,y:420}], 1.0, 0.4);
   // Upper-left bus: connects CHIP_C left side area up to top edge
   // Left canvas edge → CHIP_C left pin (direct edge-to-pad)
   add("FR6", [{x:0,y:72},{x:180,y:72},{x:180,y:262},{x:376,y:262}], 1.0, 0.32);
