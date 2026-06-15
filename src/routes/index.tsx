@@ -1040,7 +1040,6 @@ function CircuitHero() {
               style={{ overflow: "visible", pointerEvents: "auto" }}
             >
               <div
-                xmlns="http://www.w3.org/1999/xhtml"
                 style={{ display: "flex", justifyContent: "center", width: "100%" }}
               >
                 <button
