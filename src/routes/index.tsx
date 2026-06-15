@@ -554,6 +554,34 @@ function buildCircuit(seed: number): Built {
     add("FR4", [{x:660,y},{x:x3,y},{x:x3,y:y-irand(40,80)}], 1.0, 0.28);
     addVia({x:x3, y:y-60});
   }
+  // Lower-left run from text-zone edge eastward then down off-canvas
+  {
+    const y = irand(820, 860);
+    const x = irand(900, 1020);
+    add("FR5", [{x:860,y},{x,y},{x,y:900}], 1.0, 0.30);
+  }
+  // Upper-left bus: connects CHIP_C left side area up to top edge
+  {
+    const x = irand(140, 220);
+    const y = irand(60, 110);
+    add("FR6", [{x:0,y},{x,y},{x,y:irand(200,260)}], 1.0, 0.30);
+    addVia({x, y:irand(200,260)});
+  }
+  // Mid-right secondary: from EDGE_R area inward to a CHIP_A right pin region
+  {
+    const y = irand(420, 470);
+    const x = irand(1080, 1170);
+    add("FR7", [{x:1540,y},{x,y},{x,y:y-irand(50,90)}], 1.0, 0.28);
+    addVia({x, y:y-70});
+  }
+  // Top-mid: header-area outward bus going right
+  {
+    const y = irand(40, 80);
+    const x1 = irand(820, 880);
+    const x2 = irand(980, 1060);
+    add("FR8", [{x:x1,y:0},{x:x1,y},{x:x2,y},{x:x2,y:irand(120,160)}], 1.0, 0.28);
+    addVia({x:x2, y:irand(120,160)});
+  }
 
   // ── Inline parts placed on actual segments (text-zone + chip keep-out) ──
   const KEEP_OUT: { x:number; y:number; w:number; h:number }[] = [
