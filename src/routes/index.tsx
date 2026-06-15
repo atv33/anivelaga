@@ -473,8 +473,7 @@ function buildCircuit(_seed: number): Built {
     { kind: "resistor",  x: 876,  y: 158, rot: 0 },   // on L3 segment y=158 x 828..960
     { kind: "resistor",  x: 1464, y: 296, rot: 0 },   // on R1 segment y=296 x 1328..1600
     { kind: "resistor",  x: 576,  y: 134, rot: 0 },   // on C3 segment y=134 x 452..676
-    // Capacitors (3) — vertical SMD on vertical runs
-    { kind: "capacitor", x: 1103, y: 192, rot: 90 },  // on T1 trunk x=1103 y 0..262
+    // Capacitors (2) — vertical SMD on vertical runs
     { kind: "capacitor", x: 1190, y: 228, rot: 90 },  // on T3 trunk x=1190 y 0..262
     { kind: "capacitor", x: 600,  y: 576, rot: 90 },  // on CB2 trunk x=600 y 444..672
     // Diodes (2) — horizontal, both anode-left/cathode-right
