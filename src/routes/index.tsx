@@ -277,6 +277,9 @@ const CHIP_A = { x: 680, y: 110, w: 144, h: 72 };
 const CHIP_C = { x: 380, y: 240, w: 96, h: 66 };
 // CHIP_B — center-left support chip. xs(2): 520 + 40*(i+1) = 560,600. ys(2): 380+20*(i+1) = 400,420
 const CHIP_B = { x: 520, y: 380, w: 120, h: 60 };
+// CHIP_D — mid-canvas SOIC, fills the empty space between CHIP_B and portrait.
+// Pads (w=160, pins=4): top/bot xs = 776 + 32*(i+1) = 808,840,872,904
+const CHIP_D = { x: 776, y: 488, w: 160, h: 60 };
 // Edge connector right (partially off-canvas)
 const EDGE_R = { x: 1540, y: 360, w: 60, h: 220 };
 const EDGE_R_PINS = [380, 410, 440, 470, 500, 530, 560]; // y tips, x tip = 1536
@@ -392,6 +395,7 @@ function buildCircuit(seed: number): Built {
     { x: CHIP_A.x, y: CHIP_A.y, w: CHIP_A.w, h: CHIP_A.h, pad: 10 },
     { x: CHIP_B.x, y: CHIP_B.y, w: CHIP_B.w, h: CHIP_B.h, pad: 10 },
     { x: CHIP_C.x, y: CHIP_C.y, w: CHIP_C.w, h: CHIP_C.h, pad: 10 },
+    { x: CHIP_D.x, y: CHIP_D.y, w: CHIP_D.w, h: CHIP_D.h, pad: 10 },
     { x: EDGE_R.x, y: EDGE_R.y, w: EDGE_R.w, h: EDGE_R.h, pad: 10 },
     { x: HEADER_T.x, y: HEADER_T.y, w: HEADER_T.w, h: HEADER_T.h, pad: 10 },
     // lamp module above the name
@@ -454,8 +458,8 @@ function buildCircuit(seed: number): Built {
   add("L7", [{x:1052,y:512},{x:L7bx,y:512},{x:L7bx,y:236},{x:452,y:236}], 1.0, 0.4);
 
   // L8 (y=548): occasional NC short stub into a via on a long horizontal trace
-  // L8 (y=548): direct pad→chip trace down to CHIP_B top pin (x=560)
-  add("L8", [{x:1052,y:548},{x:680,y:548},{x:680,y:360},{x:560,y:360},{x:560,y:376}], 1.0, 0.38);
+  // L8 (y=548): direct portrait pad → CHIP_D bottom-right pin
+  add("L8", [{x:1052,y:548},{x:904,y:548}], 1.25, 0.5);
 
   // ── Portrait TOP pads ──
   const T1pin = pick([922, 938, 954] as const);
@@ -604,12 +608,14 @@ function buildCircuit(seed: number): Built {
   // Lower-mid gap (well above the control module footprint y<560)
   // CHIP_B right pin → portrait left pad (direct pad-to-pad)
   add("FR4", [{x:644,y:400},{x:828,y:400},{x:828,y:404},{x:1052,y:404}], 1.0, 0.32);
-  // Lower-left run from text-zone edge eastward then down off-canvas
-  {
-    const y = irand(820, 860);
-    const x = irand(900, 1020);
-    add("FR5", [{x:860,y},{x,y},{x,y:900}], 1.0, 0.30);
-  }
+  // CHIP_D ↔ CHIP_A pad-to-pad routing (top of CHIP_D up to CHIP_A bottom pins)
+  add("D1", [{x:808,y:484},{x:808,y:220},{x:704,y:220},{x:704,y:186}], 1.25, 0.5);
+  add("D2", [{x:840,y:484},{x:840,y:244},{x:728,y:244},{x:728,y:186}], 1.0, 0.42);
+  add("D3", [{x:872,y:484},{x:872,y:268},{x:776,y:268},{x:776,y:186}], 1.0, 0.4);
+  // CHIP_D bottom-left pin → canvas bottom (power/ground rail)
+  add("D4", [{x:808,y:548},{x:808,y:900}], 1.5, 0.5);
+  // CHIP_D bottom-mid pin → canvas bottom
+  add("D5", [{x:872,y:548},{x:872,y:900}], 1.0, 0.4);
   // Upper-left bus: connects CHIP_C left side area up to top edge
   // Left canvas edge → CHIP_C left pin (direct edge-to-pad)
   add("FR6", [{x:0,y:72},{x:180,y:72},{x:180,y:262},{x:376,y:262}], 1.0, 0.32);
@@ -659,65 +665,22 @@ function buildCircuit(seed: number): Built {
     return false;
   };
   const parts: Inline[] = [];
-  const usedCenters = new Set<string>();
-  const kinds: Inline["kind"][] = ["resistor", "capacitor", "inductor", "diode"];
-  for (const s of segs) {
-    // skip faint traces — inline parts on them read as floating
-    if (s.o < 0.4) continue;
-    // skip segments that exit the visible canvas — a part on a trace whose
-    // other end vanishes off-screen reads as floating
-    const exitsCanvas =
-      s.a.x <= 20 || s.a.x >= 1580 || s.a.y <= 20 || s.a.y >= 880 ||
-      s.b.x <= 20 || s.b.x >= 1580 || s.b.y <= 20 || s.b.y >= 880;
-    if (exitsCanvas) continue;
-    const isH = s.a.y === s.b.y;
-    const len = isH ? Math.abs(s.b.x - s.a.x) : Math.abs(s.b.y - s.a.y);
-    if (len < 50) continue;
-    if (rnd() > 0.22) continue;
-    const margin = 26;
-    if (len < margin * 2) continue;
-    const t = rand(margin, len - margin);
-    const dir = isH ? Math.sign(s.b.x - s.a.x) : Math.sign(s.b.y - s.a.y);
-    const cx = isH ? Math.round(s.a.x + dir * t) : s.a.x;
-    const cy = isH ? s.a.y : Math.round(s.a.y + dir * t);
-    // skip lower-left text zone
-    if (cx < 860 && cy > 560) continue;
-    // skip if inside or hugging any chip / portrait / connector body
-    if (inAnyBody(cx, cy)) continue;
-    // skip if it would sit on top of the live signal trace
-    if (onSignalPath(cx, cy)) continue;
-    // extra clearance for the lower-right region near the portrait/control —
-    // any inline part here tends to read as floating
-    if (cx > 1000 && cy > 600) continue;
-    if (cx > 700 && cx < 1100 && cy > 540 && cy < 720) continue;
-    const key = `${cx},${cy}`;
-    if (usedCenters.has(key)) continue;
-    usedCenters.add(key);
-    const kind = pick(kinds);
-    let rot: 0 | 90 | 180 | 270 = 0;
-    if (kind === "diode") {
-      // anode-to-cathode points in the direction of signal flow (segment dir)
-      if (isH) rot = dir > 0 ? 0 : 180;
-      else rot = dir > 0 ? 90 : 270;
-    } else {
-      rot = isH ? 0 : 90;
-    }
-    parts.push({ kind, x: cx, y: cy, rot } as Inline);
-  }
-
-  // sprinkle a few extra testpads on existing vias (so the ring is more obvious)
+  // Curated, intentional inline parts. Each one sits on a real pad-to-pad
+  // trace at a coordinate we already know exists and isn't on the signal path.
+  const curated: Inline[] = [
+    // Series resistor on the long EDGE_R → CHIP_A trace (FR7, y=134, x 828..1416)
+    { kind: "resistor", x: 1200, y: 134, rot: 0 },
+    // Bypass capacitor on the FR2 trace into CHIP_A left pin (vertical x=452, y 144..236)
+    { kind: "capacitor", x: 452, y: 192, rot: 90 },
+    // Inductor on the portrait T3 power trace (vertical x=1190, y 0..262)
+    { kind: "inductor", x: 1190, y: 156, rot: 90 },
+    // Series resistor on the CHIP_D ↔ CHIP_A trace D1 (vertical x=808)
+    { kind: "resistor", x: 808, y: 360, rot: 90 },
+    // Diode on CHIP_D power rail D4 going down to the bottom edge
+    { kind: "diode", x: 808, y: 820, rot: 90 },
+  ];
   const viaList = Array.from(viaMap.values());
-  const tpCount = Math.min(viaList.length, 1 + Math.floor(rnd() * 2));
-  for (let i = 0; i < tpCount; i++) {
-    const v = viaList[Math.floor(rnd() * viaList.length)];
-    if (!v) continue;
-    if (v.x < 860 && v.y > 560) continue;
-    if (inAnyBody(v.x, v.y, 4)) continue;
-    const key = `tp:${v.x},${v.y}`;
-    if (usedCenters.has(key)) continue;
-    usedCenters.add(key);
-    parts.push({ kind: "testpad", x: v.x, y: v.y });
-  }
+  parts.push(...curated);
 
   return { traces, vias: viaList, parts };
 }
@@ -1081,6 +1044,7 @@ function CircuitTraceLayer({ built }: { built: Built }) {
         <SecondaryChip {...CHIP_A} pinsTop={5} pinsBot={5} pinsLeft={2} pinsRight={2} />
         <SecondaryChip {...CHIP_C} pinsTop={3} pinsBot={3} pinsLeft={2} pinsRight={2} />
         <SecondaryChip {...CHIP_B} pinsTop={2} pinsBot={2} pinsLeft={2} pinsRight={2} />
+        <SecondaryChip {...CHIP_D} pinsTop={4} pinsBot={4} pinsLeft={0} pinsRight={0} />
         {/* right-edge connector — partially off-screen */}
         <g>
           <rect x={EDGE_R.x} y={EDGE_R.y} width={EDGE_R.w} height={EDGE_R.h} fill="#111" stroke="#333" strokeWidth="1" />
