@@ -505,25 +505,41 @@ function CircuitTraceLayer() {
             <rect key={i} x={EDGE_R.x - 4} y={cy - 3} width={4} height={6} fill="#262626" stroke="#3d3d3d" strokeWidth="0.5" />
           ))}
         </g>
+        {/* top edge header (6-pin) */}
+        <g>
+          <rect x={HEADER_T.x} y={HEADER_T.y} width={HEADER_T.w} height={HEADER_T.h} fill="#111" stroke="#333" strokeWidth="1" />
+          {HEADER_T.pins.map((px, i) => (
+            <rect key={i} x={px - 3} y={HEADER_T.y + HEADER_T.h} width={6} height={4} fill="#262626" stroke="#3d3d3d" strokeWidth="0.5" />
+          ))}
+        </g>
       </g>
 
-      {/* traces */}
+      {/* traces — drawn in with stroke-dashoffset, staggered */}
       <g fill="none" strokeLinecap="square" strokeLinejoin="round">
-        {TRACES.map((t) => (
+        {TRACES.map((t, i) => (
           <path
             key={t.id}
             id={`trace-${t.id}`}
             d={t.d}
-            stroke={t.w >= 1.5 ? "#454545" : "#2f2f2f"}
+            pathLength={1}
+            stroke={t.w >= 1.5 ? "#4a4a4a" : "#333"}
             strokeOpacity={t.o}
             strokeWidth={t.w}
             className="hero-trace-draw"
+            style={{ animationDelay: `${0.2 + i * 0.05}s` }}
           />
         ))}
       </g>
 
-      {/* endpoint vias */}
-      <g>
+      {/* inline components — fade in after traces finish */}
+      <g className="hero-part-in" style={{ animationDelay: "2s" }}>
+        {INLINE_PARTS.map((p, i) => (
+          <InlineComponent key={i} {...p} />
+        ))}
+      </g>
+
+      {/* endpoint vias — also fade in after traces */}
+      <g className="hero-part-in" style={{ animationDelay: "1.8s" }}>
         {ENDPOINTS.map((e, i) => (
           <g key={i}>
             <circle cx={e.x} cy={e.y} r={(e.r ?? 2.5) + 1.5} fill="none" stroke="#3a3a3a" strokeWidth="0.8" />
