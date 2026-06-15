@@ -228,7 +228,9 @@ function Index() {
       <TopBar />
       <SideRail />
       <main>
-        <Hero />
+        <div id="hero">
+          <Hero />
+        </div>
         <Ticker />
         <Work />
         <PcbDivider />
