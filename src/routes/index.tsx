@@ -446,11 +446,12 @@ function buildCircuit(seed: number): Built {
   const A4my = irand(50, 90);
   add("A4", [{x:776,y:106},{x:776,y:A4my},{x:A4pin,y:A4my},{x:A4pin,y:20}], 1.0, 0.4);
 
-  const A5pin = pick([938, 954, 970] as const);
+  const A5candidates: readonly number[] = [938, 954, 970];
+  const A4pinNum: number = A4pin;
+  const A5pool = A5candidates.filter((p) => p !== A4pinNum);
+  const A5pin = pick(A5pool);
   const A5my = irand(40, 80);
-  // ensure A5pin ≠ A4pin (force fallback)
-  const A5pinSafe: number = A5pin === A4pin ? (A4pin === 970 ? 938 : 970) : A5pin;
-  add("A5", [{x:800,y:106},{x:800,y:A5my},{x:A5pinSafe,y:A5my},{x:A5pinSafe,y:20}], 1.0, 0.4);
+  add("A5", [{x:800,y:106},{x:800,y:A5my},{x:A5pin,y:A5my},{x:A5pin,y:20}], 1.0, 0.4);
 
   const A6bx = irand(520, 620);
   add("A6", [{x:676,y:134},{x:A6bx,y:134},{x:A6bx,y:262},{x:480,y:262}], 1.0, 0.4);
