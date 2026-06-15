@@ -1286,7 +1286,7 @@ function CircuitHero() {
                 <div
                   className={`hw-module${hovering || charging || lampOn ? " is-hot" : ""}`}
                   style={{
-                    width: 180,
+                    width: 132,
                     height: 56,
                     background:
                       "linear-gradient(180deg, #131313 0%, #0a0a0a 100%)",
