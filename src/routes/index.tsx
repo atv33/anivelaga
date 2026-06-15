@@ -274,7 +274,9 @@ type Trace = { id: string; d: string; w: number; o: number; pulse?: number };
 //                    ys(2): y + (i+1)*72/3  = 134,158 ✓
 const CHIP_A = { x: 680, y: 110, w: 144, h: 72 };
 // CHIP_C — upper-left. xs(3): 404,428,452. ys(2): 240 + 22*(i+1) = 262,284
-const CHIP_C = { x: 380, y: 240, w: 96, h: 66 };
+// Shifted right by 48px to clear lamp (D1) on the left.
+// New pins — tops: 452,476,500 (y=236) · bots: 452,476,500 (y=310) · lefts x=424 · rights x=528
+const CHIP_C = { x: 428, y: 240, w: 96, h: 66 };
 // CHIP_B — center-left support chip. xs(2): 520 + 40*(i+1) = 560,600. ys(2): 380+20*(i+1) = 400,420
 const CHIP_B = { x: 520, y: 380, w: 120, h: 60 };
 // CHIP_D — mid-canvas SOIC, fills the empty space between CHIP_B and portrait.
@@ -372,12 +374,12 @@ function buildCircuit(_seed: number): Built {
   add("FA2", [{x:728,y:186},{x:728,y:216},{x:840,y:216},{x:840,y:484}], 1.0, 0.42);
 
   // ── CHIP_C (upper-left connector) fanout (4) ──
-  add("C1", [{x:404,y:236},{x:404,y:72},{x:312,y:72},{x:312,y:0}], 1.0, 0.4);
-  add("C2", [{x:376,y:262},{x:264,y:262},{x:264,y:168},{x:0,y:168}], 1.0, 0.4);
+  add("C1", [{x:452,y:236},{x:452,y:72},{x:312,y:72},{x:312,y:0}], 1.0, 0.4);
+  add("C2", [{x:424,y:262},{x:264,y:262},{x:264,y:168},{x:0,y:168}], 1.0, 0.4);
   // CHIP_C top pin (452,236) → CHIP_A left pin (676,134)
-  add("C3", [{x:452,y:236},{x:452,y:134},{x:676,y:134}], 1.0, 0.42);
+  add("C3", [{x:500,y:236},{x:500,y:134},{x:676,y:134}], 1.0, 0.42);
   // CHIP_C bot pin (404,310) → CHIP_B left pin (516,400) via y=360 bus and x=516 trunk
-  add("C4", [{x:404,y:310},{x:404,y:360},{x:516,y:360},{x:516,y:400}], 1.0, 0.4);
+  add("C4", [{x:452,y:310},{x:452,y:360},{x:516,y:360},{x:516,y:400}], 1.0, 0.4);
 
   // ── Inter-chip pad-to-pad routes ──
   // CHIP_A bot pin (704,186) → CHIP_B top pin (560,376) via y=360 bus
@@ -396,13 +398,13 @@ function buildCircuit(_seed: number): Built {
 
   // ── Extra pad-to-pad routes across the visible center board ──
   // CHIP_C right (480,262) → CHIP_A left (676,132) via y=200 lane
-  add("CA1", [{x:480,y:262},{x:496,y:262},{x:496,y:200},{x:660,y:200},{x:660,y:132},{x:676,y:132}], 1.0, 0.4);
+  add("CA1", [{x:528,y:262},{x:548,y:262},{x:548,y:200},{x:660,y:200},{x:660,y:132},{x:676,y:132}], 1.0, 0.4);
   // CHIP_C right (480,284) → CHIP_B left (516,420)
-  add("CB1", [{x:480,y:284},{x:500,y:284},{x:500,y:420},{x:516,y:420}], 1.0, 0.4);
+  add("CB1", [{x:528,y:284},{x:548,y:284},{x:548,y:372},{x:516,y:372},{x:516,y:400}], 1.0, 0.4);
   // CHIP_C bot (428,310) → CHIP_B top (560,376) via y=336 lane
-  add("CB2", [{x:428,y:310},{x:428,y:336},{x:560,y:336},{x:560,y:376}], 1.0, 0.38);
+  add("CB2", [{x:476,y:310},{x:476,y:336},{x:560,y:336},{x:560,y:376}], 1.0, 0.38);
   // CHIP_C bot (452,310) → CHIP_B top (600,376) via y=348 lane
-  add("CB3", [{x:452,y:310},{x:452,y:348},{x:600,y:348},{x:600,y:376}], 1.0, 0.38);
+  add("CB3", [{x:500,y:310},{x:500,y:348},{x:600,y:348},{x:600,y:376}], 1.0, 0.38);
   // CHIP_A bot (776,186) → CHIP_D top pin3 (872,484). Long vertical drops only; shared y=228 lane sits far above CHIP_D.
   add("AD1", [{x:776,y:186},{x:776,y:228},{x:872,y:228},{x:872,y:484}], 1.0, 0.4);
   // CHIP_A bot (800,186) → CHIP_D top pin4 (904,484) via y=240 lane (well above chip)
@@ -413,7 +415,7 @@ function buildCircuit(_seed: number): Built {
   add("DB2", [{x:872,y:552},{x:872,y:720},{x:1100,y:720},{x:1100,y:900}], 1.0, 0.38);
 
   // ── CHIP_C extra left-edge fanout ──
-  add("CL1", [{x:376,y:284},{x:200,y:284},{x:200,y:216},{x:0,y:216}], 1.0, 0.38);
+  add("CL1", [{x:424,y:284},{x:200,y:284},{x:200,y:216},{x:0,y:216}], 1.0, 0.38);
 
   // ── Header → CHIP_A more pins (use y=72 backbone) ──
   add("HA3", [{x:922,y:20},{x:922,y:88},{x:776,y:88},{x:776,y:106}], 1.0, 0.36);
