@@ -910,7 +910,7 @@ function CircuitHero() {
   // nothing important gets cropped. Desktop keeps the wide cinematic crop.
   const mobileViewBox = `260 220 1100 560`;
   const viewBox = isMobile ? mobileViewBox : `0 0 ${VB_W} ${VB_H}`;
-  const preserve = isMobile ? "xMidYMid meet" : "xMidYMid slice";
+  const preserve = isMobile ? "xMidYMin meet" : "xMidYMid slice";
   const timers = useRef<number[]>([]);
   const clearAllTimers = () => {
     timers.current.forEach((t) => window.clearTimeout(t));
