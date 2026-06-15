@@ -910,7 +910,7 @@ function CircuitHero() {
   // nothing important gets cropped. Desktop keeps the wide cinematic crop.
   const mobileViewBox = `260 220 1100 560`;
   const viewBox = isMobile ? mobileViewBox : `0 0 ${VB_W} ${VB_H}`;
-  const preserve = isMobile ? "xMidYMin meet" : "xMidYMid slice";
+  const preserve = isMobile ? "xMidYMid meet" : "xMidYMid slice";
   const timers = useRef<number[]>([]);
   const clearAllTimers = () => {
     timers.current.forEach((t) => window.clearTimeout(t));
@@ -957,10 +957,17 @@ function CircuitHero() {
       data-hero
       data-section="00"
       className="relative w-full overflow-hidden"
-      style={{ minHeight: isMobile ? "85vh" : "100vh", background: "#060606" }}
+      style={{ minHeight: isMobile ? "100vh" : "100vh", background: "#060606" }}
     >
       {/* layer 2: circuit SVG */}
-      <div className="pointer-events-none absolute inset-0 z-[1]">
+      <div
+        className="pointer-events-none absolute left-0 right-0 z-[1]"
+        style={
+          isMobile
+            ? { top: "96px", height: "44vh" }
+            : { top: 0, bottom: 0 }
+        }
+      >
         <svg
           viewBox={viewBox}
           preserveAspectRatio={preserve}
