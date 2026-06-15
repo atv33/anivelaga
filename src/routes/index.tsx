@@ -525,6 +525,36 @@ function buildCircuit(seed: number): Built {
     addVia({x:bbx, y:bby});
   }
 
+  // ── Filler routing in emptier regions (deterministic with light jitter) ──
+  // Upper-right gap between CHIP_A and the right edge
+  {
+    const y = irand(190, 230);
+    const vx = irand(1050, 1130);
+    add("FR1", [{x:1180,y:60},{x:1180,y},{x:vx,y},{x:vx,y:y+irand(40,80)}], 1.0, 0.32);
+    addVia({x:vx, y:y+60});
+  }
+  // Upper-mid gap between CHIP_A and CHIP_C
+  {
+    const y = irand(120, 170);
+    const x1 = irand(480, 560);
+    add("FR2", [{x:x1,y:20},{x:x1,y},{x:irand(620,660),y}], 1.0, 0.30);
+    addVia({x:irand(620,660), y});
+  }
+  // Mid-right gap below CHIP_A toward the lower-right
+  if (rnd() < 0.9) {
+    const y = irand(320, 370);
+    const x2 = irand(960, 1050);
+    add("FR3", [{x:1180,y},{x:x2,y},{x:x2,y:y+irand(50,90)}], 1.0, 0.30);
+    addVia({x:x2, y:y+70});
+  }
+  // Lower-mid gap (well above the control module footprint y<560)
+  {
+    const y = irand(500, 540);
+    const x3 = irand(780, 880);
+    add("FR4", [{x:660,y},{x:x3,y},{x:x3,y:y-irand(40,80)}], 1.0, 0.28);
+    addVia({x:x3, y:y-60});
+  }
+
   // ── Inline parts placed on actual segments (text-zone + chip keep-out) ──
   const KEEP_OUT: { x:number; y:number; w:number; h:number }[] = [
     { x: PORT.x, y: PORT.y, w: PORT.w, h: PORT.h },
