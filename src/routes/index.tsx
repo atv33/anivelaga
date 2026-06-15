@@ -907,25 +907,12 @@ function SignalPulse({ d, dur, accent }: { d: string; dur: number; accent?: "blu
 const BUTTON_PAD = { x: 1190, y: 700 };
 const LAMP = { cx: 340, cy: 320, w: 56, h: 32 };
 const LAMP_PIN = { x: LAMP.cx, y: LAMP.cy + LAMP.h / 2 + 14 }; // 340, 350
-// Capacitor C1 sits directly under the portrait module, above the control
-// box, on the same vertical axis (x=1190) as the red switch S1.
-// Top plate ← portrait bottom pad (charge source). Bottom plate → switch S1.
-const PORTRAIT_BOT_Y = 598; // portrait bottom pad center y
-const CAP_PT = { x: BUTTON_PAD.x, y: 640 };
-const CAP_TOP_Y = CAP_PT.y - 4; // top plate y
-const CAP_BOT_Y = CAP_PT.y + 4; // bottom plate y
-// Feed: portrait bottom pad → top plate of C1.
-const FEED_D = `M ${CAP_PT.x} ${PORTRAIT_BOT_Y} V ${CAP_TOP_Y}`;
-// Switch leg: bottom plate of C1 → switch input (top of red button).
-const SWITCH_LEG_D = `M ${CAP_PT.x} ${CAP_BOT_Y} V ${BUTTON_PAD.y}`;
-// Discharge: from C1 bottom plate, through the closed switch, then along a
-// single grid-aligned path to the lamp above the name. Routes through y=730
-// (well below the text) and up the left side, avoiding the headline letters.
-const DISCHARGE_D =
-  `M ${CAP_PT.x} ${CAP_BOT_Y} V 730 H 700 V 470 H ${LAMP_PIN.x} V ${LAMP_PIN.y}`;
-const DISCHARGE_DUR_MS = 1150;
-const SWITCH_CLOSE_MS = 180;
-const FEED_PULSE_MS = 900;
+// Single grid-aligned signal trace from the red button (S1) up to the lamp
+// (D1) above the name. Routes through y=740 (well below the text) and up the
+// left side, avoiding the headline letters.
+const SIGNAL_D =
+  `M ${BUTTON_PAD.x} ${BUTTON_PAD.y} V 740 H 700 V 470 H ${LAMP_PIN.x} V ${LAMP_PIN.y}`;
+const SIGNAL_DUR_MS = 1150;
 
 function Lamp({ on }: { on: boolean }) {
   return (
@@ -1211,9 +1198,7 @@ function CircuitHero() {
   const built = useMemo(() => buildCircuit(seed), [seed]);
   const pulses = built.traces.filter((t) => t.pulse);
   const [lampOn, setLampOn] = useState(false);
-  const [charging, setCharging] = useState(false);
-  const [closing, setClosing] = useState(false);
-  const [discharging, setDischarging] = useState(false);
+  const [signaling, setSignaling] = useState(false);
   const [hovering, setHovering] = useState(false);
   const [pulseId, setPulseId] = useState(0);
   const [hoverPulseId, setHoverPulseId] = useState(0);
@@ -1228,46 +1213,32 @@ function CircuitHero() {
     clearAllTimers();
     setPressed(true);
     timers.current.push(window.setTimeout(() => setPressed(false), 180));
-    if (lampOn || charging) {
+    if (lampOn || signaling) {
       setLampOn(false);
-      setCharging(false);
-      setClosing(false);
-      setDischarging(false);
+      setSignaling(false);
       return;
     }
     setPulseId((n) => n + 1);
-    setCharging(true);
-    // 1) switch closes — brief flash on the PRE segment (button → cap)
-    setClosing(true);
+    // signal travels along SIGNAL_D from button to lamp
+    setSignaling(true);
+    // lamp lights when signal front reaches it
     timers.current.push(
-      window.setTimeout(() => setClosing(false), SWITCH_CLOSE_MS),
+      window.setTimeout(() => setLampOn(true), SIGNAL_DUR_MS),
     );
-    // 2) cap discharges through POST segment (cap → lamp)
-    timers.current.push(
-      window.setTimeout(() => setDischarging(true), SWITCH_CLOSE_MS),
-    );
-    // 3) lamp lights when discharge front reaches it
-    timers.current.push(
-      window.setTimeout(
-        () => setLampOn(true),
-        SWITCH_CLOSE_MS + DISCHARGE_DUR_MS,
-      ),
-    );
-    // 4) settle: lamp off, recharging resumes
+    // settle: lamp off
     timers.current.push(
       window.setTimeout(
         () => {
           setLampOn(false);
-          setCharging(false);
-          setDischarging(false);
+          setSignaling(false);
         },
-        SWITCH_CLOSE_MS + DISCHARGE_DUR_MS + 4000,
+        SIGNAL_DUR_MS + 4000,
       ),
     );
   };
 
   const onButtonEnter = () => {
-    if (charging || lampOn) return;
+    if (signaling || lampOn) return;
     setHovering(true);
     setHoverPulseId((n) => n + 1);
   };
@@ -1323,34 +1294,12 @@ function CircuitHero() {
             ))}
           </g>
 
-          {/* Interactive switch → capacitor → lamp path. Drawn ABOVE the text
+          {/* Interactive switch → lamp signal path. Drawn ABOVE the text
               mask so it stays fully visible. */}
           <g>
-            {/* Base traces (FEED = portrait→C1, LEG = C1→switch, DISCHARGE = C1→lamp) */}
+            {/* Base signal trace: button (S1) → lamp (D1) */}
             <path
-              d={FEED_D}
-              fill="none"
-              stroke="#3a3a3a"
-              strokeOpacity={0.6}
-              strokeWidth={1.2}
-              strokeLinecap="square"
-              pathLength={1}
-              className="hero-trace-draw"
-              style={{ animationDelay: "1.4s" }}
-            />
-            <path
-              d={SWITCH_LEG_D}
-              fill="none"
-              stroke="#3a3a3a"
-              strokeOpacity={0.6}
-              strokeWidth={1.2}
-              strokeLinecap="square"
-              pathLength={1}
-              className="hero-trace-draw"
-              style={{ animationDelay: "1.45s" }}
-            />
-            <path
-              d={DISCHARGE_D}
+              d={SIGNAL_D}
               fill="none"
               stroke="#3a3a3a"
               strokeOpacity={0.55}
@@ -1362,92 +1311,44 @@ function CircuitHero() {
               style={{ animationDelay: "1.5s" }}
             />
 
-            {/* Discharge progressive fill: C1 → switch → lamp, one continuous
-                line that fills via stroke-dashoffset. */}
+            {/* Progressive signal fill: button → lamp, one continuous line
+                that fills via stroke-dashoffset. */}
             <path
-              d={DISCHARGE_D}
+              d={SIGNAL_D}
               fill="none"
               stroke="#fbbf24"
-              strokeOpacity={discharging || lampOn ? 1 : 0}
+              strokeOpacity={signaling || lampOn ? 1 : 0}
               strokeWidth={2}
               strokeLinecap="round"
               strokeLinejoin="round"
               pathLength={1}
               strokeDasharray="1 1"
-              strokeDashoffset={discharging || lampOn ? 0 : 1}
+              strokeDashoffset={signaling || lampOn ? 0 : 1}
               style={{
-                transition: discharging
-                  ? `stroke-dashoffset ${DISCHARGE_DUR_MS}ms linear, stroke-opacity 120ms ease`
+                transition: signaling
+                  ? `stroke-dashoffset ${SIGNAL_DUR_MS}ms linear, stroke-opacity 120ms ease`
                   : "stroke-dashoffset 400ms ease, stroke-opacity 400ms ease",
                 filter: "drop-shadow(0 0 4px rgba(251,191,36,0.7))",
                 pointerEvents: "none",
               }}
             />
 
-            {/* Switch-close highlight on the cap→switch leg */}
-            <path
-              d={SWITCH_LEG_D}
-              fill="none"
-              stroke="#fbbf24"
-              strokeWidth={1.9}
-              strokeLinecap="round"
-              strokeOpacity={closing || discharging || lampOn ? 0.95 : 0}
-              style={{
-                transition: "stroke-opacity 180ms ease",
-                filter: "drop-shadow(0 0 4px rgba(251,191,36,0.6))",
-                pointerEvents: "none",
-              }}
-            />
-
-            {/* Vias at every real bend in the discharge path */}
+            {/* Vias at every real bend in the signal path */}
             <g className="hero-part-in" style={{ animationDelay: "1.7s" }}>
-              <circle cx={CAP_PT.x} cy={730} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-              <circle cx={700} cy={730} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={BUTTON_PAD.x} cy={740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={700} cy={740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
               <circle cx={700} cy={470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
               <circle cx={340} cy={470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
             </g>
 
-            {/* C1 capacitor — directly under portrait, above the switch,
-                vertically oriented so top plate ↔ portrait, bottom plate ↔ switch. */}
-            <g className="hero-part-in" style={{ animationDelay: "1.6s" }}>
-              <Capacitor
-                cx={CAP_PT.x}
-                cy={CAP_PT.y}
-                stored={!discharging && !lampOn}
-                draining={discharging}
-              />
-            </g>
-
-            {/* Page-load charge pulse: one-shot dot travels from portrait
-                bottom pad into the top plate of C1, then C1 holds charge. */}
-            <g style={{ pointerEvents: "none" }}>
-              <circle r={2.6} fill="rgba(255,236,180,1)" opacity={0}>
-                <animate
-                  attributeName="opacity"
-                  values="0;1;1;0"
-                  keyTimes="0;0.05;0.9;1"
-                  dur={`${FEED_PULSE_MS / 1000}s`}
-                  begin="1.8s"
-                  fill="freeze"
-                />
-                <animateMotion
-                  dur={`${FEED_PULSE_MS / 1000}s`}
-                  begin="1.8s"
-                  repeatCount="1"
-                  fill="freeze"
-                  path={FEED_D}
-                />
-              </circle>
-            </g>
-
-            {/* Discharge leading dot — travels along DISCHARGE with the fill */}
-            {discharging && pulseId > 0 && (
+            {/* Leading dot — travels along SIGNAL with the fill */}
+            {signaling && pulseId > 0 && (
               <g key={`dis-${pulseId}`} style={{ pointerEvents: "none" }}>
                 <circle r={3.4} fill="#fff4d6">
-                  <animateMotion dur={`${DISCHARGE_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={DISCHARGE_D} />
+                  <animateMotion dur={`${SIGNAL_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={SIGNAL_D} />
                 </circle>
                 <circle r={8} fill="rgba(251,191,36,0.45)">
-                  <animateMotion dur={`${DISCHARGE_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={DISCHARGE_D} />
+                  <animateMotion dur={`${SIGNAL_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={SIGNAL_D} />
                 </circle>
               </g>
             )}
@@ -1474,7 +1375,7 @@ function CircuitHero() {
             <circle cx={BUTTON_PAD.x} cy={BUTTON_PAD.y} r={3.5} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.9} />
             {/* idle invite-pulse around the button pad (always on, restrained).
                 Intensifies on hover. */}
-            {!charging && !lampOn && (
+            {!signaling && !lampOn && (
               <g style={{ pointerEvents: "none" }}>
                 <circle
                   cx={BUTTON_PAD.x}
@@ -1532,7 +1433,7 @@ function CircuitHero() {
               style={{ overflow: "visible", pointerEvents: "auto" }}
             >
               <div
-                className={`hw-assembly${hovering || charging || lampOn ? " is-hot" : ""}`}
+                className={`hw-assembly${hovering || signaling || lampOn ? " is-hot" : ""}`}
                 style={{
                   position: "relative",
                   width: "100%",
@@ -1595,7 +1496,7 @@ function CircuitHero() {
                 {/* Unified glowing outline around button + box silhouette */}
                 <svg
                   aria-hidden
-                  className={`hw-silhouette${hovering || charging || lampOn ? " is-hot" : ""}`}
+                  className={`hw-silhouette${hovering || signaling || lampOn ? " is-hot" : ""}`}
                   width="220"
                   height="140"
                   viewBox="0 0 220 140"
@@ -1609,7 +1510,7 @@ function CircuitHero() {
                   <path
                     d="M 84 62 H 136 Q 140 62 140 66 V 77 H 142 V 86 H 174 Q 178 86 178 90 V 118 Q 178 122 174 122 H 46 Q 42 122 42 118 V 90 Q 42 86 46 86 H 78 V 77 H 80 V 66 Q 80 62 84 62 Z"
                     fill="none"
-                    stroke={hovering || charging || lampOn ? "#fbbf24" : "#c89832"}
+                    stroke={hovering || signaling || lampOn ? "#fbbf24" : "#c89832"}
                     strokeWidth="1.2"
                     strokeLinejoin="round"
                     style={{
@@ -1622,7 +1523,7 @@ function CircuitHero() {
 
                 {/* rectangular control housing */}
                 <div
-                  className={`hw-module${hovering || charging || lampOn ? " is-hot" : ""}`}
+                  className={`hw-module${hovering || signaling || lampOn ? " is-hot" : ""}`}
                   style={{
                     width: 132,
                     height: 36,
@@ -1668,7 +1569,7 @@ function CircuitHero() {
                       paddingLeft: "0.24em",
                       textTransform: "uppercase",
                       color:
-                        lampOn || charging
+                        lampOn || signaling
                           ? "#fbbf24"
                           : hovering
                             ? "#e8d28a"
@@ -1725,7 +1626,7 @@ function CircuitHero() {
                     aria-label="Click me"
                     aria-pressed={lampOn}
                     className={
-                      !pressed && !hovering && !charging && !lampOn ? "hw-cap" : ""
+                      !pressed && !hovering && !signaling && !lampOn ? "hw-cap" : ""
                     }
                     style={{
                       position: "relative",
