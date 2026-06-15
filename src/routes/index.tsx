@@ -1294,34 +1294,12 @@ function CircuitHero() {
             ))}
           </g>
 
-          {/* Interactive switch → capacitor → lamp path. Drawn ABOVE the text
+          {/* Interactive switch → lamp signal path. Drawn ABOVE the text
               mask so it stays fully visible. */}
           <g>
-            {/* Base traces (FEED = portrait→C1, LEG = C1→switch, DISCHARGE = C1→lamp) */}
+            {/* Base signal trace: button (S1) → lamp (D1) */}
             <path
-              d={FEED_D}
-              fill="none"
-              stroke="#3a3a3a"
-              strokeOpacity={0.6}
-              strokeWidth={1.2}
-              strokeLinecap="square"
-              pathLength={1}
-              className="hero-trace-draw"
-              style={{ animationDelay: "1.4s" }}
-            />
-            <path
-              d={SWITCH_LEG_D}
-              fill="none"
-              stroke="#3a3a3a"
-              strokeOpacity={0.6}
-              strokeWidth={1.2}
-              strokeLinecap="square"
-              pathLength={1}
-              className="hero-trace-draw"
-              style={{ animationDelay: "1.45s" }}
-            />
-            <path
-              d={DISCHARGE_D}
+              d={SIGNAL_D}
               fill="none"
               stroke="#3a3a3a"
               strokeOpacity={0.55}
@@ -1333,92 +1311,44 @@ function CircuitHero() {
               style={{ animationDelay: "1.5s" }}
             />
 
-            {/* Discharge progressive fill: C1 → switch → lamp, one continuous
-                line that fills via stroke-dashoffset. */}
+            {/* Progressive signal fill: button → lamp, one continuous line
+                that fills via stroke-dashoffset. */}
             <path
-              d={DISCHARGE_D}
+              d={SIGNAL_D}
               fill="none"
               stroke="#fbbf24"
-              strokeOpacity={discharging || lampOn ? 1 : 0}
+              strokeOpacity={signaling || lampOn ? 1 : 0}
               strokeWidth={2}
               strokeLinecap="round"
               strokeLinejoin="round"
               pathLength={1}
               strokeDasharray="1 1"
-              strokeDashoffset={discharging || lampOn ? 0 : 1}
+              strokeDashoffset={signaling || lampOn ? 0 : 1}
               style={{
-                transition: discharging
-                  ? `stroke-dashoffset ${DISCHARGE_DUR_MS}ms linear, stroke-opacity 120ms ease`
+                transition: signaling
+                  ? `stroke-dashoffset ${SIGNAL_DUR_MS}ms linear, stroke-opacity 120ms ease`
                   : "stroke-dashoffset 400ms ease, stroke-opacity 400ms ease",
                 filter: "drop-shadow(0 0 4px rgba(251,191,36,0.7))",
                 pointerEvents: "none",
               }}
             />
 
-            {/* Switch-close highlight on the cap→switch leg */}
-            <path
-              d={SWITCH_LEG_D}
-              fill="none"
-              stroke="#fbbf24"
-              strokeWidth={1.9}
-              strokeLinecap="round"
-              strokeOpacity={closing || discharging || lampOn ? 0.95 : 0}
-              style={{
-                transition: "stroke-opacity 180ms ease",
-                filter: "drop-shadow(0 0 4px rgba(251,191,36,0.6))",
-                pointerEvents: "none",
-              }}
-            />
-
-            {/* Vias at every real bend in the discharge path */}
+            {/* Vias at every real bend in the signal path */}
             <g className="hero-part-in" style={{ animationDelay: "1.7s" }}>
-              <circle cx={CAP_PT.x} cy={730} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-              <circle cx={700} cy={730} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={BUTTON_PAD.x} cy={740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={700} cy={740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
               <circle cx={700} cy={470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
               <circle cx={340} cy={470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
             </g>
 
-            {/* C1 capacitor — directly under portrait, above the switch,
-                vertically oriented so top plate ↔ portrait, bottom plate ↔ switch. */}
-            <g className="hero-part-in" style={{ animationDelay: "1.6s" }}>
-              <Capacitor
-                cx={CAP_PT.x}
-                cy={CAP_PT.y}
-                stored={!discharging && !lampOn}
-                draining={discharging}
-              />
-            </g>
-
-            {/* Page-load charge pulse: one-shot dot travels from portrait
-                bottom pad into the top plate of C1, then C1 holds charge. */}
-            <g style={{ pointerEvents: "none" }}>
-              <circle r={2.6} fill="rgba(255,236,180,1)" opacity={0}>
-                <animate
-                  attributeName="opacity"
-                  values="0;1;1;0"
-                  keyTimes="0;0.05;0.9;1"
-                  dur={`${FEED_PULSE_MS / 1000}s`}
-                  begin="1.8s"
-                  fill="freeze"
-                />
-                <animateMotion
-                  dur={`${FEED_PULSE_MS / 1000}s`}
-                  begin="1.8s"
-                  repeatCount="1"
-                  fill="freeze"
-                  path={FEED_D}
-                />
-              </circle>
-            </g>
-
-            {/* Discharge leading dot — travels along DISCHARGE with the fill */}
-            {discharging && pulseId > 0 && (
+            {/* Leading dot — travels along SIGNAL with the fill */}
+            {signaling && pulseId > 0 && (
               <g key={`dis-${pulseId}`} style={{ pointerEvents: "none" }}>
                 <circle r={3.4} fill="#fff4d6">
-                  <animateMotion dur={`${DISCHARGE_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={DISCHARGE_D} />
+                  <animateMotion dur={`${SIGNAL_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={SIGNAL_D} />
                 </circle>
                 <circle r={8} fill="rgba(251,191,36,0.45)">
-                  <animateMotion dur={`${DISCHARGE_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={DISCHARGE_D} />
+                  <animateMotion dur={`${SIGNAL_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={SIGNAL_D} />
                 </circle>
               </g>
             )}
