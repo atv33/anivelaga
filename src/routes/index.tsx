@@ -800,7 +800,9 @@ function CircuitHero() {
   const bp = useBreakpoint();
   const isMobile = bp === "mobile";
   const isTablet = bp === "tablet";
-  const preserve = isMobile || isTablet ? "xMidYMin meet" : "xMidYMid slice";
+  // Use slice across all breakpoints so the circuit fills the hero on every
+  // device — `meet` leaves a tall empty band under the SVG on mobile.
+  const preserve = "xMidYMid slice";
   const timers = useRef<number[]>([]);
   const clearAllTimers = () => {
     timers.current.forEach((t) => window.clearTimeout(t));
