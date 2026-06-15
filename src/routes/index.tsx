@@ -1251,6 +1251,7 @@ function CircuitHero() {
               style={{ overflow: "visible", pointerEvents: "auto" }}
             >
               <div
+                className={`hw-assembly${hovering || charging || lampOn ? " is-hot" : ""}`}
                 style={{
                   position: "relative",
                   width: "100%",
@@ -1300,18 +1301,14 @@ function CircuitHero() {
                     0%, 100% { opacity: 0.35; }
                     50%      { opacity: 1; }
                   }
-                  @keyframes hwSilhouetteBob {
+                  @keyframes hwAssemblyBob {
                     0%, 100% { transform: translateY(0); }
-                    50%      { transform: translateY(-3px); }
+                    50%      { transform: translateY(-4px); }
                   }
-                  .hw-silhouette {
-                    animation: hwSilhouettePulse 2.0s ease-in-out infinite,
-                               hwSilhouetteBob 2.0s ease-in-out infinite;
-                  }
-                  .hw-silhouette.is-hot {
-                    animation: hwSilhouettePulse 1.2s ease-in-out infinite,
-                               hwSilhouetteBob 1.2s ease-in-out infinite;
-                  }
+                  .hw-assembly { animation: hwAssemblyBob 2.0s ease-in-out infinite; }
+                  .hw-assembly.is-hot { animation-duration: 1.2s; }
+                  .hw-silhouette { animation: hwSilhouettePulse 2.0s ease-in-out infinite; }
+                  .hw-silhouette.is-hot { animation-duration: 1.2s; }
                 `}</style>
 
                 {/* Unified glowing outline around button + box silhouette */}
