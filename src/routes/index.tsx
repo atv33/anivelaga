@@ -706,100 +706,6 @@ function SignalDot({ d, dur }: { d: string; dur: number }) {
   );
 }
 
-// Through-hole electrolytic capacitor on the signal path. The two parallel
-// plates are stacked vertically (signal trace is vertical here). `stored`
-// indicates the cap is holding charge (slow amber pulse). `draining` shows a
-// quick discharge flash.
-function Capacitor({
-  cx,
-  cy,
-  stored,
-  draining,
-}: {
-  cx: number;
-  cy: number;
-  stored: boolean;
-  draining: boolean;
-}) {
-  const glow =
-    draining
-      ? "drop-shadow(0 0 10px rgba(251,191,36,0.95))"
-      : stored
-      ? "drop-shadow(0 0 6px rgba(251,191,36,0.55))"
-      : "none";
-  const plateColor = draining
-    ? "#fde68a"
-    : stored
-    ? "#c89832"
-    : "#6a6a6a";
-  return (
-    <g transform={`translate(${cx} ${cy})`} style={{ pointerEvents: "none" }}>
-      {/* clear background under the cap so the underlying trace doesn't
-          poke through between the plates */}
-      <rect x={-11} y={-9} width={22} height={18} fill="#060606" />
-      {/* top plate (flat) — positive terminal, fed by CHARGE_FEED */}
-      <line
-        x1={-9}
-        y1={-3}
-        x2={9}
-        y2={-3}
-        stroke={plateColor}
-        strokeWidth={1.6}
-        strokeLinecap="round"
-        style={{ filter: glow, transition: "stroke 200ms ease" }}
-      />
-      {/* bottom plate (curved) — electrolytic style */}
-      <path
-        d="M -9 3 Q 0 7 9 3"
-        fill="none"
-        stroke={plateColor}
-        strokeWidth={1.6}
-        strokeLinecap="round"
-        style={{ filter: glow, transition: "stroke 200ms ease" }}
-      />
-      {/* polarity marker */}
-      <text
-        x={-12}
-        y={-2}
-        fill="#777"
-        fontFamily="ui-monospace, monospace"
-        fontSize={5}
-        textAnchor="end"
-      >
-        +
-      </text>
-      {/* silkscreen label */}
-      <text
-        x={12}
-        y={2}
-        fill="#666"
-        fontFamily="ui-monospace, monospace"
-        fontSize={6}
-        textAnchor="start"
-      >
-        C1
-      </text>
-      {/* stored-charge pulse: small inner glow that breathes while idle */}
-      {stored && (
-        <circle r={2.4} cx={0} cy={-3} fill="rgba(251,191,36,0.7)">
-          <animate
-            attributeName="opacity"
-            values="0.25;0.9;0.25"
-            dur="2.2s"
-            repeatCount="indefinite"
-          />
-          <animate
-            attributeName="r"
-            values="1.6;2.8;1.6"
-            dur="2.2s"
-            repeatCount="indefinite"
-          />
-        </circle>
-      )}
-    </g>
-  );
-}
-
 function InlineComponent(c: Inline) {
   const rot = (c as { rot?: number }).rot ?? 0;
   return (
@@ -811,13 +717,6 @@ function InlineComponent(c: Inline) {
           <rect x={-7} y={-3} width={14} height={6} fill="#1a1a1a" stroke="#5c5c5c" strokeWidth="0.6" />
           <rect x={-9} y={-2} width={2} height={4} fill="#3a3a3a" />
           <rect x={7}  y={-2} width={2} height={4} fill="#3a3a3a" />
-        </g>
-      )}
-      {c.kind === "capacitor" && (
-        <g>
-          <rect x={-4} y={-7} width={8} height={14} fill="#060606" />
-          <line x1={-2} y1={-6} x2={-2} y2={6} stroke="#6a6a6a" strokeWidth="1.4" />
-          <line x1={2}  y1={-6} x2={2}  y2={6} stroke="#6a6a6a" strokeWidth="1.4" />
         </g>
       )}
       {c.kind === "inductor" && (
