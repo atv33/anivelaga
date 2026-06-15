@@ -1111,6 +1111,8 @@ function CircuitHero() {
   const pulses = built.traces.filter((t) => t.pulse);
   const [lampOn, setLampOn] = useState(false);
   const [charging, setCharging] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const [discharging, setDischarging] = useState(false);
   const [hovering, setHovering] = useState(false);
   const [pulseId, setPulseId] = useState(0);
   const [hoverPulseId, setHoverPulseId] = useState(0);
@@ -1128,16 +1130,38 @@ function CircuitHero() {
     if (lampOn || charging) {
       setLampOn(false);
       setCharging(false);
+      setClosing(false);
+      setDischarging(false);
       return;
     }
     setPulseId((n) => n + 1);
     setCharging(true);
-    timers.current.push(window.setTimeout(() => setLampOn(true), SIGNAL_DUR_MS));
+    // 1) switch closes — brief flash on the PRE segment (button → cap)
+    setClosing(true);
     timers.current.push(
-      window.setTimeout(() => {
-        setLampOn(false);
-        setCharging(false);
-      }, SIGNAL_DUR_MS + 5000),
+      window.setTimeout(() => setClosing(false), SWITCH_CLOSE_MS),
+    );
+    // 2) cap discharges through POST segment (cap → lamp)
+    timers.current.push(
+      window.setTimeout(() => setDischarging(true), SWITCH_CLOSE_MS),
+    );
+    // 3) lamp lights when discharge front reaches it
+    timers.current.push(
+      window.setTimeout(
+        () => setLampOn(true),
+        SWITCH_CLOSE_MS + DISCHARGE_DUR_MS,
+      ),
+    );
+    // 4) settle: lamp off, recharging resumes
+    timers.current.push(
+      window.setTimeout(
+        () => {
+          setLampOn(false);
+          setCharging(false);
+          setDischarging(false);
+        },
+        SWITCH_CLOSE_MS + DISCHARGE_DUR_MS + 4000,
+      ),
     );
   };
 
