@@ -383,11 +383,45 @@ function buildCircuit(seed: number): Built {
     viaMap.set(`${sp.x},${sp.y}`, sp);
   };
 
+  // Bodies that should not get an endpoint via dropped on top of them
+  // (chips, headers, edge connectors, control & lamp modules).
+  const VIA_BODIES: { x: number; y: number; w: number; h: number; pad: number }[] = [
+    { x: PORT.x, y: PORT.y, w: PORT.w, h: PORT.h, pad: 4 },
+    { x: CHIP_A.x, y: CHIP_A.y, w: CHIP_A.w, h: CHIP_A.h, pad: 8 },
+    { x: CHIP_B.x, y: CHIP_B.y, w: CHIP_B.w, h: CHIP_B.h, pad: 8 },
+    { x: CHIP_C.x, y: CHIP_C.y, w: CHIP_C.w, h: CHIP_C.h, pad: 8 },
+    { x: EDGE_R.x, y: EDGE_R.y, w: EDGE_R.w, h: EDGE_R.h, pad: 6 },
+    { x: HEADER_T.x, y: HEADER_T.y, w: HEADER_T.w, h: HEADER_T.h, pad: 6 },
+    // lamp module above the name
+    { x: 340 - 28 - 4, y: 320 - 16 - 4, w: 56 + 8, h: 32 + 8, pad: 4 },
+    // control module footprint under the portrait
+    { x: 1190 - 110, y: 585, w: 220, h: 140, pad: 4 },
+  ];
+  const isOffCanvas = (p: Pt) =>
+    p.x <= 4 || p.x >= 1596 || p.y <= 4 || p.y >= 896;
+  const nearBody = (p: Pt) =>
+    VIA_BODIES.some(
+      (b) =>
+        p.x > b.x - b.pad &&
+        p.x < b.x + b.w + b.pad &&
+        p.y > b.y - b.pad &&
+        p.y < b.y + b.h + b.pad,
+    );
+
   const add = (id: string, pts: Pt[], w: number, o: number, pulse?: number) => {
     const snapped = snapPts(pts);
     traces.push({ id, d: ptsToD(snapped), w, o, pulse });
     for (let i = 0; i < snapped.length - 1; i++)
       segs.push({ a: snapped[i], b: snapped[i + 1], o });
+    // Auto-place an endpoint via at any free endpoint (not off-canvas and
+    // not landing inside a known chip/header/edge body or signal-path module).
+    const first = snapped[0];
+    const last = snapped[snapped.length - 1];
+    for (const ep of [first, last]) {
+      if (isOffCanvas(ep)) continue;
+      if (nearBody(ep)) continue;
+      addVia(ep);
+    }
   };
 
   // pulses ~ 30% of routes
