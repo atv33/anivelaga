@@ -318,67 +318,80 @@ function buildCircuit(_seed: number): Built {
     traces.push({ id, d: ptsToD(pts), w, o, pulse });
   };
 
-  // ── Portrait LEFT pads (x=1052) — buses out to chips / header ──
-  // L1 y=296 → top header pin (922,20), routed north over CHIP_A
+  // Routing lanes (24px grid). Vertical lanes east of portrait reused
+  // wherever possible so parallel runs stay aligned.
+  // V-lanes used near portrait left: 960, 984, 1008, 1032
+  // H-lanes used over the top: 72, 96, 120
+
+  // ── Portrait LEFT pads → chips (8 traces, 4 to CHIP_A region, 2 to
+  //    CHIP_B, 2 to CHIP_D). All share lane discipline. ──
   add("L1", [{x:1052,y:296},{x:984,y:296},{x:984,y:72},{x:922,y:72},{x:922,y:20}], 1.5, 0.55, 6200);
-  // L2 y=332 → CHIP_A right pin tip (828,134)
   add("L2", [{x:1052,y:332},{x:984,y:332},{x:984,y:134},{x:828,y:134}], 1.25, 0.5);
-  // L3 y=368 → CHIP_A right pin tip (828,158)
   add("L3", [{x:1052,y:368},{x:960,y:368},{x:960,y:158},{x:828,y:158}], 1.25, 0.5, 7400);
-  // L4 y=404 → CHIP_B right pin tip (644,400)
   add("L4", [{x:1052,y:404},{x:912,y:404},{x:912,y:400},{x:644,y:400}], 1.25, 0.5);
-  // L5 y=440 → CHIP_B right pin tip (644,420)
   add("L5", [{x:1052,y:440},{x:936,y:440},{x:936,y:420},{x:644,y:420}], 1.0, 0.45);
-  // L6 y=476 → CHIP_D top pin (808,484)
   add("L6", [{x:1052,y:476},{x:984,y:476},{x:984,y:484},{x:808,y:484}], 1.25, 0.5);
-  // L7 y=512 → CHIP_D top pin (872,484)
   add("L7", [{x:1052,y:512},{x:1008,y:512},{x:1008,y:484},{x:872,y:484}], 1.0, 0.45);
-  // L8 y=548 → CHIP_D top pin (904,484)
   add("L8", [{x:1052,y:548},{x:1032,y:548},{x:1032,y:484},{x:904,y:484}], 1.25, 0.5);
 
-  // ── Portrait TOP pads (y=262) — buses to header / canvas top ──
-  // T1 x=1103 → straight up off-canvas
+  // ── Portrait TOP pads (y=262) ──
   add("T1", [{x:1103,y:262},{x:1103,y:0}], 1.0, 0.4);
-  // T2 x=1147 → header pin (954,20)
   add("T2", [{x:1147,y:262},{x:1147,y:72},{x:954,y:72},{x:954,y:20}], 1.25, 0.5, 5600);
-  // T3 x=1190 → straight up off-canvas (main power feed)
   add("T3", [{x:1190,y:262},{x:1190,y:0}], 1.5, 0.55, 4800);
-  // T4 x=1233 → up & right to canvas top
   add("T4", [{x:1233,y:262},{x:1233,y:96},{x:1416,y:96},{x:1416,y:0}], 1.0, 0.45);
-  // T5 x=1277 → up & right to canvas top
   add("T5", [{x:1277,y:262},{x:1277,y:120},{x:1488,y:120},{x:1488,y:0}], 1.0, 0.4);
 
-  // ── Portrait RIGHT pads (x=1328) — to EDGE_R or canvas right ──
+  // ── Portrait RIGHT pads (x=1328) → EDGE_R / canvas right ──
   add("R1", [{x:1328,y:296},{x:1600,y:296}], 1.25, 0.5, 6800);
-  add("R2", [{x:1328,y:332},{x:1600,y:332}], 1.0, 0.45);
-  // R3 → EDGE_R pin (1536,410)
-  add("R3", [{x:1328,y:404},{x:1464,y:404},{x:1464,y:410},{x:1536,y:410}], 1.25, 0.5);
-  // R4 → EDGE_R pin (1536,470)
-  add("R4", [{x:1328,y:476},{x:1464,y:476},{x:1464,y:470},{x:1536,y:470}], 1.25, 0.5);
-  // R5 → EDGE_R pin (1536,560)
-  add("R5", [{x:1328,y:548},{x:1464,y:548},{x:1464,y:560},{x:1536,y:560}], 1.0, 0.45);
+  add("R2", [{x:1328,y:404},{x:1464,y:404},{x:1464,y:410},{x:1536,y:410}], 1.25, 0.5);
+  add("R3", [{x:1328,y:476},{x:1464,y:476},{x:1464,y:470},{x:1536,y:470}], 1.25, 0.5);
+  add("R4", [{x:1328,y:548},{x:1464,y:548},{x:1464,y:560},{x:1536,y:560}], 1.0, 0.45);
 
   // ── Portrait BOTTOM pads (y=598) — south rails ──
-  // B1 x=1147 → canvas right edge low
   add("B1", [{x:1147,y:598},{x:1147,y:768},{x:1600,y:768}], 1.0, 0.4);
-  // B2 x=1233 → straight down to canvas bottom
   add("B2", [{x:1233,y:598},{x:1233,y:900}], 1.25, 0.45);
 
-  // ── CHIP_A north fanout (top edge) ──
-  // Header pin (938,20) → CHIP_A top pin (752,106)
+  // ── CHIP_A north fanout: header pin → CHIP_A top pin ──
   add("FA1", [{x:938,y:20},{x:938,y:72},{x:752,y:72},{x:752,y:106}], 1.0, 0.4);
 
-  // ── CHIP_C fanout (upper-left chip) ──
-  // C1 top pin tip (404,236) → canvas top
+  // ── CHIP_C (upper-left small connector) fanout ──
   add("C1", [{x:404,y:236},{x:404,y:72},{x:312,y:72},{x:312,y:0}], 1.0, 0.4);
-  // C2 left pin tip (376,262) → canvas left
   add("C2", [{x:376,y:262},{x:264,y:262},{x:264,y:168},{x:0,y:168}], 1.0, 0.4);
-  // C3 bottom pin tip (404,310) → CHIP_B top pin tip (560,376)
   add("C3", [{x:404,y:310},{x:404,y:360},{x:560,y:360},{x:560,y:376}], 1.0, 0.4);
-  // C4 top pin tip (452,236) → CHIP_A left pin tip (676,134)
   add("C4", [{x:452,y:236},{x:452,y:134},{x:676,y:134}], 1.0, 0.42);
 
-  return { traces, vias: [], parts: [] };
+  // ── Inline parts: each is centered exactly on a real trace segment ──
+  // Resistors (5): SMD 0805 bodies on straight horizontal runs.
+  // - R on L2 horizontal y=134 (x 828..984)
+  // - R on L3 horizontal y=158 (x 828..960)
+  // - R on L4 horizontal y=400 (x 644..912)
+  // - R on R1 horizontal y=296 (x 1328..1600)
+  // - R on C3 horizontal y=360 (x 404..560)
+  // Capacitors (3): vertical SMD on vertical runs.
+  // - C on T1 vertical x=1103
+  // - C on T3 vertical x=1190 (decoupling near pad)
+  // - C on B2 vertical x=1233
+  // Diodes (1):
+  // - D on L6 horizontal y=484 (x 808..984)
+  // Inductors (1):
+  // - L on FA1 horizontal y=72 (x 752..938)
+  const parts: Inline[] = [
+    { kind: "resistor", x: 900, y: 134, rot: 0 },
+    { kind: "resistor", x: 900, y: 158, rot: 0 },
+    { kind: "resistor", x: 792, y: 400, rot: 0 },
+    { kind: "resistor", x: 1464, y: 296, rot: 0 },
+    { kind: "resistor", x: 480, y: 360, rot: 0 },
+    { kind: "capacitor", x: 1103, y: 132, rot: 90 },
+    { kind: "capacitor", x: 1190, y: 228, rot: 90 },
+    { kind: "capacitor", x: 1233, y: 720, rot: 90 },
+    { kind: "diode",    x: 900, y: 484, rot: 0 },
+    { kind: "inductor", x: 840, y: 72,  rot: 0 },
+  ];
+
+  // ── Vias: only at actual T-junctions / branch points. We have no
+  //    electrical branches in the graph, so leave this empty rather than
+  //    sprinkle floating dots. ──
+  return { traces, vias: [], parts };
 }
 
 function HeroText() {
