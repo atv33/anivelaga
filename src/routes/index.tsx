@@ -484,7 +484,6 @@ function buildCircuit(_seed: number): Built {
   return { traces, vias: [], parts };
 }
 
-function HeroText() {
 function HeroText({ bp }: { bp?: "mobile" | "tablet" | "desktop" } = {}) {
   const breakpoint = bp ?? "desktop";
 
