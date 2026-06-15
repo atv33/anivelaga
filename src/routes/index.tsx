@@ -394,6 +394,22 @@ function buildCircuit(_seed: number): Built {
   add("EP2", [{x:1536,y:500},{x:1416,y:500},{x:1416,y:440},{x:1328,y:440}], 1.0, 0.4);
   add("EP3", [{x:1536,y:530},{x:1416,y:530},{x:1416,y:512},{x:1328,y:512}], 1.0, 0.4);
 
+  // ── Extra pad-to-pad routes across the visible center board ──
+  // CHIP_C right (480,262) → CHIP_A left (676,132) via y=200 lane
+  add("CA1", [{x:480,y:262},{x:496,y:262},{x:496,y:200},{x:660,y:200},{x:660,y:132},{x:676,y:132}], 1.0, 0.4);
+  // CHIP_C right (480,284) → CHIP_B left (516,420)
+  add("CB1", [{x:480,y:284},{x:500,y:284},{x:500,y:420},{x:516,y:420}], 1.0, 0.4);
+  // CHIP_C bot (428,310) → CHIP_B top (560,376) via y=336 lane
+  add("CB2", [{x:428,y:310},{x:428,y:336},{x:560,y:336},{x:560,y:376}], 1.0, 0.38);
+  // CHIP_C bot (452,310) → CHIP_B top (600,376) via y=348 lane
+  add("CB3", [{x:452,y:310},{x:452,y:348},{x:600,y:348},{x:600,y:376}], 1.0, 0.38);
+  // CHIP_A bot (776,186) → CHIP_D top (872,484) via x=776 trunk and y=464 lane
+  add("AD1", [{x:776,y:186},{x:776,y:464},{x:872,y:464},{x:872,y:484}], 1.0, 0.4);
+  // CHIP_A bot (800,186) → CHIP_D top (840,484) via x=800 trunk and y=472 lane
+  add("AD2", [{x:800,y:186},{x:800,y:472},{x:840,y:472},{x:840,y:484}], 1.0, 0.38);
+  // CHIP_B bot (560,444) → CHIP_D top (808,484) via y=472 lane
+  add("BD2", [{x:560,y:444},{x:560,y:472},{x:808,y:472},{x:808,y:484}], 1.0, 0.4);
+
   // ── Inline parts — each centered exactly on a real straight segment.
   //    No part overlaps a chip body, the portrait, or the control module. ──
   const parts: Inline[] = [
