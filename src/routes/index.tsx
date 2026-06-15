@@ -853,19 +853,13 @@ function CircuitHero() {
   const isTablet = bp === "tablet";
   // On mobile, compose a tighter hero board so the portrait, lamp, and button
   // are intentionally placed instead of relying on the wide desktop crop.
-  const mobileViewBox = `30 180 980 980`;
-  const viewBox = isMobile ? mobileViewBox : `0 0 ${VB_W} ${VB_H}`;
-  // Tablet: keep the desktop composition but contain (no slice) so the
-  // portrait on the right is never clipped off-screen.
-  const preserve = isMobile
-    ? "xMidYMid meet"
-    : isTablet
-      ? "xMidYMin meet"
-      : "xMidYMid slice";
-  const buttonPad = isMobile ? MOBILE_BUTTON_PAD : BUTTON_PAD;
-  const signalD = isMobile
-    ? `M ${MOBILE_BUTTON_PAD.x} ${MOBILE_BUTTON_PAD.y} H ${MOBILE_SIGNAL_BUS_X} V ${MOBILE_TRACE_TOP_Y} H ${MOBILE_LAMP.cx} V ${MOBILE_LAMP.cy + (LAMP.h / 2 + 14) * MOBILE_LAMP_SCALE}`
-    : SIGNAL_D;
+  // One composition across all breakpoints — text-first hero. Mobile/tablet
+  // scale the desktop circuit board down with `meet` and anchor to the top so
+  // the headline sits in a clean band below.
+  const viewBox = `0 0 ${VB_W} ${VB_H}`;
+  const preserve = isMobile || isTablet ? "xMidYMin meet" : "xMidYMid slice";
+  const buttonPad = BUTTON_PAD;
+  const signalD = SIGNAL_D;
   const timers = useRef<number[]>([]);
   const clearAllTimers = () => {
     timers.current.forEach((t) => window.clearTimeout(t));
@@ -1003,12 +997,12 @@ function CircuitHero() {
             />
 
             {/* Vias at every real bend in the signal path */}
-            <g className="hero-part-in" style={{ animationDelay: "1.7s" }}>
-              <circle cx={isMobile ? MOBILE_BUTTON_PAD.x : BUTTON_PAD.x} cy={isMobile ? MOBILE_BUTTON_PAD.y : 740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-              <circle cx={isMobile ? MOBILE_SIGNAL_BUS_X : 700} cy={isMobile ? MOBILE_BUTTON_PAD.y : 740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-              <circle cx={isMobile ? MOBILE_SIGNAL_BUS_X : 700} cy={isMobile ? MOBILE_TRACE_TOP_Y : 470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-              <circle cx={isMobile ? MOBILE_LAMP.cx : 340} cy={isMobile ? MOBILE_TRACE_TOP_Y : 470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-              <circle cx={isMobile ? MOBILE_LAMP.cx : 340} cy={isMobile ? MOBILE_LAMP.cy + (LAMP.h / 2 + 14) * MOBILE_LAMP_SCALE : 470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+          <g className="hero-part-in" style={{ animationDelay: "1.7s" }}>
+              <circle cx={BUTTON_PAD.x} cy={740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={700} cy={740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={700} cy={470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={340} cy={470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={340} cy={470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
             </g>
 
             {/* Leading dot — travels along SIGNAL with the fill */}
@@ -1024,9 +1018,7 @@ function CircuitHero() {
             )}
 
             <g className="hero-part-in" style={{ animationDelay: "1.6s" }}>
-              <g transform={isMobile ? `translate(${MOBILE_LAMP.cx - LAMP.cx} ${MOBILE_LAMP.cy - LAMP.cy})` : undefined}>
-                <Lamp on={lampOn} scale={isMobile ? MOBILE_LAMP_SCALE : 1} />
-              </g>
+              <Lamp on={lampOn} scale={1} />
             </g>
           </g>
 
@@ -1035,7 +1027,7 @@ function CircuitHero() {
             {/* button pad + leg into the routed trace */}
             <line
               x1={buttonPad.x}
-              y1={isMobile ? buttonPad.y - 70 : 620}
+              y1={620}
               x2={buttonPad.x}
               y2={buttonPad.y}
               stroke="#3a3a3a"
@@ -1096,7 +1088,7 @@ function CircuitHero() {
             )}
             <foreignObject
               x={buttonPad.x - 110}
-              y={isMobile ? buttonPad.y - 70 : 585}
+              y={585}
               width={220}
               height={140}
               style={{ overflow: "visible", pointerEvents: "auto" }}
