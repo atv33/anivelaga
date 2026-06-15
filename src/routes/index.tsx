@@ -529,29 +529,33 @@ function buildCircuit(seed: number): Built {
   {
     const y = irand(190, 230);
     const vx = irand(1050, 1130);
-    add("FR1", [{x:1180,y:60},{x:1180,y},{x:vx,y},{x:vx,y:y+irand(40,80)}], 1.0, 0.32);
-    addVia({x:vx, y:y+60});
+    const vy = y + irand(40, 80);
+    add("FR1", [{x:1180,y:60},{x:1180,y},{x:vx,y},{x:vx,y:vy}], 1.0, 0.32);
+    addVia({x:vx, y:vy});
   }
   // Upper-mid gap between CHIP_A and CHIP_C
   {
     const y = irand(120, 170);
     const x1 = irand(480, 560);
-    add("FR2", [{x:x1,y:20},{x:x1,y},{x:irand(620,660),y}], 1.0, 0.30);
-    addVia({x:irand(620,660), y});
+    const x2 = irand(620, 660);
+    add("FR2", [{x:x1,y:20},{x:x1,y},{x:x2,y}], 1.0, 0.30);
+    addVia({x:x2, y});
   }
   // Mid-right gap below CHIP_A toward the lower-right
   if (rnd() < 0.9) {
     const y = irand(320, 370);
     const x2 = irand(960, 1050);
-    add("FR3", [{x:1180,y},{x:x2,y},{x:x2,y:y+irand(50,90)}], 1.0, 0.30);
-    addVia({x:x2, y:y+70});
+    const vy = y + irand(50, 90);
+    add("FR3", [{x:1180,y},{x:x2,y},{x:x2,y:vy}], 1.0, 0.30);
+    addVia({x:x2, y:vy});
   }
   // Lower-mid gap (well above the control module footprint y<560)
   {
     const y = irand(500, 540);
     const x3 = irand(780, 880);
-    add("FR4", [{x:660,y},{x:x3,y},{x:x3,y:y-irand(40,80)}], 1.0, 0.28);
-    addVia({x:x3, y:y-60});
+    const vy = y - irand(40, 80);
+    add("FR4", [{x:660,y},{x:x3,y},{x:x3,y:vy}], 1.0, 0.28);
+    addVia({x:x3, y:vy});
   }
   // Lower-left run from text-zone edge eastward then down off-canvas
   {
@@ -563,23 +567,26 @@ function buildCircuit(seed: number): Built {
   {
     const x = irand(140, 220);
     const y = irand(60, 110);
-    add("FR6", [{x:0,y},{x,y},{x,y:irand(200,260)}], 1.0, 0.30);
-    addVia({x, y:irand(200,260)});
+    const vy = irand(200, 260);
+    add("FR6", [{x:0,y},{x,y},{x,y:vy}], 1.0, 0.30);
+    addVia({x, y:vy});
   }
   // Mid-right secondary: from EDGE_R area inward to a CHIP_A right pin region
   {
     const y = irand(420, 470);
     const x = irand(1080, 1170);
-    add("FR7", [{x:1540,y},{x,y},{x,y:y-irand(50,90)}], 1.0, 0.28);
-    addVia({x, y:y-70});
+    const vy = y - irand(50, 90);
+    add("FR7", [{x:1540,y},{x,y},{x,y:vy}], 1.0, 0.28);
+    addVia({x, y:vy});
   }
   // Top-mid: header-area outward bus going right
   {
     const y = irand(40, 80);
     const x1 = irand(820, 880);
     const x2 = irand(980, 1060);
-    add("FR8", [{x:x1,y:0},{x:x1,y},{x:x2,y},{x:x2,y:irand(120,160)}], 1.0, 0.28);
-    addVia({x:x2, y:irand(120,160)});
+    const vy = irand(120, 160);
+    add("FR8", [{x:x1,y:0},{x:x1,y},{x:x2,y},{x:x2,y:vy}], 1.0, 0.28);
+    addVia({x:x2, y:vy});
   }
 
   // ── Inline parts placed on actual segments (text-zone + chip keep-out) ──
