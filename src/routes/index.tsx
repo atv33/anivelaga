@@ -321,31 +321,41 @@ function ptsToD(pts: Pt[]): string {
 // traces still terminate on real pad/pin tips.
 const GRID = 12;
 const snap = (v: number) => Math.round(v / GRID) * GRID;
-function snapPts(pts: Pt[]): Pt[] {
-  if (pts.length < 2) return pts.map((p) => ({ ...p }));
-  const out = pts.map((p, i) =>
-    i === 0 || i === pts.length - 1
+function snapPts(orig: Pt[]): Pt[] {
+  const n = orig.length;
+  if (n < 2) return orig.map((p) => ({ ...p }));
+  // Determine the shared axis of each original segment (paths are strictly
+  // orthogonal, so each adjacent pair shares exactly one coordinate).
+  const sharedAxis: ("x" | "y")[] = [];
+  for (let i = 0; i < n - 1; i++) {
+    sharedAxis.push(orig[i].x === orig[i + 1].x ? "x" : "y");
+  }
+  // Snap intermediate points to the grid; keep endpoints exact.
+  const out: Pt[] = orig.map((p, i) =>
+    i === 0 || i === n - 1
       ? { x: p.x, y: p.y }
       : { x: snap(p.x), y: snap(p.y) },
   );
-  for (let i = 1; i < out.length; i++) {
-    const prev = out[i - 1];
-    const cur = out[i];
-    const dx = Math.abs(cur.x - prev.x);
-    const dy = Math.abs(cur.y - prev.y);
-    if (dx === 0 || dy === 0) continue;
-    if (dx <= dy) cur.x = prev.x;
-    else cur.y = prev.y;
+  // Re-anchor the shared axis of each segment. First segment anchors to the
+  // first endpoint, last segment anchors to the last endpoint, middle
+  // segments propagate forward from the prior point.
+  for (let i = 0; i < n - 1; i++) {
+    const a = out[i];
+    const b = out[i + 1];
+    const axis = sharedAxis[i];
+    const v = i === 0 ? a[axis] : i === n - 2 ? b[axis] : a[axis];
+    a[axis] = v;
+    b[axis] = v;
   }
+  // Drop zero-length and collinear redundant points.
   const cleaned: Pt[] = [out[0]];
-  for (let i = 1; i < out.length; i++) {
+  for (let i = 1; i < n; i++) {
     const p = out[i];
     const last = cleaned[cleaned.length - 1];
     if (p.x === last.x && p.y === last.y) continue;
     if (cleaned.length >= 2) {
       const a = cleaned[cleaned.length - 2];
-      const b = last;
-      if ((a.x === b.x && b.x === p.x) || (a.y === b.y && b.y === p.y)) {
+      if ((a.x === last.x && last.x === p.x) || (a.y === last.y && last.y === p.y)) {
         cleaned[cleaned.length - 1] = p;
         continue;
       }
