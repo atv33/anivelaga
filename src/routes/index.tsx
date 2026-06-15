@@ -88,14 +88,13 @@ type Category = {
 const CATEGORIES: Category[] = [
   {
     id: "01",
-    label: "PCB Design — CUAUV",
+    label: "PCB Design Projects",
     intro:
-      "Designed and laid out production PCBs in Altium Designer for Cornell's autonomous submarine. Hardware-first: 4-layer stackups, differential pair routing, ESD protection.",
+      "Through my work on Cornell's autonomous submarine team, I designed and brought up multiple PCBs for different systems on the vehicle. I identified signal and power requirements, structured schematics, referenced datasheets for layout decisions, and designed boards from schematic through assembly. I also soldered, debugged, and wrote firmware to bring each board to a reliable operating state.",
     projects: [
       {
         id: "A",
         name: "Serial Communication Board",
-        year: "Spring 2026",
         tagline:
           "Central communication hub for the submarine. Aggregates 16 RS-232 RX/TX channels from sensors and peripherals into a single USB-C connection to the Jetson AI computer. Uses FTDI USB-to-UART ICs with RS-232 level shifting. Spring 2026 added SMF05CT1G TVS diode arrays for ESD protection on all 32 signal lines, DVL direct-connect header, and hot-swap EEPROM footprint. 4-layer PCB, 3.701\" x 4.291\".",
         stack: ["Altium Designer", "4-Layer PCB", "RS-232", "USB-C", "FTDI", "ESD Protection"],
