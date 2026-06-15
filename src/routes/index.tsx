@@ -19,6 +19,9 @@ import headshotAsset from "@/assets/headshot.jpg.asset.json";
 import serialLayoutAsset from "@/assets/serial-layout.png.asset.json";
 import serialFrontAsset from "@/assets/serial-front.png.asset.json";
 import serialBackAsset from "@/assets/serial-back.png.asset.json";
+import thrusterLayoutAsset from "@/assets/thruster-layout.png.asset.json";
+import thrusterFrontAsset from "@/assets/thruster-front.png.asset.json";
+import thrusterBackAsset from "@/assets/thruster-back.png.asset.json";
 
 // Allow <model-viewer> custom element in JSX (React 19 uses React.JSX)
 declare module "react" {
