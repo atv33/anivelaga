@@ -1296,13 +1296,40 @@ function CircuitHero() {
                     0%, 100% { transform: translateX(-50%) translateY(0); }
                     50%      { transform: translateX(-50%) translateY(-5px); }
                   }
-                  .hw-module { animation: hwBoxPulse 2.0s ease-in-out infinite; }
-                  .hw-module.is-hot { animation-duration: 1.2s; }
-                  .hw-cap { animation: hwCapPulse 2.0s ease-in-out infinite; }
-                  .hw-cap.is-hot { animation-duration: 1.2s; }
-                  .hw-btn-wrap { animation: hwBtnBob 1.8s ease-in-out infinite; }
-                  .hw-btn-wrap.is-pressed { animation: none; }
+                  @keyframes hwSilhouettePulse {
+                    0%, 100% { opacity: 0.35; }
+                    50%      { opacity: 1; }
+                  }
+                  .hw-silhouette { animation: hwSilhouettePulse 2.0s ease-in-out infinite; }
+                  .hw-silhouette.is-hot { animation-duration: 1.2s; }
                 `}</style>
+
+                {/* Unified glowing outline around button + box silhouette */}
+                <svg
+                  aria-hidden
+                  className={`hw-silhouette${hovering || charging || lampOn ? " is-hot" : ""}`}
+                  width="220"
+                  height="140"
+                  viewBox="0 0 220 140"
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    pointerEvents: "none",
+                    overflow: "visible",
+                  }}
+                >
+                  <path
+                    d="M 46 86 H 80 V 32 Q 80 28 84 28 H 136 Q 140 28 140 32 V 86 H 174 Q 178 86 178 90 V 118 Q 178 122 174 122 H 46 Q 42 122 42 118 V 90 Q 42 86 46 86 Z"
+                    fill="none"
+                    stroke={hovering || charging || lampOn ? "#fbbf24" : "#c89832"}
+                    strokeWidth="1.2"
+                    style={{
+                      filter:
+                        "drop-shadow(0 0 4px rgba(251,191,36,0.55)) drop-shadow(0 0 10px rgba(251,191,36,0.35))",
+                      transition: "stroke 200ms ease",
+                    }}
+                  />
+                </svg>
 
                 {/* rectangular control housing */}
                 <div
