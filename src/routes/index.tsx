@@ -1677,6 +1677,13 @@ function CategoryBlock({ category: c }: { category: Category }) {
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-dim">{c.intro}</p>
         </div>
       </div>
+      {c.id === "02" ? (
+        <div className="mt-12 flex items-center justify-center border-y border-border px-6 py-20">
+          <p className="max-w-2xl text-center font-display text-lg leading-relaxed text-ink-dim sm:text-xl">
+            Doing some cool stuff @ByteDance with Charon, Vidur and LLM inference simulation. Will update soon :)
+          </p>
+        </div>
+      ) : (
       <ul
         className={
           c.id === "01"
@@ -1796,6 +1803,7 @@ function CategoryBlock({ category: c }: { category: Category }) {
           );
         })}
       </ul>
+      )}
       <Sheet open={!!openProject} onOpenChange={(o) => !o && setOpenId(null)}>
         <SheetContent
           side="right"
