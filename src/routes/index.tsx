@@ -130,7 +130,7 @@ const CATEGORIES: Category[] = [
     ],
   },
   {
-    id: "03",
+    id: "02",
     label: "Personal Projects",
     intro: "Side projects in hardware and infrastructure.",
     projects: [
@@ -159,6 +159,12 @@ const CATEGORIES: Category[] = [
         stack: ["OpenWrt", "WireGuard", "VLANs", "Networking", "Linux"],
       },
     ],
+  },
+  {
+    id: "03",
+    label: "Networking / LLM Inference Research",
+    intro: "",
+    projects: [],
   },
 ];
 
@@ -1642,9 +1648,18 @@ function CategoryBlock({ category: c }: { category: Category }) {
           <h3 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
             {c.label}
           </h3>
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-dim">{c.intro}</p>
+          {c.intro ? (
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-dim">{c.intro}</p>
+          ) : null}
         </div>
       </div>
+      {c.projects.length === 0 ? (
+        <div className="mt-12 flex items-center justify-center border-y border-border px-6 py-20">
+          <p className="max-w-2xl text-center font-display text-lg leading-relaxed text-ink-dim sm:text-xl">
+            Doing some cool stuff @ByteDance with Charon, Vidur and LLM inference simulation. Will update soon :)
+          </p>
+        </div>
+      ) : (
       <ul
         className={
           c.id === "01"
@@ -1764,6 +1779,7 @@ function CategoryBlock({ category: c }: { category: Category }) {
           );
         })}
       </ul>
+      )}
       <Sheet open={!!openProject} onOpenChange={(o) => !o && setOpenId(null)}>
         <SheetContent
           side="right"
