@@ -907,9 +907,18 @@ function SignalPulse({ d, dur, accent }: { d: string; dur: number; accent?: "blu
 const BUTTON_PAD = { x: 1190, y: 700 };
 const LAMP = { cx: 340, cy: 320, w: 56, h: 32 };
 const LAMP_PIN = { x: LAMP.cx, y: LAMP.cy + LAMP.h / 2 + 14 }; // 340, 350
-const SIGNAL_PATH_D =
-  `M ${BUTTON_PAD.x} ${BUTTON_PAD.y} V 730 H 700 V 470 H ${LAMP_PIN.x} V ${LAMP_PIN.y}`;
-const SIGNAL_DUR_MS = 1400;
+// Capacitor C1 sits on the vertical leg of the signal path between the
+// switch (button) and the lamp. PRE = switch → cap; POST = cap → lamp.
+const CAP_PT = { x: 700, y: 600 };
+const CAP_GAP = 14; // pixels of bare lead on each side of the cap symbol
+const SIGNAL_PATH_PRE = `M ${BUTTON_PAD.x} ${BUTTON_PAD.y} V 730 H ${CAP_PT.x} V ${CAP_PT.y + CAP_GAP / 2}`;
+const SIGNAL_PATH_POST = `M ${CAP_PT.x} ${CAP_PT.y - CAP_GAP / 2} V 470 H ${LAMP_PIN.x} V ${LAMP_PIN.y}`;
+// Charge-feed branch: a short trace coming in from the right side of the
+// board into the top plate of C1. This visualises where the stored energy
+// comes from while the switch is open.
+const CHARGE_FEED_D = `M 880 540 H ${CAP_PT.x} V ${CAP_PT.y - CAP_GAP / 2}`;
+const DISCHARGE_DUR_MS = 950;
+const SWITCH_CLOSE_MS = 180;
 
 function Lamp({ on }: { on: boolean }) {
   return (
@@ -986,6 +995,100 @@ function SignalDot({ d, dur }: { d: string; dur: number }) {
       <circle r={14} fill="rgba(255,210,140,0.2)">
         <animateMotion dur={s} repeatCount="1" fill="freeze" path={d} />
       </circle>
+    </g>
+  );
+}
+
+// Through-hole electrolytic capacitor on the signal path. The two parallel
+// plates are stacked vertically (signal trace is vertical here). `stored`
+// indicates the cap is holding charge (slow amber pulse). `draining` shows a
+// quick discharge flash.
+function Capacitor({
+  cx,
+  cy,
+  stored,
+  draining,
+}: {
+  cx: number;
+  cy: number;
+  stored: boolean;
+  draining: boolean;
+}) {
+  const glow =
+    draining
+      ? "drop-shadow(0 0 10px rgba(251,191,36,0.95))"
+      : stored
+      ? "drop-shadow(0 0 6px rgba(251,191,36,0.55))"
+      : "none";
+  const plateColor = draining
+    ? "#fde68a"
+    : stored
+    ? "#c89832"
+    : "#6a6a6a";
+  return (
+    <g transform={`translate(${cx} ${cy})`} style={{ pointerEvents: "none" }}>
+      {/* clear background under the cap so the underlying trace doesn't
+          poke through between the plates */}
+      <rect x={-11} y={-9} width={22} height={18} fill="#060606" />
+      {/* top plate (flat) — positive terminal, fed by CHARGE_FEED */}
+      <line
+        x1={-9}
+        y1={-3}
+        x2={9}
+        y2={-3}
+        stroke={plateColor}
+        strokeWidth={1.6}
+        strokeLinecap="round"
+        style={{ filter: glow, transition: "stroke 200ms ease" }}
+      />
+      {/* bottom plate (curved) — electrolytic style */}
+      <path
+        d="M -9 3 Q 0 7 9 3"
+        fill="none"
+        stroke={plateColor}
+        strokeWidth={1.6}
+        strokeLinecap="round"
+        style={{ filter: glow, transition: "stroke 200ms ease" }}
+      />
+      {/* polarity marker */}
+      <text
+        x={-12}
+        y={-2}
+        fill="#777"
+        fontFamily="ui-monospace, monospace"
+        fontSize={5}
+        textAnchor="end"
+      >
+        +
+      </text>
+      {/* silkscreen label */}
+      <text
+        x={12}
+        y={2}
+        fill="#666"
+        fontFamily="ui-monospace, monospace"
+        fontSize={6}
+        textAnchor="start"
+      >
+        C1
+      </text>
+      {/* stored-charge pulse: small inner glow that breathes while idle */}
+      {stored && (
+        <circle r={2.4} cx={0} cy={-3} fill="rgba(251,191,36,0.7)">
+          <animate
+            attributeName="opacity"
+            values="0.25;0.9;0.25"
+            dur="2.2s"
+            repeatCount="indefinite"
+          />
+          <animate
+            attributeName="r"
+            values="1.6;2.8;1.6"
+            dur="2.2s"
+            repeatCount="indefinite"
+          />
+        </circle>
+      )}
     </g>
   );
 }
@@ -1102,6 +1205,8 @@ function CircuitHero() {
   const pulses = built.traces.filter((t) => t.pulse);
   const [lampOn, setLampOn] = useState(false);
   const [charging, setCharging] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const [discharging, setDischarging] = useState(false);
   const [hovering, setHovering] = useState(false);
   const [pulseId, setPulseId] = useState(0);
   const [hoverPulseId, setHoverPulseId] = useState(0);
@@ -1119,16 +1224,38 @@ function CircuitHero() {
     if (lampOn || charging) {
       setLampOn(false);
       setCharging(false);
+      setClosing(false);
+      setDischarging(false);
       return;
     }
     setPulseId((n) => n + 1);
     setCharging(true);
-    timers.current.push(window.setTimeout(() => setLampOn(true), SIGNAL_DUR_MS));
+    // 1) switch closes — brief flash on the PRE segment (button → cap)
+    setClosing(true);
     timers.current.push(
-      window.setTimeout(() => {
-        setLampOn(false);
-        setCharging(false);
-      }, SIGNAL_DUR_MS + 5000),
+      window.setTimeout(() => setClosing(false), SWITCH_CLOSE_MS),
+    );
+    // 2) cap discharges through POST segment (cap → lamp)
+    timers.current.push(
+      window.setTimeout(() => setDischarging(true), SWITCH_CLOSE_MS),
+    );
+    // 3) lamp lights when discharge front reaches it
+    timers.current.push(
+      window.setTimeout(
+        () => setLampOn(true),
+        SWITCH_CLOSE_MS + DISCHARGE_DUR_MS,
+      ),
+    );
+    // 4) settle: lamp off, recharging resumes
+    timers.current.push(
+      window.setTimeout(
+        () => {
+          setLampOn(false);
+          setCharging(false);
+          setDischarging(false);
+        },
+        SWITCH_CLOSE_MS + DISCHARGE_DUR_MS + 4000,
+      ),
     );
   };
 
@@ -1189,11 +1316,12 @@ function CircuitHero() {
             ))}
           </g>
 
-          {/* Interactive signal path: button → board → lamp. Drawn ABOVE the
-              text mask so it stays fully visible. */}
+          {/* Interactive switch → capacitor → lamp path. Drawn ABOVE the text
+              mask so it stays fully visible. */}
           <g>
+            {/* Base traces (PRE = switch→cap, POST = cap→lamp, FEED = charge source→cap) */}
             <path
-              d={SIGNAL_PATH_D}
+              d={SIGNAL_PATH_PRE}
               fill="none"
               stroke="#3a3a3a"
               strokeOpacity={0.55}
@@ -1204,61 +1332,134 @@ function CircuitHero() {
               className="hero-trace-draw"
               style={{ animationDelay: "1.4s" }}
             />
-            {/* Progressive amber fill — same path, revealed via dashoffset.
-                Click → fill from 1 → 0 over SIGNAL_DUR_MS (charging).
-                Hover → preview, peel ~8% from the button end. */}
             <path
-              d={SIGNAL_PATH_D}
+              d={SIGNAL_PATH_POST}
+              fill="none"
+              stroke="#3a3a3a"
+              strokeOpacity={0.55}
+              strokeWidth={1.4}
+              strokeLinecap="square"
+              strokeLinejoin="round"
+              pathLength={1}
+              className="hero-trace-draw"
+              style={{ animationDelay: "1.5s" }}
+            />
+            <path
+              d={CHARGE_FEED_D}
+              fill="none"
+              stroke="#3a3a3a"
+              strokeOpacity={0.45}
+              strokeWidth={1.1}
+              strokeLinecap="square"
+              strokeLinejoin="round"
+              pathLength={1}
+              className="hero-trace-draw"
+              style={{ animationDelay: "1.6s" }}
+            />
+
+            {/* PRE highlight — flashes when the switch closes */}
+            <path
+              d={SIGNAL_PATH_PRE}
               fill="none"
               stroke="#fbbf24"
-              strokeOpacity={lampOn ? 1 : 0.92}
               strokeWidth={1.8}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeOpacity={closing ? 0.95 : 0}
+              style={{
+                transition: "stroke-opacity 220ms ease",
+                filter: "drop-shadow(0 0 4px rgba(251,191,36,0.6))",
+                pointerEvents: "none",
+              }}
+            />
+
+            {/* POST progressive discharge fill (cap → lamp) */}
+            <path
+              d={SIGNAL_PATH_POST}
+              fill="none"
+              stroke="#fbbf24"
+              strokeOpacity={discharging || lampOn ? 1 : 0}
+              strokeWidth={1.9}
               strokeLinecap="round"
               strokeLinejoin="round"
               pathLength={1}
               strokeDasharray="1 1"
-              strokeDashoffset={
-                charging || lampOn ? 0 : hovering ? 0.92 : 1
-              }
+              strokeDashoffset={discharging || lampOn ? 0 : 1}
               style={{
-                transition:
-                  charging
-                    ? `stroke-dashoffset ${SIGNAL_DUR_MS}ms linear, stroke-opacity 200ms ease`
-                    : hovering
-                      ? "stroke-dashoffset 380ms ease-out, stroke-opacity 200ms ease"
-                      : "stroke-dashoffset 600ms ease-in, stroke-opacity 300ms ease",
-                filter: "drop-shadow(0 0 3px rgba(251,191,36,0.55))",
+                transition: discharging
+                  ? `stroke-dashoffset ${DISCHARGE_DUR_MS}ms linear, stroke-opacity 120ms ease`
+                  : "stroke-dashoffset 400ms ease, stroke-opacity 400ms ease",
+                filter: "drop-shadow(0 0 4px rgba(251,191,36,0.65))",
                 pointerEvents: "none",
               }}
             />
+
             {/* small inline parts along the routed path */}
             <g className="hero-part-in" style={{ animationDelay: "2s" }}>
               <InlineComponent kind="diode" x={430} y={470} rot={180} />
               <InlineComponent kind="resistor" x={600} y={470} rot={0} />
-              {/* via at corners */}
+              {/* vias at corners */}
               <circle cx={700} cy={690} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
               <circle cx={700} cy={470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
               <circle cx={340} cy={470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
             </g>
-            {/* leading dot that travels with the fill on click */}
-            {charging && pulseId > 0 && (
-              <g key={`click-${pulseId}`} style={{ pointerEvents: "none" }}>
+
+            {/* C1 capacitor sitting on the path between switch and lamp */}
+            <g className="hero-part-in" style={{ animationDelay: "1.7s" }}>
+              <Capacitor
+                cx={CAP_PT.x}
+                cy={CAP_PT.y}
+                stored={!discharging && !lampOn}
+                draining={discharging}
+              />
+            </g>
+
+            {/* Idle charge flow: dots traveling along CHARGE_FEED into top
+                plate of C1 — energy being stored. */}
+            {!charging && !lampOn && (
+              <g style={{ pointerEvents: "none" }}>
+                <circle r={2.4} fill="rgba(251,191,36,0.95)">
+                  <animateMotion dur="2.6s" repeatCount="indefinite" path={CHARGE_FEED_D} />
+                </circle>
+                <circle r={2.4} fill="rgba(251,191,36,0.95)">
+                  <animateMotion dur="2.6s" begin="0.85s" repeatCount="indefinite" path={CHARGE_FEED_D} />
+                </circle>
+                <circle r={2.4} fill="rgba(251,191,36,0.95)">
+                  <animateMotion dur="2.6s" begin="1.7s" repeatCount="indefinite" path={CHARGE_FEED_D} />
+                </circle>
+              </g>
+            )}
+
+            {/* Switch-close pulse: a quick dot from button up to the cap */}
+            {closing && pulseId > 0 && (
+              <g key={`sw-${pulseId}`} style={{ pointerEvents: "none" }}>
+                <circle r={3.2} fill="#fff4d6">
+                  <animateMotion dur={`${SWITCH_CLOSE_MS / 1000}s`} repeatCount="1" fill="freeze" path={SIGNAL_PATH_PRE} />
+                </circle>
+              </g>
+            )}
+
+            {/* Discharge leading dot — travels along POST path with the fill */}
+            {discharging && pulseId > 0 && (
+              <g key={`dis-${pulseId}`} style={{ pointerEvents: "none" }}>
                 <circle r={3.4} fill="#fff4d6">
-                  <animateMotion dur={`${SIGNAL_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={SIGNAL_PATH_D} />
+                  <animateMotion dur={`${DISCHARGE_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={SIGNAL_PATH_POST} />
                 </circle>
                 <circle r={8} fill="rgba(251,191,36,0.45)">
-                  <animateMotion dur={`${SIGNAL_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={SIGNAL_PATH_D} />
+                  <animateMotion dur={`${DISCHARGE_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={SIGNAL_PATH_POST} />
                 </circle>
               </g>
             )}
-            {/* hover preview: a tiny pulse that nudges into the route then fades */}
-            {hovering && hoverPulseId > 0 && (
+
+            {/* hover preview: a tiny pulse that nudges into the PRE route */}
+            {hovering && hoverPulseId > 0 && !charging && !lampOn && (
               <g key={`hov-${hoverPulseId}`} style={{ pointerEvents: "none" }}>
                 <circle r={2.6} fill="rgba(251,191,36,0.85)">
-                  <animateMotion dur="0.9s" repeatCount="indefinite" path={SIGNAL_PATH_D} keyPoints="0;0.1" keyTimes="0;1" calcMode="linear" />
+                  <animateMotion dur="0.9s" repeatCount="indefinite" path={SIGNAL_PATH_PRE} keyPoints="0;0.15" keyTimes="0;1" calcMode="linear" />
                 </circle>
               </g>
             )}
+
             <g className="hero-part-in" style={{ animationDelay: "1.6s" }}>
               <Lamp on={lampOn} />
             </g>
