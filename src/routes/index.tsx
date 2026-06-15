@@ -1434,6 +1434,21 @@ function CircuitHero() {
             >
               <div
                 className={`hw-assembly${hovering || signaling || lampOn ? " is-hot" : ""}`}
+                role="button"
+                tabIndex={0}
+                aria-label="Click me"
+                aria-pressed={lampOn}
+                onClick={triggerSignal}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    triggerSignal();
+                  }
+                }}
+                onMouseEnter={onButtonEnter}
+                onMouseLeave={onButtonLeave}
+                onFocus={onButtonEnter}
+                onBlur={onButtonLeave}
                 style={{
                   position: "relative",
                   width: "100%",
@@ -1444,6 +1459,8 @@ function CircuitHero() {
                   justifyContent: "flex-end",
                   paddingBottom: 18,
                   boxSizing: "border-box",
+                  cursor: "pointer",
+                  outline: "none",
                 }}
               >
                 <style>{`
@@ -1616,28 +1633,20 @@ function CircuitHero() {
                         "inset 0 1px 0 rgba(255,255,255,0.04), 0 1px 0 rgba(0,0,0,0.6)",
                     }}
                   />
-                  <button
-                    type="button"
-                    onClick={triggerSignal}
-                    onMouseEnter={onButtonEnter}
-                    onMouseLeave={onButtonLeave}
-                    onFocus={onButtonEnter}
-                    onBlur={onButtonLeave}
-                    aria-label="Click me"
-                    aria-pressed={lampOn}
+                  <div
+                    aria-hidden
                     className={
                       !pressed && !hovering && !signaling && !lampOn ? "hw-cap" : ""
                     }
                     style={{
                       position: "relative",
-                      width: 56,
-                      height: 16,
+                      width: 44,
+                      height: 13,
                       marginBottom: 6,
                       borderRadius: 3,
                       border: "none",
                       padding: 0,
-                      cursor: "pointer",
-                      pointerEvents: "auto",
+                      pointerEvents: "none",
                       // darker red base / sides of the cap
                       background:
                         "linear-gradient(180deg, #5a0e0e 0%, #3a0707 60%, #1c0303 100%)",
@@ -1691,7 +1700,7 @@ function CircuitHero() {
                         transition: "opacity 150ms ease",
                       }}
                     />
-                  </button>
+                  </div>
                 </div>
               </div>
             </foreignObject>
