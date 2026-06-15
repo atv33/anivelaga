@@ -382,8 +382,8 @@ function buildCircuit(_seed: number): Built {
   // ── Inter-chip pad-to-pad routes ──
   // CHIP_A bot pin (704,186) → CHIP_B top pin (560,376) via y=360 bus
   add("AB1", [{x:704,y:186},{x:704,y:360},{x:560,y:360},{x:560,y:376}], 1.0, 0.42);
-  // CHIP_B bot pin (600,444) → CHIP_D top pin (904,484) — clean L
-  add("BD1", [{x:600,y:444},{x:600,y:484},{x:904,y:484}], 1.0, 0.4);
+  // CHIP_B bot pin (600,444) → CHIP_D top pin (808,484) via y=460 lane (24px clearance above chip)
+  add("BD1", [{x:600,y:444},{x:600,y:460},{x:808,y:460},{x:808,y:484}], 1.0, 0.4);
 
   // ── Header → CHIP_A top fanout (2 more, all on y=72 backbone) ──
   add("HA1", [{x:890,y:20},{x:890,y:72},{x:704,y:72},{x:704,y:106}], 1.0, 0.4);
@@ -403,12 +403,21 @@ function buildCircuit(_seed: number): Built {
   add("CB2", [{x:428,y:310},{x:428,y:336},{x:560,y:336},{x:560,y:376}], 1.0, 0.38);
   // CHIP_C bot (452,310) → CHIP_B top (600,376) via y=348 lane
   add("CB3", [{x:452,y:310},{x:452,y:348},{x:600,y:348},{x:600,y:376}], 1.0, 0.38);
-  // CHIP_A bot (776,186) → CHIP_D top (872,484) via x=776 trunk and y=464 lane
-  add("AD1", [{x:776,y:186},{x:776,y:464},{x:872,y:464},{x:872,y:484}], 1.0, 0.4);
-  // CHIP_A bot (800,186) → CHIP_D top (840,484) via x=800 trunk and y=472 lane
-  add("AD2", [{x:800,y:186},{x:800,y:472},{x:840,y:472},{x:840,y:484}], 1.0, 0.38);
-  // CHIP_B bot (560,444) → CHIP_D top (808,484) via y=472 lane
-  add("BD2", [{x:560,y:444},{x:560,y:472},{x:808,y:472},{x:808,y:484}], 1.0, 0.4);
+  // CHIP_A bot (776,186) → CHIP_D top pin3 (872,484). Long vertical drops only; shared y=228 lane sits far above CHIP_D.
+  add("AD1", [{x:776,y:186},{x:776,y:228},{x:872,y:228},{x:872,y:484}], 1.0, 0.4);
+  // CHIP_A bot (800,186) → CHIP_D top pin4 (904,484) via y=240 lane (well above chip)
+  add("AD2", [{x:800,y:186},{x:800,y:240},{x:904,y:240},{x:904,y:484}], 1.0, 0.38);
+
+  // ── CHIP_D bot pins → bottom board edge (2 outputs) ──
+  add("DB1", [{x:840,y:552},{x:840,y:792},{x:760,y:792},{x:760,y:900}], 1.0, 0.4);
+  add("DB2", [{x:872,y:552},{x:872,y:720},{x:1100,y:720},{x:1100,y:900}], 1.0, 0.38);
+
+  // ── CHIP_C extra left-edge fanout ──
+  add("CL1", [{x:376,y:284},{x:200,y:284},{x:200,y:216},{x:0,y:216}], 1.0, 0.38);
+
+  // ── Header → CHIP_A more pins (use y=72 backbone) ──
+  add("HA3", [{x:922,y:20},{x:922,y:88},{x:776,y:88},{x:776,y:106}], 1.0, 0.36);
+  add("HA4", [{x:970,y:20},{x:970,y:88},{x:800,y:88},{x:800,y:106}], 1.0, 0.36);
 
   // ── Inline parts — each centered exactly on a real straight segment.
   //    No part overlaps a chip body, the portrait, or the control module. ──
