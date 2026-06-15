@@ -1695,7 +1695,7 @@ function CategoryBlock({ category: c }: { category: Category }) {
                     borderRadius: 2,
                   }}
                 >
-                  <div className="flex flex-col lg:flex-row" style={{ minHeight: 350 }}>
+                  <div className="flex flex-col lg:flex-row" style={{ minHeight: 160 }}>
                     <div className="lg:w-1/2">
                       <ProjectRow
                         project={p}
@@ -1731,7 +1731,7 @@ function CategoryBlock({ category: c }: { category: Category }) {
                     borderRadius: 2,
                   }}
                 >
-                  <div className="flex flex-col lg:flex-row" style={{ minHeight: 350 }}>
+                  <div className="flex flex-col lg:flex-row" style={{ minHeight: 160 }}>
                     <div className="lg:w-1/2">
                       <ProjectRow
                         project={p}
@@ -1800,16 +1800,18 @@ function ProjectRow({
             }
           : undefined
       }
-      className={`group grid grid-cols-12 items-baseline gap-6 py-10 transition-colors ${
+      className={`group grid grid-cols-12 items-baseline transition-colors ${
+        bare ? "gap-3 py-3 px-4" : "gap-6 py-10"
+      } ${
         p.comingSoon ? "opacity-50" : ""
-      } ${clickable ? (bare ? "cursor-pointer px-6" : "cursor-pointer hover:bg-secondary/40 -mx-4 px-4 rounded-sm transition-transform duration-200 hover:scale-[1.02]") : ""}`}
+      } ${clickable ? (bare ? "cursor-pointer" : "cursor-pointer hover:bg-secondary/40 -mx-4 px-4 rounded-sm transition-transform duration-200 hover:scale-[1.02]") : ""}`}
     >
-      <div className="col-span-12 font-mono text-xs uppercase tracking-[0.25em] text-ink-faint sm:col-span-2">
+      <div className={`col-span-12 font-mono uppercase tracking-[0.25em] text-ink-faint sm:col-span-2 ${bare ? "text-[10px]" : "text-xs"}`}>
         {categoryId}.{p.id}
         {p.year ? <> / {p.year}</> : null}
       </div>
       <div className="col-span-12 sm:col-span-7">
-        <h4 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+        <h4 className={`font-display font-bold tracking-tight text-foreground ${bare ? "text-base sm:text-lg" : "text-2xl sm:text-3xl"}`}>
           {p.name}
           {p.comingSoon ? (
             <span className="ml-3 align-middle font-mono text-[10px] uppercase tracking-[0.25em] text-ink-faint">
@@ -1818,7 +1820,7 @@ function ProjectRow({
           ) : null}
         </h4>
         {p.bullets && p.bullets.length > 0 ? (
-          <ul className="mt-3 max-w-2xl space-y-1.5 text-base leading-relaxed text-ink-dim">
+          <ul className={`max-w-2xl leading-relaxed text-ink-dim ${bare ? "mt-1.5 space-y-0.5 text-[11px]" : "mt-3 space-y-1.5 text-base"}`}>
             {p.bullets.map((b) => (
               <li key={b} className="flex gap-2">
                 <span className="text-ink-faint">—</span>
@@ -1827,10 +1829,10 @@ function ProjectRow({
             ))}
           </ul>
         ) : (
-          <p className="mt-3 max-w-2xl text-base leading-relaxed text-ink-dim">{p.tagline}</p>
+          <p className={`max-w-2xl leading-relaxed text-ink-dim ${bare ? "mt-1.5 text-[11px]" : "mt-3 text-base"}`}>{p.tagline}</p>
         )}
         {p.stack.length > 0 ? (
-          <div className="mt-5 flex flex-wrap gap-2">
+          <div className={`flex flex-wrap gap-1.5 ${bare ? "mt-2" : "mt-5"}`}>
             {p.stack.map((s) => (
               <span key={s} className="tag-pill">{s}</span>
             ))}
@@ -1843,7 +1845,7 @@ function ProjectRow({
               e.stopPropagation();
               onOpen?.();
             }}
-            className="mt-6 inline-flex items-center gap-2.5 rounded-sm border-2 border-rule bg-secondary/40 px-6 py-3 font-mono text-sm uppercase tracking-[0.25em] text-foreground transition-all hover:border-mark hover:bg-mark/10 hover:text-mark"
+            className={`inline-flex items-center rounded-sm border-2 border-rule bg-secondary/40 font-mono uppercase tracking-[0.25em] text-foreground transition-all hover:border-mark hover:bg-mark/10 hover:text-mark ${bare ? "mt-2 gap-1.5 px-3 py-1.5 text-[10px]" : "mt-6 gap-2.5 px-6 py-3 text-sm"}`}
           >
             <span>View details</span>
             <span className="transition-transform group-hover:translate-x-0.5">→</span>
@@ -1917,15 +1919,15 @@ function SubProjectRow({
               }
             : undefined
         }
-        className={`lg:w-1/2 px-6 py-5 ${clickable ? "cursor-pointer" : ""}`}
+        className={`lg:w-1/2 px-4 py-3 ${clickable ? "cursor-pointer" : ""}`}
       >
-        <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-ink-faint">
+        <div className="font-mono text-[9px] uppercase tracking-[0.28em] text-ink-faint">
           ↳ Sub-project &nbsp;·&nbsp; {categoryId}.{p.id}
         </div>
-        <h5 className="mt-2 font-display text-sm font-bold tracking-tight text-foreground sm:text-base">
+        <h5 className="mt-1 font-display text-xs font-bold tracking-tight text-foreground sm:text-sm">
           {p.name}
         </h5>
-        <p className="mt-1.5 max-w-md text-xs leading-relaxed text-ink-dim">
+        <p className="mt-1 max-w-md text-[11px] leading-relaxed text-ink-dim">
           {p.tagline.split(".")[0]}.
         </p>
         {clickable ? (
@@ -1935,7 +1937,7 @@ function SubProjectRow({
               e.stopPropagation();
               onOpen?.();
             }}
-            className="mt-4 inline-flex items-center gap-2 rounded-sm border-2 border-rule bg-secondary/40 px-5 py-2.5 font-mono text-xs uppercase tracking-[0.25em] text-foreground transition-all hover:border-mark hover:bg-mark/10 hover:text-mark"
+            className="mt-2 inline-flex items-center gap-1.5 rounded-sm border-2 border-rule bg-secondary/40 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-foreground transition-all hover:border-mark hover:bg-mark/10 hover:text-mark"
           >
             <span>View details</span>
             <span>→</span>
@@ -1944,10 +1946,10 @@ function SubProjectRow({
       </div>
       <div
         className="lg:w-1/2"
-        style={{ borderLeft: "1px solid rgba(255,255,255,0.06)", minHeight: 200 }}
+        style={{ borderLeft: "1px solid rgba(255,255,255,0.06)", minHeight: 120 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ width: "100%", height: "100%", minHeight: 200 }} className="overflow-hidden">
+        <div style={{ width: "100%", height: "100%", minHeight: 120 }} className="overflow-hidden">
           <model-viewer
             src={modelSrc}
             alt={`${p.name} 3D model`}
