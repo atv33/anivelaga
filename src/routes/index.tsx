@@ -321,7 +321,6 @@ const HEADER_T = { x: 880, y: -10, w: 100, h: 26, pins: [890, 906, 922, 938, 954
 // Inline component types
 type Inline =
   | { kind: "resistor";  x: number; y: number; rot?: 0 | 90 | 180 | 270 }
-  | { kind: "capacitor"; x: number; y: number; rot?: 0 | 90 | 180 | 270 }
   | { kind: "inductor";  x: number; y: number; rot?: 0 | 90 | 180 | 270 }
   | { kind: "diode";     x: number; y: number; rot?: 0 | 90 | 180 | 270 }
   | { kind: "testpad";   x: number; y: number };
@@ -404,7 +403,7 @@ function buildCircuit(_seed: number): Built {
   add("FA2", [{x:728,y:186},{x:728,y:216},{x:840,y:216},{x:840,y:484}], 1.0, 0.42);
 
   // ── CHIP_C (upper-left connector) fanout (4) ──
-  add("C1", [{x:452,y:236},{x:452,y:72},{x:312,y:72},{x:312,y:0}], 1.0, 0.4);
+  add("CHIP_C_TOP", [{x:452,y:236},{x:452,y:72},{x:312,y:72},{x:312,y:0}], 1.0, 0.4);
   add("C2", [{x:424,y:262},{x:264,y:262},{x:264,y:168},{x:0,y:168}], 1.0, 0.4);
   // CHIP_C top pin (452,236) → CHIP_A left pin (676,134)
   add("C3", [{x:500,y:236},{x:500,y:134},{x:676,y:134}], 1.0, 0.42);
@@ -473,8 +472,6 @@ function buildCircuit(_seed: number): Built {
     { kind: "resistor",  x: 876,  y: 158, rot: 0 },   // on L3 segment y=158 x 828..960
     { kind: "resistor",  x: 1464, y: 296, rot: 0 },   // on R1 segment y=296 x 1328..1600
     { kind: "resistor",  x: 576,  y: 134, rot: 0 },   // on C3 segment y=134 x 452..676
-    // Capacitors (1) — vertical SMD on vertical runs
-    { kind: "capacitor", x: 600,  y: 576, rot: 90 },  // on CB2 trunk x=600 y 444..672
     // Diodes (2) — horizontal, both anode-left/cathode-right
     { kind: "diode",     x: 912,  y: 476, rot: 0 },   // on L6/L7/L8 shared y=476 lane (x 808..984)
     { kind: "diode",     x: 840,  y: 72,  rot: 0 },   // on FA1 segment y=72 x 752..938
@@ -709,100 +706,6 @@ function SignalDot({ d, dur }: { d: string; dur: number }) {
   );
 }
 
-// Through-hole electrolytic capacitor on the signal path. The two parallel
-// plates are stacked vertically (signal trace is vertical here). `stored`
-// indicates the cap is holding charge (slow amber pulse). `draining` shows a
-// quick discharge flash.
-function Capacitor({
-  cx,
-  cy,
-  stored,
-  draining,
-}: {
-  cx: number;
-  cy: number;
-  stored: boolean;
-  draining: boolean;
-}) {
-  const glow =
-    draining
-      ? "drop-shadow(0 0 10px rgba(251,191,36,0.95))"
-      : stored
-      ? "drop-shadow(0 0 6px rgba(251,191,36,0.55))"
-      : "none";
-  const plateColor = draining
-    ? "#fde68a"
-    : stored
-    ? "#c89832"
-    : "#6a6a6a";
-  return (
-    <g transform={`translate(${cx} ${cy})`} style={{ pointerEvents: "none" }}>
-      {/* clear background under the cap so the underlying trace doesn't
-          poke through between the plates */}
-      <rect x={-11} y={-9} width={22} height={18} fill="#060606" />
-      {/* top plate (flat) — positive terminal, fed by CHARGE_FEED */}
-      <line
-        x1={-9}
-        y1={-3}
-        x2={9}
-        y2={-3}
-        stroke={plateColor}
-        strokeWidth={1.6}
-        strokeLinecap="round"
-        style={{ filter: glow, transition: "stroke 200ms ease" }}
-      />
-      {/* bottom plate (curved) — electrolytic style */}
-      <path
-        d="M -9 3 Q 0 7 9 3"
-        fill="none"
-        stroke={plateColor}
-        strokeWidth={1.6}
-        strokeLinecap="round"
-        style={{ filter: glow, transition: "stroke 200ms ease" }}
-      />
-      {/* polarity marker */}
-      <text
-        x={-12}
-        y={-2}
-        fill="#777"
-        fontFamily="ui-monospace, monospace"
-        fontSize={5}
-        textAnchor="end"
-      >
-        +
-      </text>
-      {/* silkscreen label */}
-      <text
-        x={12}
-        y={2}
-        fill="#666"
-        fontFamily="ui-monospace, monospace"
-        fontSize={6}
-        textAnchor="start"
-      >
-        C1
-      </text>
-      {/* stored-charge pulse: small inner glow that breathes while idle */}
-      {stored && (
-        <circle r={2.4} cx={0} cy={-3} fill="rgba(251,191,36,0.7)">
-          <animate
-            attributeName="opacity"
-            values="0.25;0.9;0.25"
-            dur="2.2s"
-            repeatCount="indefinite"
-          />
-          <animate
-            attributeName="r"
-            values="1.6;2.8;1.6"
-            dur="2.2s"
-            repeatCount="indefinite"
-          />
-        </circle>
-      )}
-    </g>
-  );
-}
-
 function InlineComponent(c: Inline) {
   const rot = (c as { rot?: number }).rot ?? 0;
   return (
@@ -814,13 +717,6 @@ function InlineComponent(c: Inline) {
           <rect x={-7} y={-3} width={14} height={6} fill="#1a1a1a" stroke="#5c5c5c" strokeWidth="0.6" />
           <rect x={-9} y={-2} width={2} height={4} fill="#3a3a3a" />
           <rect x={7}  y={-2} width={2} height={4} fill="#3a3a3a" />
-        </g>
-      )}
-      {c.kind === "capacitor" && (
-        <g>
-          <rect x={-4} y={-7} width={8} height={14} fill="#060606" />
-          <line x1={-2} y1={-6} x2={-2} y2={6} stroke="#6a6a6a" strokeWidth="1.4" />
-          <line x1={2}  y1={-6} x2={2}  y2={6} stroke="#6a6a6a" strokeWidth="1.4" />
         </g>
       )}
       {c.kind === "inductor" && (
@@ -1224,20 +1120,6 @@ function CircuitHero() {
                       border-color: #a07720;
                     }
                   }
-                  @keyframes hwCapPulse {
-                    0%, 100% {
-                      box-shadow: 0 3px 4px rgba(0,0,0,0.55),
-                                  0 0 0 1px rgba(251,191,36,0.10),
-                                  0 0 10px rgba(251,191,36,0.15),
-                                  inset 0 -2px 3px rgba(0,0,0,0.5);
-                    }
-                    50% {
-                      box-shadow: 0 3px 4px rgba(0,0,0,0.55),
-                                  0 0 0 1px rgba(251,191,36,0.45),
-                                  0 0 16px rgba(251,191,36,0.40),
-                                  inset 0 -2px 3px rgba(0,0,0,0.5);
-                    }
-                  }
                   @keyframes hwBtnBob {
                     0%, 100% { transform: translateX(-50%) translateY(0); }
                     50%      { transform: translateX(-50%) translateY(-5px); }
@@ -1360,7 +1242,7 @@ function CircuitHero() {
                     pointerEvents: "none",
                   }}
                 >
-                  {/* dark mount/base — connects the cap into the housing */}
+                  {/* dark mount/base — connects the button into the housing */}
                   <span
                     aria-hidden
                     style={{
@@ -1381,9 +1263,7 @@ function CircuitHero() {
                   />
                   <div
                     aria-hidden
-                    className={
-                      !pressed && !hovering && !signaling && !lampOn ? "hw-cap" : ""
-                    }
+                    className="hw-button-top"
                     style={{
                       position: "relative",
                       width: 44,
@@ -1393,7 +1273,7 @@ function CircuitHero() {
                       border: "none",
                       padding: 0,
                       pointerEvents: "none",
-                      // darker red base / sides of the cap
+                      // darker red base / sides of the button
                       background:
                         "linear-gradient(180deg, #5a0e0e 0%, #3a0707 60%, #1c0303 100%)",
                       boxShadow: pressed
