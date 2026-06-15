@@ -911,11 +911,7 @@ function CircuitHero() {
       {/* layer 2: circuit SVG */}
       <div
         className="pointer-events-none absolute left-0 right-0 z-[1]"
-        style={
-          isMobile
-            ? { top: "60px", height: "58vh" }
-            : { top: 0, bottom: 0 }
-        }
+        style={{ top: 0, bottom: 0 }}
       >
         <svg
           viewBox={viewBox}
