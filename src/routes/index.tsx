@@ -22,6 +22,8 @@ import serialBackAsset from "@/assets/serial-back.png.asset.json";
 import thrusterLayoutAsset from "@/assets/thruster-layout.png.asset.json";
 import thrusterFrontAsset from "@/assets/thruster-front.png.asset.json";
 import thrusterBackAsset from "@/assets/thruster-back.png.asset.json";
+import thrusterFab1Asset from "@/assets/thruster-fab-1.png.asset.json";
+import thrusterFab2Asset from "@/assets/thruster-fab-2.png.asset.json";
 
 // Allow <model-viewer> custom element in JSX (React 19 uses React.JSX)
 declare module "react" {
@@ -1928,7 +1930,31 @@ function ProjectDetails({
       ) : null}
 
       {isSerial ? <SerialBoardGallery /> : null}
-      {isThruster ? <ThrusterBoardGallery /> : null}
+      {isThruster ? (
+        <>
+          <ThrusterBoardGallery />
+          <div className="mt-2">
+            <div className="font-mono text-[11px] uppercase tracking-[0.25em] text-ink-faint">
+              Fabricated + Soldered Board
+            </div>
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {[thrusterFab1Asset, thrusterFab2Asset].map((a, i) => (
+                <div
+                  key={i}
+                  className="relative aspect-[4/3] overflow-hidden rounded-md border border-border"
+                  style={{ backgroundColor: "#1a1a1a" }}
+                >
+                  <img
+                    src={a.url}
+                    alt={`Thruster Board fabricated and soldered, photo ${i + 1}`}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      ) : null}
 
       {p.links?.length ? (
         <div className="border-t border-border pt-4">
