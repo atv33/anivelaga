@@ -207,6 +207,12 @@ const SKILLS = [
 
 const EXPERIENCE = [
   {
+    when: "May 2026 — Present",
+    role: "High Speed Network Researcher",
+    org: "ByteDance",
+    note: "LLM inference system R&D.",
+  },
+  {
     when: "Sep 2024 — Present",
     role: "Electrical Engineer",
     org: "CUAUV",
@@ -217,6 +223,18 @@ const EXPERIENCE = [
     role: "Undergraduate Researcher",
     org: "Cornell ECE",
     note: "Investigating distributed KV-cache networking for LLM inference. Focus on inter-GPU communication overhead during prefill and decode phases. Benchmarking NCCL collective operations vs. RDMA direct transfers on multi-GPU clusters.",
+  },
+  {
+    when: "Jun 2025 — Apr 2026",
+    role: "Network Software Engineer",
+    org: "ByteDance",
+    note: "NCCL simulation for large clusters.",
+  },
+  {
+    when: "Jun 2023 — Aug 2023",
+    role: "FPGA Engineer",
+    org: "Broadcom",
+    note: "Verilog & FPGA validation.",
   },
 ];
 
@@ -1825,7 +1843,7 @@ function ProjectRow({
               e.stopPropagation();
               onOpen?.();
             }}
-            className="mt-6 inline-flex items-center gap-2 rounded-sm border border-rule bg-secondary/40 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.25em] text-foreground transition-all hover:border-mark hover:bg-mark/10 hover:text-mark"
+            className="mt-6 inline-flex items-center gap-2.5 rounded-sm border-2 border-rule bg-secondary/40 px-6 py-3 font-mono text-sm uppercase tracking-[0.25em] text-foreground transition-all hover:border-mark hover:bg-mark/10 hover:text-mark"
           >
             <span>View details</span>
             <span className="transition-transform group-hover:translate-x-0.5">→</span>
@@ -1917,7 +1935,7 @@ function SubProjectRow({
               e.stopPropagation();
               onOpen?.();
             }}
-            className="mt-3 inline-flex items-center gap-2 rounded-sm border border-rule bg-secondary/40 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-foreground transition-all hover:border-mark hover:bg-mark/10 hover:text-mark"
+            className="mt-4 inline-flex items-center gap-2 rounded-sm border-2 border-rule bg-secondary/40 px-5 py-2.5 font-mono text-xs uppercase tracking-[0.25em] text-foreground transition-all hover:border-mark hover:bg-mark/10 hover:text-mark"
           >
             <span>View details</span>
             <span>→</span>
