@@ -1099,6 +1099,14 @@ function CircuitHero() {
           </g>
 
           {/* layer 3: portrait module — always visible, above mask */}
+          {isMobile && (
+            <g fill="none" stroke="#333" strokeOpacity={0.62} strokeWidth={1.25} strokeLinecap="square" strokeLinejoin="round">
+              <path d={`M ${MOBILE_PORT.x + MOBILE_PORT.w} ${MOBILE_PORT.y + 130} H ${MOBILE_SIGNAL_BUS_X}`} />
+              <path d={`M ${MOBILE_PORT.x + MOBILE_PORT.w} ${MOBILE_PORT.y + 260} H ${MOBILE_SIGNAL_BUS_X}`} />
+              <path d={`M ${MOBILE_PORT.x + MOBILE_PORT.w} ${MOBILE_PORT.y + 390} H ${MOBILE_SIGNAL_BUS_X}`} />
+              <path d={`M ${MOBILE_PORT.x + MOBILE_PORT.w / 2} ${MOBILE_PORT.y} V ${MOBILE_TRACE_TOP_Y} H ${MOBILE_SIGNAL_BUS_X}`} />
+            </g>
+          )}
           <PortraitModule mobile={isMobile} />
 
           {/* hardware-style trigger button under the portrait */}
