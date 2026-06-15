@@ -957,13 +957,13 @@ function CircuitHero() {
       data-hero
       data-section="00"
       className="relative w-full overflow-hidden"
-      style={{ minHeight: "100vh", background: "#060606" }}
+      style={{ minHeight: isMobile ? "85vh" : "100vh", background: "#060606" }}
     >
       {/* layer 2: circuit SVG */}
       <div className="pointer-events-none absolute inset-0 z-[1]">
         <svg
-          viewBox={`0 0 ${VB_W} ${VB_H}`}
-          preserveAspectRatio="xMidYMid slice"
+          viewBox={viewBox}
+          preserveAspectRatio={preserve}
           className="hero-circuit-fade absolute inset-0 h-full w-full"
           aria-hidden
         >
