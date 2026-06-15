@@ -712,6 +712,70 @@ function SignalPulse({ d, dur, accent }: { d: string; dur: number; accent?: "blu
   );
 }
 
+// LED indicator — a small PCB-mounted amber lamp that pulses on when a signal
+// arrives. Pad geometry is exposed via LED_BODY/LED_PIN so the routing layer
+// can terminate the LED trace exactly on its pad.
+const LED_BODY = { cx: 270, cy: 440, w: 28, h: 14 };
+// Trace approaches the LED from below and lands on the lower pad center
+const LED_PIN = { x: LED_BODY.cx, y: LED_BODY.cy + LED_BODY.h / 2 + 3 }; // 270, 460
+// Dedicated trace: CHIP_C bottom pin 3 (452, 310) → corner → LED bottom pad
+const LED_TRACE_D = `M 452 310 V 360 H ${LED_PIN.x} V ${LED_PIN.y}`;
+const LED_PERIOD_MS = 3200;
+
+function LedIndicator({ period = LED_PERIOD_MS }: { period?: number }) {
+  const dur = `${period / 1000}s`;
+  return (
+    <g transform={`translate(${LED_BODY.cx} ${LED_BODY.cy})`}>
+      {/* solder pads top + bottom */}
+      <rect x={-3} y={LED_BODY.h / 2} width={6} height={4} fill="#262626" stroke="#3d3d3d" strokeWidth={0.5} />
+      <rect x={-3} y={-LED_BODY.h / 2 - 4} width={6} height={4} fill="#262626" stroke="#3d3d3d" strokeWidth={0.5} />
+      {/* body */}
+      <rect
+        x={-LED_BODY.w / 2}
+        y={-LED_BODY.h / 2}
+        width={LED_BODY.w}
+        height={LED_BODY.h}
+        rx={1.5}
+        fill="#101010"
+        stroke="#3d3d3d"
+        strokeWidth={1}
+      />
+      {/* dim lens (off state) */}
+      <circle r={5} fill="#1a1a1a" stroke="#5a5a5a" strokeWidth={0.8} />
+      {/* polarity marker */}
+      <line x1={LED_BODY.w / 2 - 3} y1={-3} x2={LED_BODY.w / 2 - 3} y2={3} stroke="#555" strokeWidth={0.6} />
+      {/* glow layers — only briefly visible when the pulse arrives */}
+      <circle r={5} fill="#fbbf24" opacity={0}>
+        <animate
+          attributeName="opacity"
+          values="0;0;0;0.95;0.55;0.15;0"
+          keyTimes="0;0.75;0.9;0.94;0.97;0.99;1"
+          dur={dur}
+          repeatCount="indefinite"
+        />
+      </circle>
+      <circle r={11} fill="#fbbf24" opacity={0}>
+        <animate
+          attributeName="opacity"
+          values="0;0;0;0.4;0.22;0.08;0"
+          keyTimes="0;0.75;0.9;0.94;0.97;0.99;1"
+          dur={dur}
+          repeatCount="indefinite"
+        />
+      </circle>
+      <circle r={20} fill="#fbbf24" opacity={0}>
+        <animate
+          attributeName="opacity"
+          values="0;0;0;0.18;0.1;0.03;0"
+          keyTimes="0;0.75;0.9;0.94;0.97;0.99;1"
+          dur={dur}
+          repeatCount="indefinite"
+        />
+      </circle>
+    </g>
+  );
+}
+
 function InlineComponent(c: Inline) {
   const rot = (c as { rot?: number }).rot ?? 0;
   return (
