@@ -614,9 +614,9 @@ const SIGNAL_D =
   `M ${BUTTON_PAD.x} ${BUTTON_PAD.y} V 740 H 700 V 470 H ${LAMP_PIN.x} V ${LAMP_PIN.y}`;
 const SIGNAL_DUR_MS = 1150;
 
-function Lamp({ on }: { on: boolean }) {
+function Lamp({ on, scale = 1 }: { on: boolean; scale?: number }) {
   return (
-    <g transform={`translate(${LAMP.cx} ${LAMP.cy})`}>
+    <g transform={`translate(${LAMP.cx} ${LAMP.cy}) scale(${scale})`}>
       {/* downward halo cone over the name */}
       {on && (
         <ellipse
