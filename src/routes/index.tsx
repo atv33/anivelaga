@@ -1071,10 +1071,10 @@ function CircuitHero() {
 
             {/* Vias at every real bend in the signal path */}
             <g className="hero-part-in" style={{ animationDelay: "1.7s" }}>
-              <circle cx={isMobile ? MOBILE_BUTTON_PAD.x : BUTTON_PAD.x} cy={isMobile ? 500 : 740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-              <circle cx={700} cy={isMobile ? 520 : 740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-              <circle cx={700} cy={isMobile ? 520 : 470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-              <circle cx={isMobile ? MOBILE_LAMP.cx : 340} cy={isMobile ? 520 : 470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={isMobile ? MOBILE_BUTTON_PAD.x : BUTTON_PAD.x} cy={isMobile ? MOBILE_BUTTON_PAD.y : 740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={isMobile ? MOBILE_BUTTON_PAD.x : 700} cy={isMobile ? MOBILE_TRACE_TOP_Y : 740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={isMobile ? MOBILE_LAMP.cx : 700} cy={isMobile ? MOBILE_TRACE_TOP_Y : 470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={isMobile ? MOBILE_LAMP.cx : 340} cy={isMobile ? MOBILE_LAMP.cy + (LAMP.h / 2 + 14) * MOBILE_LAMP_SCALE : 470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
             </g>
 
             {/* Leading dot — travels along SIGNAL with the fill */}
@@ -1091,7 +1091,7 @@ function CircuitHero() {
 
             <g className="hero-part-in" style={{ animationDelay: "1.6s" }}>
               <g transform={isMobile ? `translate(${MOBILE_LAMP.cx - LAMP.cx} ${MOBILE_LAMP.cy - LAMP.cy})` : undefined}>
-                <Lamp on={lampOn} scale={isMobile ? 1.8 : 1} />
+                <Lamp on={lampOn} scale={isMobile ? MOBILE_LAMP_SCALE : 1} />
               </g>
             </g>
           </g>
