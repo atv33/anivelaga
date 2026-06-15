@@ -130,7 +130,7 @@ const CATEGORIES: Category[] = [
     ],
   },
   {
-    id: "03",
+    id: "02",
     label: "Personal Projects",
     intro: "Side projects in hardware and infrastructure.",
     projects: [
@@ -159,6 +159,12 @@ const CATEGORIES: Category[] = [
         stack: ["OpenWrt", "WireGuard", "VLANs", "Networking", "Linux"],
       },
     ],
+  },
+  {
+    id: "03",
+    label: "Networking / LLM Inference Research",
+    intro: "",
+    projects: [],
   },
 ];
 
