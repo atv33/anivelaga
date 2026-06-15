@@ -1368,7 +1368,7 @@ function CircuitHero() {
                   className={`hw-btn-wrap${pressed ? " is-pressed" : ""}`}
                   style={{
                     position: "absolute",
-                    top: 14,
+                    top: 38,
                     left: "50%",
                     transform: "translateX(-50%)",
                     width: 72,
