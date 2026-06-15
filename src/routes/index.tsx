@@ -1524,7 +1524,7 @@ function InlineSerialModel({
     >
       <div
         className={embedded ? "overflow-hidden h-full" : "overflow-hidden border border-border"}
-        style={{ backgroundColor: "#111", width: "100%", height: embedded ? 200 : 300 }}
+        style={{ backgroundColor: "#111", width: "100%", height: embedded ? 350 : 300 }}
       >
         <model-viewer
           ref={ref as unknown as React.Ref<HTMLElement>}
@@ -1704,7 +1704,7 @@ function CategoryBlock({ category: c }: { category: Category }) {
                   <div className="flex flex-col">
                     <div
                       className="w-full"
-                      style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", height: 200 }}
+                      style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", height: 350 }}
                     >
                       <InlineSerialModel embedded src={SERIAL_INLINE_GLB} />
                     </div>
@@ -1740,7 +1740,7 @@ function CategoryBlock({ category: c }: { category: Category }) {
                   <div className="flex flex-col">
                     <div
                       className="w-full"
-                      style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", height: 200 }}
+                      style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", height: 350 }}
                     >
                       <InlineSerialModel embedded src={THRUSTER_INLINE_GLB} idleElevation={15} />
                     </div>
