@@ -1799,7 +1799,18 @@ function ProjectRow({
             </span>
           ) : null}
         </h4>
-        <p className="mt-3 max-w-2xl text-base leading-relaxed text-ink-dim">{p.tagline}</p>
+        {p.bullets && p.bullets.length > 0 ? (
+          <ul className="mt-3 max-w-2xl space-y-1.5 text-base leading-relaxed text-ink-dim">
+            {p.bullets.map((b) => (
+              <li key={b} className="flex gap-2">
+                <span className="text-ink-faint">—</span>
+                <span>{b}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-3 max-w-2xl text-base leading-relaxed text-ink-dim">{p.tagline}</p>
+        )}
         {p.stack.length > 0 ? (
           <div className="mt-5 flex flex-wrap gap-2">
             {p.stack.map((s) => (
@@ -1808,9 +1819,17 @@ function ProjectRow({
           </div>
         ) : null}
         {clickable ? (
-          <div className="mt-5 font-mono text-[11px] uppercase tracking-[0.25em] text-ink-faint transition-colors group-hover:text-mark">
-            → View details
-          </div>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpen?.();
+            }}
+            className="mt-6 inline-flex items-center gap-2 rounded-sm border border-rule bg-secondary/40 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.25em] text-foreground transition-all hover:border-mark hover:bg-mark/10 hover:text-mark"
+          >
+            <span>View details</span>
+            <span className="transition-transform group-hover:translate-x-0.5">→</span>
+          </button>
         ) : null}
       </div>
       <div
