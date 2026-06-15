@@ -2025,9 +2025,9 @@ function SerialBoardGallery() {
 
 function ThrusterBoardGallery() {
   const images = [
+    { id: "layout", label: "2D Layout", src: thrusterLayoutAsset.url, alt: "Thruster Board 2D PCB schematic layout" },
     { id: "front", label: "3D Front", src: thrusterFrontAsset.url, alt: "Thruster Board 3D front render" },
     { id: "back", label: "3D Back", src: thrusterBackAsset.url, alt: "Thruster Board 3D back render" },
-    { id: "layout", label: "2D Layout", src: thrusterLayoutAsset.url, alt: "Thruster Board 2D PCB schematic layout" },
   ];
   const [active, setActive] = useState(images[0].id);
   const current = images.find((i) => i.id === active) ?? images[0];
