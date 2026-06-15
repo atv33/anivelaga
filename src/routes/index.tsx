@@ -1261,8 +1261,8 @@ function CircuitHero() {
                     50%      { box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 0 22px rgba(251,191,36,0.18); border-color: #4a4030; }
                   }
                   @keyframes hwBtnBob {
-                    0%, 100% { transform: translateY(0); }
-                    50%      { transform: translateY(-5px); }
+                    0%, 100% { transform: translateX(-50%) translateY(0); }
+                    50%      { transform: translateX(-50%) translateY(-5px); }
                   }
                   .hw-module { animation: hwBoxPulse 2.0s ease-in-out infinite; }
                   .hw-module.is-hot { animation-duration: 1.2s; }
