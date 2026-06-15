@@ -739,7 +739,7 @@ function InlineComponent(c: Inline) {
   );
 }
 
-function CircuitTraceLayer() {
+function CircuitTraceLayer({ built }: { built: Built }) {
   return (
     <g>
       {/* secondary chips (rendered before traces so trace endpoints sit on them) */}
@@ -765,7 +765,7 @@ function CircuitTraceLayer() {
 
       {/* traces — drawn in with stroke-dashoffset, staggered */}
       <g fill="none" strokeLinecap="square" strokeLinejoin="round">
-        {TRACES.map((t, i) => (
+        {built.traces.map((t, i) => (
           <path
             key={t.id}
             id={`trace-${t.id}`}
@@ -782,17 +782,17 @@ function CircuitTraceLayer() {
 
       {/* inline components — fade in after traces finish */}
       <g className="hero-part-in" style={{ animationDelay: "2s" }}>
-        {INLINE_PARTS.map((p, i) => (
+        {built.parts.map((p, i) => (
           <InlineComponent key={i} {...p} />
         ))}
       </g>
 
       {/* endpoint vias — also fade in after traces */}
       <g className="hero-part-in" style={{ animationDelay: "1.8s" }}>
-        {ENDPOINTS.map((e, i) => (
+        {built.vias.map((e, i) => (
           <g key={i}>
-            <circle cx={e.x} cy={e.y} r={(e.r ?? 2.5) + 1.5} fill="none" stroke="#3a3a3a" strokeWidth="0.8" />
-            <circle cx={e.x} cy={e.y} r={e.r ?? 2.5} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth="0.8" />
+            <circle cx={e.x} cy={e.y} r={4} fill="none" stroke="#3a3a3a" strokeWidth="0.8" />
+            <circle cx={e.x} cy={e.y} r={2.5} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth="0.8" />
           </g>
         ))}
       </g>
@@ -801,8 +801,13 @@ function CircuitTraceLayer() {
 }
 
 function CircuitHero() {
-  // pulses — selected traces only
-  const pulses = TRACES.filter((t) => t.pulse);
+  // Seed: stable on server + initial client render, then randomized on mount.
+  const [seed, setSeed] = useState(1);
+  useEffect(() => {
+    setSeed(((Math.random() * 0xffffffff) >>> 0) || 1);
+  }, []);
+  const built = useMemo(() => buildCircuit(seed), [seed]);
+  const pulses = built.traces.filter((t) => t.pulse);
   return (
     <section
       id="top"
@@ -813,6 +818,7 @@ function CircuitHero() {
       {/* layer 2: circuit SVG */}
       <div className="pointer-events-none absolute inset-0 z-[1]">
         <svg
+          key={seed}
           viewBox={`0 0 ${VB_W} ${VB_H}`}
           preserveAspectRatio="xMidYMid slice"
           className="hero-circuit-fade absolute inset-0 h-full w-full"
@@ -834,7 +840,7 @@ function CircuitHero() {
 
           {/* circuit layer (under the mask) */}
           <g mask="url(#heroTraceMask)">
-            <CircuitTraceLayer />
+            <CircuitTraceLayer built={built} />
           </g>
 
           {/* pulses — above traces, also masked so they don't pop into the text zone */}
