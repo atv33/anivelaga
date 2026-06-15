@@ -516,19 +516,21 @@ function HeroText() {
   );
 }
 
-function PortraitModule() {
-  const ix = PORT.x + PORT_INSET;
-  const iy = PORT.y + PORT_INSET;
-  const iw = PORT.w - PORT_INSET * 2;
-  const ih = PORT.h - PORT_INSET * 2;
+function PortraitModule({ mobile = false }: { mobile?: boolean }) {
+  const frame = mobile ? MOBILE_PORT : PORT;
+  const inset = mobile ? MOBILE_PORT_INSET : PORT_INSET;
+  const ix = frame.x + inset;
+  const iy = frame.y + inset;
+  const iw = frame.w - inset * 2;
+  const ih = frame.h - inset * 2;
   return (
     <g>
       {/* outer dark package */}
       <rect
-        x={PORT.x}
-        y={PORT.y}
-        width={PORT.w}
-        height={PORT.h}
+        x={frame.x}
+        y={frame.y}
+        width={frame.w}
+        height={frame.h}
         fill="#141414"
         stroke="#2a2a2a"
         strokeWidth="1"
@@ -554,14 +556,14 @@ function PortraitModule() {
         style={{ filter: "grayscale(15%) brightness(0.92) contrast(1.03)" }}
       />
       {/* orientation notch */}
-      <circle cx={PORT.x + 10} cy={PORT.y + 10} r="2" fill="#3a3a3a" />
+      <circle cx={frame.x + 10} cy={frame.y + 10} r="2" fill="#3a3a3a" />
 
       {/* pads on all four sides */}
-      <g fill="#2b2b2b" stroke="#454545" strokeWidth="0.6">
+      {!mobile && <g fill="#2b2b2b" stroke="#454545" strokeWidth="0.6">
         {[...leftPads, ...rightPads, ...topPads, ...bottomPads].map((p, i) => (
           <rect key={i} x={p.x} y={p.y} width={p.w} height={p.h} rx="1" />
         ))}
-      </g>
+      </g>}
     </g>
   );
 }
