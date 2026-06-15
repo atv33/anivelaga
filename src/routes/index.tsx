@@ -2390,43 +2390,45 @@ function ThrusterViewer() {
 
 function About() {
   return (
-    <section id="about" className="mx-auto max-w-6xl px-6 py-28 sm:px-10 sm:py-40">
-      <SectionHeader index="02" kicker="About" title="Who I am." />
-      <div className="mt-20 grid gap-16 sm:grid-cols-12">
-        <div className="sm:col-span-7">
-          <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-start sm:gap-8">
+    <section
+      id="about"
+      className="relative mx-auto max-w-6xl px-6 py-24 sm:px-10 sm:py-32"
+    >
+      <SectionHeader index="02" kicker="About" title="About Me." />
+      <div className="mt-16 grid gap-10 md:grid-cols-12 md:gap-14">
+        <div className="md:col-span-5">
+          <div className="mx-auto w-full max-w-[440px] md:max-w-none">
             <img
               src={headshotAsset.url}
               alt="Ani Velaga"
-              width={180}
-              height={180}
-              className="size-[180px] shrink-0 object-cover border border-border"
-              style={{ borderRadius: "50%" }}
+              className="block h-auto w-full border border-border object-cover"
+              style={{ aspectRatio: "4 / 5" }}
+              loading="lazy"
             />
-            <div>
-              <p className="text-lg leading-relaxed text-ink-dim">
-            I'm an electrical and computer engineering student at Cornell, currently on CUAUV —
-            Cornell's autonomous underwater vehicle team. I design production PCBs in Altium
-            Designer: 4-layer stackups, differential pair routing, ESD protection, high-speed USB.
-            The submarine goes in real water, so the boards have to work.
-              </p>
-              <p className="mt-6 text-lg leading-relaxed text-ink-dim">
+          </div>
+        </div>
+        <div className="md:col-span-7">
+          <p className="text-base leading-relaxed text-ink-dim sm:text-lg">
+            I'm an electrical and computer engineering student at Cornell, currently on
+            CUAUV — Cornell's autonomous underwater vehicle team. I design production PCBs in
+            Altium Designer: 4-layer stackups, differential pair routing, ESD protection,
+            high-speed USB. The submarine goes in real water, so the boards have to work.
+          </p>
+          <p className="mt-6 text-base leading-relaxed text-ink-dim sm:text-lg">
             My work runs from board-level hardware through the networking stack up into LLM
             inference systems. I care about the full path: what the silicon is doing, how data
             moves between nodes, and where inference bottlenecks actually live. I'm looking for
             roles where that end-to-end view matters.
-              </p>
+          </p>
+          <div className="mt-10">
+            <div className="font-mono text-xs uppercase tracking-[0.28em] text-ink-faint">
+              Skills
             </div>
-          </div>
-        </div>
-        <div className="sm:col-span-5 sm:pl-12">
-          <div className="font-mono text-xs uppercase tracking-[0.28em] text-ink-faint">
-            Skills
-          </div>
-          <div className="mt-5 flex flex-wrap gap-2">
-            {SKILLS.map((s) => (
-              <span key={s} className="tag-pill">{s}</span>
-            ))}
+            <div className="mt-4 flex flex-wrap gap-2">
+              {SKILLS.map((s) => (
+                <span key={s} className="tag-pill">{s}</span>
+              ))}
+            </div>
           </div>
         </div>
       </div>
