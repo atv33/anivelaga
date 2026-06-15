@@ -1408,6 +1408,9 @@ function CircuitHero() {
                     onBlur={onButtonLeave}
                     aria-label="Click me"
                     aria-pressed={lampOn}
+                    className={
+                      !pressed && !hovering && !charging && !lampOn ? "hw-cap" : ""
+                    }
                     style={{
                       position: "relative",
                       width: 56,
@@ -1424,8 +1427,8 @@ function CircuitHero() {
                       boxShadow: pressed
                         ? "0 1px 0 rgba(0,0,0,0.85), inset 0 2px 3px rgba(0,0,0,0.55)"
                         : hovering
-                          ? "0 4px 6px rgba(0,0,0,0.6), 0 0 14px rgba(220,38,38,0.35), inset 0 -2px 3px rgba(0,0,0,0.5)"
-                          : "0 3px 4px rgba(0,0,0,0.55), 0 0 8px rgba(220,38,38,0.18), inset 0 -2px 3px rgba(0,0,0,0.5)",
+                          ? "0 4px 6px rgba(0,0,0,0.6), 0 0 0 1px rgba(251,191,36,0.55), 0 0 18px rgba(251,191,36,0.45), inset 0 -2px 3px rgba(0,0,0,0.5)"
+                          : undefined,
                       transform: hovering && !pressed ? "scale(1.04)" : "scale(1)",
                       transition:
                         "transform 120ms ease, box-shadow 200ms ease",
