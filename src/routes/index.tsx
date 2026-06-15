@@ -1909,7 +1909,7 @@ function SubProjectRow({
       style={{
         borderTop: "1px solid rgba(255,255,255,0.06)",
       }}
-      className="flex flex-col lg:flex-row"
+      className="flex flex-col"
     >
       <div
         onClick={onOpen}
@@ -1925,7 +1925,7 @@ function SubProjectRow({
               }
             : undefined
         }
-        className={`lg:w-1/2 px-4 py-3 ${clickable ? "cursor-pointer" : ""}`}
+        className={`w-full px-4 py-3 ${clickable ? "cursor-pointer" : ""}`}
       >
         <div className="font-mono text-[9px] uppercase tracking-[0.28em] text-ink-faint">
           ↳ Sub-project &nbsp;·&nbsp; {categoryId}.{p.id}
@@ -1951,8 +1951,8 @@ function SubProjectRow({
         ) : null}
       </div>
       <div
-        className="lg:w-1/2"
-        style={{ borderLeft: "1px solid rgba(255,255,255,0.06)", minHeight: 120 }}
+        className="w-full"
+        style={{ borderTop: "1px solid rgba(255,255,255,0.06)", minHeight: 120 }}
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ width: "100%", height: "100%", minHeight: 120 }} className="overflow-hidden">
