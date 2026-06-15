@@ -275,6 +275,10 @@ const VB_H = 900;
 // Portrait module — central component
 const PORT = { x: 1060, y: 270, w: 260, h: 320 };
 const PORT_INSET = 14;
+const MOBILE_PORT = { x: 410, y: 250, w: 420, h: 510 };
+const MOBILE_PORT_INSET = 16;
+const MOBILE_BUTTON_PAD = { x: 940, y: 500 };
+const MOBILE_LAMP = { cx: 170, cy: 330 };
 
 // Pin pad layout helpers
 const yPads = [296, 332, 368, 404, 440, 476, 512, 548];     // 8 vertical pad rows (left/right)
