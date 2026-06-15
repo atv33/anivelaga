@@ -379,13 +379,20 @@ function buildCircuit(_seed: number): Built {
   // CHIP_C bot pin (404,310) → CHIP_B left pin (516,400) via y=360 bus and x=516 trunk
   add("C4", [{x:404,y:310},{x:404,y:360},{x:516,y:360},{x:516,y:400}], 1.0, 0.4);
 
-  // ── CHIP_B south fanout (2) — branch into the lower-left text region ──
-  add("CB1", [{x:560,y:444},{x:560,y:576},{x:0,y:576}], 1.0, 0.32);
-  add("CB2", [{x:600,y:444},{x:600,y:672},{x:180,y:672},{x:180,y:900}], 1.0, 0.3);
+  // ── Inter-chip pad-to-pad routes ──
+  // CHIP_A bot pin (704,186) → CHIP_B top pin (560,376) via y=360 bus
+  add("AB1", [{x:704,y:186},{x:704,y:360},{x:560,y:360},{x:560,y:376}], 1.0, 0.42);
+  // CHIP_B bot pin (600,444) → CHIP_D top pin (904,484) — clean L
+  add("BD1", [{x:600,y:444},{x:600,y:484},{x:904,y:484}], 1.0, 0.4);
 
-  // ── CHIP_D south fanout (2) — south rails ──
-  add("DS1", [{x:840,y:552},{x:840,y:720},{x:1032,y:720}], 1.0, 0.4);
-  add("DS2", [{x:872,y:552},{x:872,y:792},{x:1296,y:792},{x:1296,y:900}], 1.0, 0.4);
+  // ── Header → CHIP_A top fanout (2 more, all on y=72 backbone) ──
+  add("HA1", [{x:890,y:20},{x:890,y:72},{x:704,y:72},{x:704,y:106}], 1.0, 0.4);
+  add("HA2", [{x:906,y:20},{x:906,y:72},{x:728,y:72},{x:728,y:106}], 1.0, 0.38);
+
+  // ── EDGE_R ↔ portrait right fanout (3 more, all share x=1416 trunk) ──
+  add("EP1", [{x:1536,y:380},{x:1416,y:380},{x:1416,y:368},{x:1328,y:368}], 1.0, 0.42);
+  add("EP2", [{x:1536,y:500},{x:1416,y:500},{x:1416,y:440},{x:1328,y:440}], 1.0, 0.4);
+  add("EP3", [{x:1536,y:530},{x:1416,y:530},{x:1416,y:512},{x:1328,y:512}], 1.0, 0.4);
 
   // ── Inline parts — each centered exactly on a real straight segment.
   //    No part overlaps a chip body, the portrait, or the control module. ──
