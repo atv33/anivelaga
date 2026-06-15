@@ -1540,7 +1540,7 @@ function InlineSerialModel({
           interaction-prompt="none"
           loading="eager"
           reveal="auto"
-          style={{ width: "100%", height: "100%", backgroundColor: "#111" } as React.CSSProperties}
+            style={{ width: "100%", height: "100%", backgroundColor: "#111", transform: "translateY(8%)" } as React.CSSProperties}
         />
       </div>
     </div>
@@ -2001,7 +2001,7 @@ function SubProjectRow({
             interaction-prompt="none"
             loading="eager"
             reveal="auto"
-            style={{ width: "100%", height: "100%", backgroundColor: "transparent" } as React.CSSProperties}
+            style={{ width: "100%", height: "100%", backgroundColor: "transparent", transform: "translateY(8%)" } as React.CSSProperties}
           />
         </div>
       </div>
