@@ -935,6 +935,28 @@ function CircuitHero() {
             ))}
           </g>
 
+          {/* LED indicator + dedicated trace (drawn ABOVE the text mask so they
+              stay fully visible above the name). The trace originates at
+              CHIP_C bottom pin 3, which the procedural router leaves unused. */}
+          <g>
+            <path
+              d={LED_TRACE_D}
+              fill="none"
+              stroke="#4a4a4a"
+              strokeOpacity={0.55}
+              strokeWidth={1.25}
+              strokeLinecap="square"
+              strokeLinejoin="round"
+              pathLength={1}
+              className="hero-trace-draw"
+              style={{ animationDelay: "1.4s" }}
+            />
+            <g className="hero-part-in" style={{ animationDelay: "2s" }}>
+              <SignalPulse d={LED_TRACE_D} dur={LED_PERIOD_MS} accent="amber" />
+              <LedIndicator />
+            </g>
+          </g>
+
           {/* layer 3: portrait module — always visible, above mask */}
           <PortraitModule />
         </svg>
