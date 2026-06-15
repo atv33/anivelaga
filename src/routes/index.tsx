@@ -122,7 +122,7 @@ const CATEGORIES: Category[] = [
         tagline:
           "Motor driver PCB for the Orion vehicle's thruster array. Receives PWM/CAN commands from the Jetson via backplane connector and drives 8 brushless DC thrusters. Handles power distribution, overcurrent protection, and ESC signal conditioning.",
         bullets: [
-          "8-channel ESC motor driver with CAN bus control for thruster actuation",
+          "Dual-driver gate circuit for 8 high-power MOSFETs with isolated PWM control per channel",
           "Multi-rail power design: 16V, 7.4V, and 3.3V lines managed via LDOs with optimized dropout voltages",
         ],
         stack: ["Altium Designer", "Motor Control", "CAN Bus", "PWM", "Power Distribution"],
@@ -1524,7 +1524,7 @@ function InlineSerialModel({
     >
       <div
         className={embedded ? "overflow-hidden h-full" : "overflow-hidden border border-border"}
-        style={{ backgroundColor: "#111", width: "100%", height: embedded ? "100%" : 300, minHeight: embedded ? 350 : undefined }}
+        style={{ backgroundColor: "#111", width: "100%", height: embedded ? 200 : 300 }}
       >
         <model-viewer
           ref={ref as unknown as React.Ref<HTMLElement>}
@@ -1704,7 +1704,7 @@ function CategoryBlock({ category: c }: { category: Category }) {
                   <div className="flex flex-col">
                     <div
                       className="w-full"
-                      style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", minHeight: 140 }}
+                      style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", height: 200 }}
                     >
                       <InlineSerialModel embedded src={SERIAL_INLINE_GLB} />
                     </div>
@@ -1740,7 +1740,7 @@ function CategoryBlock({ category: c }: { category: Category }) {
                   <div className="flex flex-col">
                     <div
                       className="w-full"
-                      style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", minHeight: 140 }}
+                      style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", height: 200 }}
                     >
                       <InlineSerialModel embedded src={THRUSTER_INLINE_GLB} idleElevation={15} />
                     </div>
