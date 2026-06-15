@@ -1370,10 +1370,10 @@ function CircuitHero() {
                     aria-pressed={lampOn}
                     style={{
                       position: "relative",
-                      width: 52,
-                      height: 26,
+                      width: 56,
+                      height: 16,
                       marginBottom: 6,
-                      borderRadius: 4,
+                      borderRadius: 3,
                       border: "none",
                       padding: 0,
                       cursor: "pointer",
@@ -1400,15 +1400,15 @@ function CircuitHero() {
                         left: 2,
                         right: 2,
                         top: 2,
-                        bottom: 4,
-                        borderRadius: 3,
+                        bottom: 3,
+                        borderRadius: 2,
                         background:
                           "linear-gradient(180deg, #ff5a5a 0%, #e02a2a 45%, #a51414 100%)",
                         boxShadow: pressed
                           ? "inset 0 2px 3px rgba(0,0,0,0.5), inset 0 -1px 1px rgba(255,255,255,0.04)"
                           : "inset 0 -2px 3px rgba(0,0,0,0.45), inset 0 1px 1px rgba(255,255,255,0.22)",
                         transform: pressed
-                          ? "translateY(2px)"
+                          ? "translateY(1.5px)"
                           : "translateY(0)",
                         transition:
                           "transform 100ms ease, box-shadow 200ms ease",
@@ -1419,10 +1419,10 @@ function CircuitHero() {
                       aria-hidden
                       style={{
                         position: "absolute",
-                        top: 4,
+                        top: 3,
                         left: 6,
                         right: 6,
-                        height: 3,
+                        height: 2,
                         borderRadius: 2,
                         background:
                           "linear-gradient(180deg, rgba(255,255,255,0.55), rgba(255,255,255,0))",
