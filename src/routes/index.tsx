@@ -1,5 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Cpu, Terminal, BrainCircuit } from "lucide-react";
+import { NavBar } from "@/components/ui/tubelight-navbar";
 import {
   Sheet,
   SheetContent,
@@ -225,7 +228,9 @@ function Index() {
       <TopBar />
       <SideRail />
       <main>
-        <Hero />
+        <div id="hero">
+          <Hero />
+        </div>
         <Ticker />
         <Work />
         <PcbDivider />
@@ -242,24 +247,14 @@ function Index() {
 
 function TopBar() {
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5 sm:px-10">
-        <a href="#top" className="font-mono text-sm font-bold tracking-tight uppercase">
-          Ani Velaga
-        </a>
-        <nav className="flex items-center gap-7 font-mono text-xs uppercase tracking-[0.18em]">
-          {NAV.map(([label, href]) => (
-            <a
-              key={href}
-              href={href}
-              className="nav-link text-ink-dim transition hover:text-foreground"
-            >
-              {label}
-            </a>
-          ))}
-        </nav>
-      </div>
-    </header>
+    <NavBar
+      items={[
+        { name: "Home", href: "#hero" },
+        { name: "Work", href: "#work" },
+        { name: "Experience", href: "#experience" },
+        { name: "Contact", href: "#contact" },
+      ]}
+    />
   );
 }
 
@@ -951,6 +946,7 @@ function CircuitHero() {
   return (
     <section
       id="top"
+      data-hero
       data-section="00"
       className="relative w-full overflow-hidden"
       style={{ minHeight: "100vh", background: "#060606" }}
@@ -1600,36 +1596,139 @@ function SectionHeader({ index, title, kicker }: { index: string; title: string;
 }
 
 function Work() {
-  const [tab, setTab] = useState(CATEGORIES[0].id);
-  const active = CATEGORIES.find((c) => c.id === tab) ?? CATEGORIES[0];
+  const [selected, setSelected] = useState<string | null>(null);
+  const active = selected ? CATEGORIES.find((c) => c.id === selected) ?? null : null;
+
+  const cards = [
+    {
+      id: "01",
+      label: "01 / PCB DESIGN",
+      title: "Circuit Board Design",
+      desc: "3D-rendered PCBs designed for Cornell AUV — communication boards, thruster controllers, and more.",
+      preview: "pcb" as const,
+    },
+    {
+      id: "02",
+      label: "02 / PERSONAL",
+      title: "Personal Projects",
+      desc: "Side projects and experiments outside of work.",
+      preview: "code" as const,
+    },
+    {
+      id: "03",
+      label: "03 / RESEARCH",
+      title: "LLM Inference Research",
+      desc: "Doing some cool stuff @ByteDance with Charon, Vidur and LLM inference simulation. Will update soon :)",
+      preview: "brain" as const,
+    },
+  ];
+
   return (
     <section id="work" className="mx-auto max-w-6xl px-6 py-28 sm:px-10 sm:py-40">
       <SectionHeader index="01" kicker="Selected Work" title="Things I've built." />
-      <div className="mt-16 flex flex-wrap gap-x-8 gap-y-3 border-b border-border pb-4">
-        {CATEGORIES.map((cat) => {
-          const isActive = cat.id === tab;
-          return (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => setTab(cat.id)}
-              className={`font-mono text-xs uppercase tracking-[0.28em] transition-colors ${
-                isActive ? "text-foreground" : "text-ink-faint hover:text-ink-dim"
-              }`}
+
+      <div className="mt-16">
+        <AnimatePresence mode="wait">
+          {!active ? (
+            <motion.div
+              key="overview"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="grid gap-6 md:grid-cols-3"
             >
-              <span className={isActive ? "font-bold text-mark" : "text-mark/70"}>
-                {cat.id}
-              </span>
-              <span className="ml-2">{cat.label.split(" — ")[0]}</span>
-              {isActive ? (
-                <span className="mt-2 block h-[2px] w-full bg-mark" />
-              ) : null}
-            </button>
-          );
-        })}
-      </div>
-      <div className="mt-12">
-        <CategoryBlock key={active.id} category={active} />
+              {cards.map((card, i) => (
+                <motion.button
+                  key={card.id}
+                  type="button"
+                  onClick={() => setSelected(card.id)}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: i * 0.08, ease: "easeOut" }}
+                  whileHover={{ y: -4 }}
+                  className="group flex flex-col overflow-hidden border border-border bg-secondary/20 text-left transition-colors hover:border-mark/60"
+                  style={{ borderRadius: 2 }}
+                >
+                  <div
+                    className="relative w-full overflow-hidden"
+                    style={{ height: 200, background: "#111" }}
+                  >
+                    {card.preview === "pcb" ? (
+                      <model-viewer
+                        src={SERIAL_INLINE_GLB}
+                        alt="PCB preview"
+                        auto-rotate
+                        auto-rotate-delay={0}
+                        rotation-per-second="22deg"
+                        interaction-prompt="none"
+                        loading="eager"
+                        reveal="auto"
+                        camera-orbit="35deg 70deg 110%"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          backgroundColor: "#111",
+                          pointerEvents: "none",
+                          transform: "translateY(6%)",
+                        } as React.CSSProperties}
+                      />
+                    ) : card.preview === "code" ? (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <Terminal
+                          className="text-mark/70 transition-transform duration-500 group-hover:scale-110"
+                          size={64}
+                          strokeWidth={1.25}
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <BrainCircuit
+                          className="text-mark/70 transition-transform duration-500 group-hover:scale-110"
+                          size={64}
+                          strokeWidth={1.25}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-1 flex-col gap-3 p-5">
+                    <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-mark">
+                      {card.label}
+                    </div>
+                    <h3 className="font-display text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                      {card.title}
+                    </h3>
+                    <p className="text-sm leading-relaxed text-ink-dim">{card.desc}</p>
+                    <div className="mt-auto pt-3">
+                      <span className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.25em] text-foreground transition-colors group-hover:text-mark">
+                        Explore
+                        <span className="transition-transform group-hover:translate-x-1">→</span>
+                      </span>
+                    </div>
+                  </div>
+                </motion.button>
+              ))}
+            </motion.div>
+          ) : (
+            <motion.div
+              key={`detail-${active.id}`}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+            >
+              <button
+                type="button"
+                onClick={() => setSelected(null)}
+                className="mb-8 inline-flex items-center gap-2 rounded-sm border border-rule px-3 py-2 font-mono text-[11px] uppercase tracking-[0.25em] text-ink-dim transition-all hover:border-mark hover:text-mark"
+              >
+                <span>←</span>
+                <span>Back</span>
+              </button>
+              <CategoryBlock category={active} />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </section>
   );
