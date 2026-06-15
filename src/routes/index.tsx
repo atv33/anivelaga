@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Cpu, Terminal, BrainCircuit } from "lucide-react";
 import { NavBar } from "@/components/ui/tubelight-navbar";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Sheet,
   SheetContent,
@@ -903,6 +904,13 @@ function CircuitHero() {
   const [pulseId, setPulseId] = useState(0);
   const [hoverPulseId, setHoverPulseId] = useState(0);
   const [pressed, setPressed] = useState(false);
+  const isMobile = useIsMobile();
+  // On mobile, focus the viewBox on the meaningful widgets (lamp on the
+  // left, portrait + signal button on the right) and switch to `meet` so
+  // nothing important gets cropped. Desktop keeps the wide cinematic crop.
+  const mobileViewBox = `260 220 1100 560`;
+  const viewBox = isMobile ? mobileViewBox : `0 0 ${VB_W} ${VB_H}`;
+  const preserve = isMobile ? "xMidYMin meet" : "xMidYMid slice";
   const timers = useRef<number[]>([]);
   const clearAllTimers = () => {
     timers.current.forEach((t) => window.clearTimeout(t));
@@ -949,13 +957,13 @@ function CircuitHero() {
       data-hero
       data-section="00"
       className="relative w-full overflow-hidden"
-      style={{ minHeight: "100vh", background: "#060606" }}
+      style={{ minHeight: isMobile ? "85vh" : "100vh", background: "#060606" }}
     >
       {/* layer 2: circuit SVG */}
       <div className="pointer-events-none absolute inset-0 z-[1]">
         <svg
-          viewBox={`0 0 ${VB_W} ${VB_H}`}
-          preserveAspectRatio="xMidYMid slice"
+          viewBox={viewBox}
+          preserveAspectRatio={preserve}
           className="hero-circuit-fade absolute inset-0 h-full w-full"
           aria-hidden
         >
