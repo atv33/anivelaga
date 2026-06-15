@@ -331,6 +331,42 @@ const CHIP_A = { x: 700, y: 110, w: 130, h: 70 };   // upper-mid
 const CHIP_C = { x: 480, y: 240, w: 80,  h: 50 };   // upper-left
 const EDGE_R = { x: 1540, y: 380, w: 60, h: 160 };  // right edge connector (off-screen partial)
 
+// Header connector at top edge (6 pins, partially off-canvas)
+const HEADER_T = { x: 860, y: -10, w: 100, h: 26, pins: [880, 896, 912, 928, 944, 960] };
+
+// Inline component placements — every coord lies exactly on a real trace segment.
+type Inline =
+  | { kind: "resistor";  x: number; y: number; rot?: 0 | 90 }
+  | { kind: "capacitor"; x: number; y: number; rot?: 0 | 90 }
+  | { kind: "inductor";  x: number; y: number; rot?: 0 | 90 }
+  | { kind: "diode";     x: number; y: number; rot?: 0 | 90 | 180 | 270 }
+  | { kind: "testpad";   x: number; y: number };
+
+const INLINE_PARTS: Inline[] = [
+  // On L2 horizontal section (y=332, x 980..1052)
+  { kind: "resistor", x: 1010, y: 332 },
+  // On L3 horizontal section (y=265, x 560..860)
+  { kind: "resistor", x: 720, y: 265 },
+  // On T2 horizontal (y=200, x 1147..1500)
+  { kind: "diode",    x: 1330, y: 200 },
+  // On T1 horizontal (y=180, x 920..1103)
+  { kind: "capacitor", x: 1020, y: 180 },
+  // On R4 horizontal (y=404, x 1328..1540)
+  { kind: "capacitor", x: 1430, y: 404 },
+  // On R8 horizontal (y=680, x 1420..1600)
+  { kind: "inductor", x: 1500, y: 680 },
+  // On B3 vertical (x=1190, y 598..900) — rotate for vertical orientation
+  { kind: "capacitor", x: 1190, y: 770, rot: 90 },
+  // On L1 vertical (x=920, y 200..296) — vertical resistor
+  { kind: "resistor", x: 920, y: 245, rot: 90 },
+  // Test pads at notable junctions / endpoints
+  { kind: "testpad", x: 940, y: 440 },
+  { kind: "testpad", x: 1500, y: 480 },
+  { kind: "testpad", x: 1300, y: 740 },
+  { kind: "testpad", x: 880, y: 280 },
+  { kind: "testpad", x: 1400, y: 60 },
+];
+
 function HeroText() {
   return (
     <div className="pointer-events-none absolute inset-0 z-[3] mx-auto flex max-w-6xl items-end px-6 pb-24 sm:px-10 sm:pb-28">
@@ -455,6 +491,49 @@ function SignalPulse({ d, dur, accent }: { d: string; dur: number; accent?: "blu
   );
 }
 
+function InlineComponent(c: Inline) {
+  const rot = (c as { rot?: number }).rot ?? 0;
+  return (
+    <g transform={`translate(${c.x} ${c.y}) rotate(${rot})`}>
+      {c.kind === "resistor" && (
+        <g>
+          {/* clear the trace behind the body */}
+          <rect x={-9} y={-3.5} width={18} height={7} fill="#060606" />
+          <rect x={-7} y={-3} width={14} height={6} fill="#1a1a1a" stroke="#5c5c5c" strokeWidth="0.6" />
+          <rect x={-9} y={-2} width={2} height={4} fill="#3a3a3a" />
+          <rect x={7}  y={-2} width={2} height={4} fill="#3a3a3a" />
+        </g>
+      )}
+      {c.kind === "capacitor" && (
+        <g>
+          <rect x={-4} y={-7} width={8} height={14} fill="#060606" />
+          <line x1={-2} y1={-6} x2={-2} y2={6} stroke="#6a6a6a" strokeWidth="1.4" />
+          <line x1={2}  y1={-6} x2={2}  y2={6} stroke="#6a6a6a" strokeWidth="1.4" />
+        </g>
+      )}
+      {c.kind === "inductor" && (
+        <g>
+          <rect x={-14} y={-7} width={28} height={9} fill="#060606" />
+          <path d="M -12 0 q 4 -8 8 0 q 4 -8 8 0 q 4 -8 8 0" fill="none" stroke="#6a6a6a" strokeWidth="1.1" />
+        </g>
+      )}
+      {c.kind === "diode" && (
+        <g>
+          <rect x={-8} y={-6} width={14} height={12} fill="#060606" />
+          <polygon points="-6,-5 -6,5 2,0" fill="#262626" stroke="#6a6a6a" strokeWidth="0.7" />
+          <line x1={2} y1={-5} x2={2} y2={5} stroke="#7a7a7a" strokeWidth="1.4" />
+        </g>
+      )}
+      {c.kind === "testpad" && (
+        <g>
+          <circle r={4.5} fill="#060606" stroke="#3a3a3a" strokeWidth="0.8" />
+          <circle r={2.2} fill="#1a1a1a" stroke="#6a6a6a" strokeWidth="0.6" />
+        </g>
+      )}
+    </g>
+  );
+}
+
 function CircuitTraceLayer() {
   return (
     <g>
@@ -469,25 +548,41 @@ function CircuitTraceLayer() {
             <rect key={i} x={EDGE_R.x - 4} y={cy - 3} width={4} height={6} fill="#262626" stroke="#3d3d3d" strokeWidth="0.5" />
           ))}
         </g>
+        {/* top edge header (6-pin) */}
+        <g>
+          <rect x={HEADER_T.x} y={HEADER_T.y} width={HEADER_T.w} height={HEADER_T.h} fill="#111" stroke="#333" strokeWidth="1" />
+          {HEADER_T.pins.map((px, i) => (
+            <rect key={i} x={px - 3} y={HEADER_T.y + HEADER_T.h} width={6} height={4} fill="#262626" stroke="#3d3d3d" strokeWidth="0.5" />
+          ))}
+        </g>
       </g>
 
-      {/* traces */}
+      {/* traces — drawn in with stroke-dashoffset, staggered */}
       <g fill="none" strokeLinecap="square" strokeLinejoin="round">
-        {TRACES.map((t) => (
+        {TRACES.map((t, i) => (
           <path
             key={t.id}
             id={`trace-${t.id}`}
             d={t.d}
-            stroke={t.w >= 1.5 ? "#454545" : "#2f2f2f"}
+            pathLength={1}
+            stroke={t.w >= 1.5 ? "#4a4a4a" : "#333"}
             strokeOpacity={t.o}
             strokeWidth={t.w}
             className="hero-trace-draw"
+            style={{ animationDelay: `${0.2 + i * 0.05}s` }}
           />
         ))}
       </g>
 
-      {/* endpoint vias */}
-      <g>
+      {/* inline components — fade in after traces finish */}
+      <g className="hero-part-in" style={{ animationDelay: "2s" }}>
+        {INLINE_PARTS.map((p, i) => (
+          <InlineComponent key={i} {...p} />
+        ))}
+      </g>
+
+      {/* endpoint vias — also fade in after traces */}
+      <g className="hero-part-in" style={{ animationDelay: "1.8s" }}>
         {ENDPOINTS.map((e, i) => (
           <g key={i}>
             <circle cx={e.x} cy={e.y} r={(e.r ?? 2.5) + 1.5} fill="none" stroke="#3a3a3a" strokeWidth="0.8" />
