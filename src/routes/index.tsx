@@ -848,12 +848,20 @@ function CircuitHero() {
   const [pulseId, setPulseId] = useState(0);
   const [hoverPulseId, setHoverPulseId] = useState(0);
   const [pressed, setPressed] = useState(false);
-  const isMobile = useIsMobile();
+  const bp = useBreakpoint();
+  const isMobile = bp === "mobile";
+  const isTablet = bp === "tablet";
   // On mobile, compose a tighter hero board so the portrait, lamp, and button
   // are intentionally placed instead of relying on the wide desktop crop.
   const mobileViewBox = `30 180 980 980`;
   const viewBox = isMobile ? mobileViewBox : `0 0 ${VB_W} ${VB_H}`;
-  const preserve = isMobile ? "xMidYMid meet" : "xMidYMid slice";
+  // Tablet: keep the desktop composition but contain (no slice) so the
+  // portrait on the right is never clipped off-screen.
+  const preserve = isMobile
+    ? "xMidYMid meet"
+    : isTablet
+      ? "xMidYMid meet"
+      : "xMidYMid slice";
   const buttonPad = isMobile ? MOBILE_BUTTON_PAD : BUTTON_PAD;
   const signalD = isMobile
     ? `M ${MOBILE_BUTTON_PAD.x} ${MOBILE_BUTTON_PAD.y} H ${MOBILE_SIGNAL_BUS_X} V ${MOBILE_TRACE_TOP_Y} H ${MOBILE_LAMP.cx} V ${MOBILE_LAMP.cy + (LAMP.h / 2 + 14) * MOBILE_LAMP_SCALE}`
@@ -903,8 +911,8 @@ function CircuitHero() {
       id="top"
       data-hero
       data-section="00"
-      className="relative w-full overflow-hidden"
-      style={{ minHeight: isMobile ? "100vh" : "100vh", background: "#060606" }}
+      className="hero-shell"
+      style={{ background: "#060606" }}
     >
       {/* layer 2: circuit SVG */}
       <div
@@ -1367,7 +1375,7 @@ function CircuitHero() {
       </div>
 
       {/* layer 4: text */}
-      <HeroText />
+      <HeroText bp={bp} />
 
       {/* small status pill */}
       <div className="pointer-events-none absolute inset-x-0 bottom-5 z-[3] flex items-center justify-center gap-3 px-6 font-mono text-[10px] uppercase tracking-[0.28em] text-neutral-500 sm:px-10">
