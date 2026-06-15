@@ -326,14 +326,14 @@ function buildCircuit(seed: number): Built {
   const pick = <T,>(arr: readonly T[]): T => arr[Math.floor(rnd() * arr.length)]!;
 
   const traces: Trace[] = [];
-  type Seg = { a: Pt; b: Pt };
+  type Seg = { a: Pt; b: Pt; o: number };
   const segs: Seg[] = [];
   const viaMap = new Map<string, Pt>();
   const addVia = (p: Pt) => viaMap.set(`${p.x},${p.y}`, p);
 
   const add = (id: string, pts: Pt[], w: number, o: number, pulse?: number) => {
     traces.push({ id, d: ptsToD(pts), w, o, pulse });
-    for (let i = 0; i < pts.length - 1; i++) segs.push({ a: pts[i], b: pts[i + 1] });
+    for (let i = 0; i < pts.length - 1; i++) segs.push({ a: pts[i], b: pts[i + 1], o });
   };
 
   // pulses ~ 30% of routes
@@ -633,6 +633,8 @@ function buildCircuit(seed: number): Built {
   const usedCenters = new Set<string>();
   const kinds: Inline["kind"][] = ["resistor", "capacitor", "inductor", "diode"];
   for (const s of segs) {
+    // skip faint traces — inline parts on them read as floating
+    if (s.o < 0.4) continue;
     const isH = s.a.y === s.b.y;
     const len = isH ? Math.abs(s.b.x - s.a.x) : Math.abs(s.b.y - s.a.y);
     if (len < 50) continue;
@@ -666,7 +668,7 @@ function buildCircuit(seed: number): Built {
 
   // sprinkle a few extra testpads on existing vias (so the ring is more obvious)
   const viaList = Array.from(viaMap.values());
-  const tpCount = Math.min(viaList.length, 3 + Math.floor(rnd() * 3));
+  const tpCount = Math.min(viaList.length, 1 + Math.floor(rnd() * 2));
   for (let i = 0; i < tpCount; i++) {
     const v = viaList[Math.floor(rnd() * viaList.length)];
     if (!v) continue;
@@ -1261,8 +1263,8 @@ function CircuitHero() {
                     50%      { box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 0 22px rgba(251,191,36,0.18); border-color: #4a4030; }
                   }
                   @keyframes hwBtnBob {
-                    0%, 100% { transform: translateY(0); }
-                    50%      { transform: translateY(-5px); }
+                    0%, 100% { transform: translateX(-50%) translateY(0); }
+                    50%      { transform: translateX(-50%) translateY(-5px); }
                   }
                   .hw-module { animation: hwBoxPulse 2.0s ease-in-out infinite; }
                   .hw-module.is-hot { animation-duration: 1.2s; }
