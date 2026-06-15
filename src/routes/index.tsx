@@ -277,6 +277,9 @@ const CHIP_A = { x: 680, y: 110, w: 144, h: 72 };
 const CHIP_C = { x: 380, y: 240, w: 96, h: 66 };
 // CHIP_B — center-left support chip. xs(2): 520 + 40*(i+1) = 560,600. ys(2): 380+20*(i+1) = 400,420
 const CHIP_B = { x: 520, y: 380, w: 120, h: 60 };
+// CHIP_D — mid-canvas SOIC, fills the empty space between CHIP_B and portrait.
+// Pads (w=160, pins=4): top/bot xs = 776 + 32*(i+1) = 808,840,872,904
+const CHIP_D = { x: 776, y: 488, w: 160, h: 60 };
 // Edge connector right (partially off-canvas)
 const EDGE_R = { x: 1540, y: 360, w: 60, h: 220 };
 const EDGE_R_PINS = [380, 410, 440, 470, 500, 530, 560]; // y tips, x tip = 1536
