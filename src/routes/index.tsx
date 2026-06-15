@@ -1706,9 +1706,22 @@ function CategoryBlock({ category: c }: { category: Category }) {
                 >
                   <div className="flex flex-col">
                     <div
-                      className="w-full"
+                      className="relative w-full"
                       style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", height: 450 }}
                     >
+                      {!p.comingSoon ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenId(p.id);
+                          }}
+                          className="absolute left-4 top-4 z-10 inline-flex items-center gap-2 rounded-sm border-2 border-rule bg-background/80 px-4 py-2 font-mono text-xs uppercase tracking-[0.25em] text-foreground backdrop-blur transition-all hover:border-mark hover:bg-mark/10 hover:text-mark"
+                        >
+                          <span>View details</span>
+                          <span>→</span>
+                        </button>
+                      ) : null}
                       <InlineSerialModel embedded src={SERIAL_INLINE_GLB} cameraOrbit="35deg 70deg 105%" />
                     </div>
                     <div className="w-full">
@@ -1717,6 +1730,7 @@ function CategoryBlock({ category: c }: { category: Category }) {
                         categoryId={c.id}
                         onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
                         bare
+                        hideViewDetails
                       />
                     </div>
                   </div>
@@ -1742,9 +1756,22 @@ function CategoryBlock({ category: c }: { category: Category }) {
                 >
                   <div className="flex flex-col">
                     <div
-                      className="w-full"
+                      className="relative w-full"
                       style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", height: 450 }}
                     >
+                      {!p.comingSoon ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenId(p.id);
+                          }}
+                          className="absolute left-4 top-4 z-10 inline-flex items-center gap-2 rounded-sm border-2 border-rule bg-background/80 px-4 py-2 font-mono text-xs uppercase tracking-[0.25em] text-foreground backdrop-blur transition-all hover:border-mark hover:bg-mark/10 hover:text-mark"
+                        >
+                          <span>View details</span>
+                          <span>→</span>
+                        </button>
+                      ) : null}
                       <InlineSerialModel embedded src={THRUSTER_INLINE_GLB} idleElevation={15} cameraOrbit="-120deg 80deg 105%" />
                     </div>
                     <div className="w-full">
@@ -1753,6 +1780,7 @@ function CategoryBlock({ category: c }: { category: Category }) {
                         categoryId={c.id}
                         onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
                         bare
+                        hideViewDetails
                       />
                     </div>
                   </div>
