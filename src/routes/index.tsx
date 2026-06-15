@@ -1120,20 +1120,6 @@ function CircuitHero() {
                       border-color: #a07720;
                     }
                   }
-                  @keyframes hwCapPulse {
-                    0%, 100% {
-                      box-shadow: 0 3px 4px rgba(0,0,0,0.55),
-                                  0 0 0 1px rgba(251,191,36,0.10),
-                                  0 0 10px rgba(251,191,36,0.15),
-                                  inset 0 -2px 3px rgba(0,0,0,0.5);
-                    }
-                    50% {
-                      box-shadow: 0 3px 4px rgba(0,0,0,0.55),
-                                  0 0 0 1px rgba(251,191,36,0.45),
-                                  0 0 16px rgba(251,191,36,0.40),
-                                  inset 0 -2px 3px rgba(0,0,0,0.5);
-                    }
-                  }
                   @keyframes hwBtnBob {
                     0%, 100% { transform: translateX(-50%) translateY(0); }
                     50%      { transform: translateX(-50%) translateY(-5px); }
@@ -1256,7 +1242,7 @@ function CircuitHero() {
                     pointerEvents: "none",
                   }}
                 >
-                  {/* dark mount/base — connects the cap into the housing */}
+                  {/* dark mount/base — connects the button into the housing */}
                   <span
                     aria-hidden
                     style={{
@@ -1277,9 +1263,7 @@ function CircuitHero() {
                   />
                   <div
                     aria-hidden
-                    className={
-                      !pressed && !hovering && !signaling && !lampOn ? "hw-cap" : ""
-                    }
+                    className="hw-button-top"
                     style={{
                       position: "relative",
                       width: 44,
@@ -1289,7 +1273,7 @@ function CircuitHero() {
                       border: "none",
                       padding: 0,
                       pointerEvents: "none",
-                      // darker red base / sides of the cap
+                      // darker red base / sides of the button
                       background:
                         "linear-gradient(180deg, #5a0e0e 0%, #3a0707 60%, #1c0303 100%)",
                       boxShadow: pressed
