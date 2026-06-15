@@ -246,26 +246,327 @@ function Hero() {
 }
 
 // ============================================================
-// CircuitBackground — full SVG, deterministic branching traces
+// CircuitHero — curated CPU-architecture-style SVG hero
+// All coordinates are fixed (SSR-safe, no RNG).
 // ============================================================
 const VB_W = 1600;
 const VB_H = 900;
 
-type Pt = [number, number];
-type Side = "t" | "b" | "l" | "r";
-type Chip = { x: number; y: number; w: number; h: number; perSide: number };
+// Portrait module — central component
+const PORT = { x: 1060, y: 270, w: 260, h: 320 };
+const PORT_INSET = 14;
 
-function mulberry32(a: number) {
-  return function () {
-    a |= 0;
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
+// Pin pad layout helpers
+const yPads = [296, 332, 368, 404, 440, 476, 512, 548];     // 8 vertical pad rows (left/right)
+const xPads = [1103, 1147, 1190, 1233, 1277];               // 5 horizontal pad cols (top/bottom)
+
+type Pad = { x: number; y: number; w: number; h: number };
+const leftPads:   Pad[] = yPads.map((y) => ({ x: PORT.x - 8,        y: y - 5,  w: 8,  h: 10 }));
+const rightPads:  Pad[] = yPads.map((y) => ({ x: PORT.x + PORT.w,   y: y - 5,  w: 8,  h: 10 }));
+const topPads:    Pad[] = xPads.map((x) => ({ x: x - 5, y: PORT.y - 8,         w: 10, h: 8  }));
+const bottomPads: Pad[] = xPads.map((x) => ({ x: x - 5, y: PORT.y + PORT.h,    w: 10, h: 8  }));
+
+// Trace data: d = SVG path, w = stroke width, o = opacity (0..1), pulse?: ms duration
+type Trace = { id: string; d: string; w: number; o: number; pulse?: number };
+
+// Curated trace list — every path begins at a portrait-module pin and ends
+// at a via, a secondary chip pin, an edge connector, or off-screen.
+const TRACES: Trace[] = [
+  // ── LEFT side (avoiding the lower-left text zone) ──────────────────
+  { id: "L1", d: "M 1052 296 H 920 V 200 H 760 V 175",      w: 1.5, o: 0.62, pulse: 6200 },
+  { id: "L2", d: "M 1052 332 H 980 V 280 H 880",            w: 1.25, o: 0.5 },
+  { id: "L3", d: "M 1052 368 H 860 V 265 H 560",            w: 1.5, o: 0.58 },
+  { id: "L4", d: "M 1052 404 H 940 V 440 H 820",            w: 1.25, o: 0.45, pulse: 7400 },
+  { id: "L5", d: "M 1052 440 H 980",                         w: 1, o: 0.4 },
+  { id: "L6", d: "M 1052 476 H 900 V 510 H 720",            w: 1.25, o: 0.42 },
+  // ── TOP side ───────────────────────────────────────────────────────
+  { id: "T1", d: "M 1103 262 V 180 H 920 V 80",             w: 1.25, o: 0.5 },
+  { id: "T2", d: "M 1147 262 V 200 H 1500",                  w: 1.5, o: 0.58, pulse: 5600 },
+  { id: "T3", d: "M 1190 262 V 0",                           w: 1.75, o: 0.62, pulse: 4800 },
+  { id: "T4", d: "M 1233 262 V 150 H 1400 V 40",            w: 1.25, o: 0.48 },
+  { id: "T5", d: "M 1277 262 V 200 H 1380",                  w: 1, o: 0.42 },
+  // ── RIGHT side ─────────────────────────────────────────────────────
+  { id: "R1", d: "M 1328 296 H 1500 V 220 H 1600",          w: 1.5, o: 0.55, pulse: 6800 },
+  { id: "R2", d: "M 1328 332 H 1460 V 290 H 1600",          w: 1.25, o: 0.45 },
+  { id: "R3", d: "M 1328 368 H 1480 V 400 H 1540",          w: 1.5, o: 0.55 },
+  { id: "R4", d: "M 1328 404 H 1540",                        w: 1.5, o: 0.55 },
+  { id: "R5", d: "M 1328 440 H 1500 V 480 H 1540",          w: 1.25, o: 0.48 },
+  { id: "R6", d: "M 1328 476 H 1480 V 540 H 1600",          w: 1.25, o: 0.45 },
+  { id: "R7", d: "M 1328 512 H 1440 V 600 H 1600",          w: 1, o: 0.4 },
+  { id: "R8", d: "M 1328 548 H 1420 V 680 H 1600",          w: 1.25, o: 0.45, pulse: 7800 },
+  // ── BOTTOM (lower-right only — keeps lower-left text clean) ────────
+  { id: "B1", d: "M 1103 598 V 700 H 1000",                  w: 1.25, o: 0.45 },
+  { id: "B2", d: "M 1147 598 V 740 H 1300",                  w: 1, o: 0.4 },
+  { id: "B3", d: "M 1190 598 V 900",                          w: 1.5, o: 0.55, pulse: 5200 },
+  { id: "B4", d: "M 1233 598 V 680 H 1500 V 760",            w: 1.25, o: 0.48 },
+  { id: "B5", d: "M 1277 598 V 720 H 1600",                  w: 1, o: 0.42 },
+  // ── Secondary chip extensions (fanout away from chips) ─────────────
+  { id: "CA1", d: "M 730 110 V 60 H 380",                    w: 1, o: 0.38 },
+  { id: "CA2", d: "M 700 130 H 600 V 70",                    w: 1, o: 0.35 },
+  { id: "CA3", d: "M 830 130 H 950 V 60 H 1080",             w: 1, o: 0.4 },
+  { id: "CC1", d: "M 510 240 V 180 H 380",                   w: 1, o: 0.34 },
+  { id: "CC2", d: "M 480 265 H 360 V 320",                   w: 1, o: 0.34 },
+];
+
+// Endpoint markers (vias) — placed at trace terminations not absorbed by a chip
+const ENDPOINTS: { x: number; y: number; r?: number }[] = [
+  { x: 880, y: 280 },
+  { x: 820, y: 440 },
+  { x: 980, y: 440 },
+  { x: 720, y: 510 },
+  { x: 1380, y: 200, r: 3 },
+  { x: 1500, y: 200 },
+  { x: 1000, y: 700 },
+  { x: 1300, y: 740 },
+  { x: 1500, y: 760 },
+  { x: 380, y: 60 },
+  { x: 380, y: 180 },
+  { x: 600, y: 70 },
+  { x: 1080, y: 60 },
+  { x: 560, y: 320 },
+];
+
+// Secondary components — 1 chip upper-mid, 1 chip upper-left, 1 edge connector right
+const CHIP_A = { x: 700, y: 110, w: 130, h: 70 };   // upper-mid
+const CHIP_C = { x: 480, y: 240, w: 80,  h: 50 };   // upper-left
+const EDGE_R = { x: 1540, y: 380, w: 60, h: 160 };  // right edge connector (off-screen partial)
+
+function HeroText() {
+  return (
+    <div className="pointer-events-none absolute inset-0 z-[3] mx-auto flex max-w-6xl items-end px-6 pb-24 sm:px-10 sm:pb-28">
+      <div className="pointer-events-auto max-w-xl">
+        <h1
+          className="font-display font-black uppercase text-white"
+          style={{
+            fontSize: "clamp(3.25rem,10.5vw,8rem)",
+            letterSpacing: "-0.05em",
+            lineHeight: 0.86,
+          }}
+        >
+          Ani
+          <br />
+          Velaga
+        </h1>
+        <p className="mt-6 max-w-md font-mono text-[13px] leading-relaxed text-neutral-400">
+          <span className="text-neutral-100">Electrical &amp; computer engineer</span> — I design
+          hardware at the board level, then push it through the networking stack into LLM
+          inference systems. Currently on CUAUV building PCBs for an autonomous submarine.
+          <span className="blink-cursor">_</span>
+        </p>
+      </div>
+    </div>
+  );
 }
 
-const DIRS: Pt[] = [
+function PortraitModule() {
+  const ix = PORT.x + PORT_INSET;
+  const iy = PORT.y + PORT_INSET;
+  const iw = PORT.w - PORT_INSET * 2;
+  const ih = PORT.h - PORT_INSET * 2;
+  return (
+    <g>
+      {/* very soft shadow under the module */}
+      <ellipse cx={PORT.x + PORT.w / 2} cy={PORT.y + PORT.h + 22} rx={PORT.w / 2 + 30} ry={14} fill="rgba(0,0,0,0.55)" />
+      {/* outer dark package */}
+      <rect
+        x={PORT.x}
+        y={PORT.y}
+        width={PORT.w}
+        height={PORT.h}
+        fill="#141414"
+        stroke="#2a2a2a"
+        strokeWidth="1"
+        rx="2"
+      />
+      {/* inner image border */}
+      <rect
+        x={ix - 2}
+        y={iy - 2}
+        width={iw + 4}
+        height={ih + 4}
+        fill="none"
+        stroke="#3a3a3a"
+        strokeWidth="1"
+      />
+      <image
+        href={headshotAsset.url}
+        x={ix}
+        y={iy}
+        width={iw}
+        height={ih}
+        preserveAspectRatio="xMidYMid slice"
+        style={{ filter: "grayscale(15%) brightness(0.92) contrast(1.03)" }}
+      />
+      {/* orientation notch */}
+      <circle cx={PORT.x + 10} cy={PORT.y + 10} r="2" fill="#3a3a3a" />
+
+      {/* pads on all four sides */}
+      <g fill="#2b2b2b" stroke="#454545" strokeWidth="0.6">
+        {[...leftPads, ...rightPads, ...topPads, ...bottomPads].map((p, i) => (
+          <rect key={i} x={p.x} y={p.y} width={p.w} height={p.h} rx="1" />
+        ))}
+      </g>
+    </g>
+  );
+}
+
+function SecondaryChip({ x, y, w, h, pinsTop = 0, pinsBot = 0, pinsLeft = 0, pinsRight = 0 }: {
+  x: number; y: number; w: number; h: number;
+  pinsTop?: number; pinsBot?: number; pinsLeft?: number; pinsRight?: number;
+}) {
+  const xs = (n: number) => Array.from({ length: n }, (_, i) => x + ((i + 1) * w) / (n + 1));
+  const ys = (n: number) => Array.from({ length: n }, (_, i) => y + ((i + 1) * h) / (n + 1));
+  return (
+    <g>
+      <rect x={x} y={y} width={w} height={h} fill="#111" stroke="#333" strokeWidth="1" />
+      <circle cx={x + 6} cy={y + 6} r="1.5" fill="#444" />
+      <g fill="#262626" stroke="#3d3d3d" strokeWidth="0.5">
+        {xs(pinsTop).map((cx, i) => (
+          <rect key={`t${i}`} x={cx - 3} y={y - 4} width={6} height={4} />
+        ))}
+        {xs(pinsBot).map((cx, i) => (
+          <rect key={`b${i}`} x={cx - 3} y={y + h} width={6} height={4} />
+        ))}
+        {ys(pinsLeft).map((cy, i) => (
+          <rect key={`l${i}`} x={x - 4} y={cy - 3} width={4} height={6} />
+        ))}
+        {ys(pinsRight).map((cy, i) => (
+          <rect key={`r${i}`} x={x + w} y={cy - 3} width={4} height={6} />
+        ))}
+      </g>
+    </g>
+  );
+}
+
+function SignalPulse({ d, dur, accent }: { d: string; dur: number; accent?: "blue" | "amber" | "white" }) {
+  const fill =
+    accent === "blue" ? "rgba(140,180,255,0.95)" :
+    accent === "amber" ? "rgba(255,210,140,0.9)" :
+    "rgba(255,255,255,0.95)";
+  return (
+    <g>
+      <circle r="2.2" fill={fill} opacity="0.95">
+        <animateMotion dur={`${dur / 1000}s`} repeatCount="indefinite" rotate="auto" path={d} />
+      </circle>
+      <circle r="5" fill={fill} opacity="0.18">
+        <animateMotion dur={`${dur / 1000}s`} repeatCount="indefinite" rotate="auto" path={d} />
+      </circle>
+    </g>
+  );
+}
+
+function CircuitTraceLayer() {
+  return (
+    <g>
+      {/* secondary chips (rendered before traces so trace endpoints sit on them) */}
+      <g opacity="0.85">
+        <SecondaryChip {...CHIP_A} pinsTop={5} pinsBot={5} pinsLeft={3} pinsRight={3} />
+        <SecondaryChip {...CHIP_C} pinsTop={3} pinsBot={3} pinsLeft={2} pinsRight={2} />
+        {/* right-edge connector — partially off-screen */}
+        <g>
+          <rect x={EDGE_R.x} y={EDGE_R.y} width={EDGE_R.w} height={EDGE_R.h} fill="#111" stroke="#333" strokeWidth="1" />
+          {[400, 420, 440, 460, 480, 500, 520].map((cy, i) => (
+            <rect key={i} x={EDGE_R.x - 4} y={cy - 3} width={4} height={6} fill="#262626" stroke="#3d3d3d" strokeWidth="0.5" />
+          ))}
+        </g>
+      </g>
+
+      {/* traces */}
+      <g fill="none" strokeLinecap="square" strokeLinejoin="round">
+        {TRACES.map((t) => (
+          <path
+            key={t.id}
+            id={`trace-${t.id}`}
+            d={t.d}
+            stroke={t.w >= 1.5 ? "#454545" : "#2f2f2f"}
+            strokeOpacity={t.o}
+            strokeWidth={t.w}
+            className="hero-trace-draw"
+          />
+        ))}
+      </g>
+
+      {/* endpoint vias */}
+      <g>
+        {ENDPOINTS.map((e, i) => (
+          <g key={i}>
+            <circle cx={e.x} cy={e.y} r={(e.r ?? 2.5) + 1.5} fill="none" stroke="#3a3a3a" strokeWidth="0.8" />
+            <circle cx={e.x} cy={e.y} r={e.r ?? 2.5} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth="0.8" />
+          </g>
+        ))}
+      </g>
+    </g>
+  );
+}
+
+function CircuitHero() {
+  // pulses — selected traces only
+  const pulses = TRACES.filter((t) => t.pulse);
+  return (
+    <section
+      id="top"
+      data-section="00"
+      className="relative w-full overflow-hidden"
+      style={{ minHeight: "100vh", background: "#060606" }}
+    >
+      {/* layer 2: circuit SVG */}
+      <div className="pointer-events-none absolute inset-0 z-[1]">
+        <svg
+          viewBox={`0 0 ${VB_W} ${VB_H}`}
+          preserveAspectRatio="xMidYMid slice"
+          className="hero-circuit-fade absolute inset-0 h-full w-full"
+          aria-hidden
+        >
+          <defs>
+            {/* soft fade mask — protects the lower-left text region */}
+            <radialGradient id="heroTextFade" cx="22%" cy="86%" r="38%">
+              <stop offset="0%" stopColor="#000" />
+              <stop offset="55%" stopColor="#1a1a1a" />
+              <stop offset="100%" stopColor="#fff" />
+            </radialGradient>
+            <mask id="heroTraceMask" maskUnits="userSpaceOnUse" x="0" y="0" width={VB_W} height={VB_H}>
+              <rect x="0" y="0" width={VB_W} height={VB_H} fill="url(#heroTextFade)" />
+              {/* always keep the portrait region fully visible */}
+              <rect x={PORT.x - 60} y={PORT.y - 60} width={PORT.w + 120} height={PORT.h + 120} fill="white" />
+            </mask>
+          </defs>
+
+          {/* circuit layer (under the mask) */}
+          <g mask="url(#heroTraceMask)">
+            <CircuitTraceLayer />
+          </g>
+
+          {/* pulses — above traces, also masked so they don't pop into the text zone */}
+          <g mask="url(#heroTraceMask)">
+            {pulses.map((t, i) => (
+              <SignalPulse
+                key={t.id}
+                d={t.d}
+                dur={t.pulse!}
+                accent={i === 0 ? "blue" : i === 3 ? "amber" : "white"}
+              />
+            ))}
+          </g>
+
+          {/* layer 3: portrait module — always visible, above mask */}
+          <PortraitModule />
+        </svg>
+      </div>
+
+      {/* layer 4: text */}
+      <HeroText />
+
+      {/* small status pill */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-5 z-[3] flex items-center justify-center gap-3 px-6 font-mono text-[10px] uppercase tracking-[0.28em] text-neutral-500 sm:px-10">
+        <span className="size-1.5 rounded-full bg-neutral-300" />
+        Available for new work — 2026
+      </div>
+    </section>
+  );
+}
+
+// (intentionally unused) placeholder to preserve direction enum scope
+const __DIRS_LEGACY: [number, number][] = [
   [1, 0],
   [0, 1],
   [-1, 0],
