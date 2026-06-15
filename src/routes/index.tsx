@@ -326,7 +326,7 @@ function buildCircuit(seed: number): Built {
   const pick = <T,>(arr: readonly T[]): T => arr[Math.floor(rnd() * arr.length)]!;
 
   const traces: Trace[] = [];
-  type Seg = { a: Pt; b: Pt };
+  type Seg = { a: Pt; b: Pt; o: number };
   const segs: Seg[] = [];
   const viaMap = new Map<string, Pt>();
   const addVia = (p: Pt) => viaMap.set(`${p.x},${p.y}`, p);
