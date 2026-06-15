@@ -1087,6 +1087,7 @@ function CircuitTraceLayer({ built }: { built: Built }) {
         <SecondaryChip {...CHIP_A} pinsTop={5} pinsBot={5} pinsLeft={2} pinsRight={2} />
         <SecondaryChip {...CHIP_C} pinsTop={3} pinsBot={3} pinsLeft={2} pinsRight={2} />
         <SecondaryChip {...CHIP_B} pinsTop={2} pinsBot={2} pinsLeft={2} pinsRight={2} />
+        <SecondaryChip {...CHIP_D} pinsTop={4} pinsBot={4} pinsLeft={0} pinsRight={0} />
         {/* right-edge connector — partially off-screen */}
         <g>
           <rect x={EDGE_R.x} y={EDGE_R.y} width={EDGE_R.w} height={EDGE_R.h} fill="#111" stroke="#333" strokeWidth="1" />
