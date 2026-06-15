@@ -668,8 +668,8 @@ function InlineComponent(c: Inline) {
 // ── Lamp positioned above the headline (lower-left area of SVG) ──
 // Lamp sits above the "ANI" headline (lower-left in viewport, but above
 // the text baseline). With viewBox 1600x900 sliced at 1440x900 the
-// headline starts around SVG y≈380 — so the lamp lives at y=340.
-const LAMP = { cx: 240, cy: 340, w: 56, h: 32 };
+// headline starts around SVG y≈380 — so the lamp lives at y=330.
+const LAMP = { cx: 260, cy: 330, w: 84, h: 44 };
 const LAMP_PIN = { x: LAMP.cx, y: LAMP.cy + LAMP.h / 2 + 14 };
 
 function StatusLamp({ on }: { on: boolean }) {
