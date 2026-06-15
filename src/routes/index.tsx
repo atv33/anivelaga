@@ -1147,8 +1147,6 @@ function CircuitHero() {
             />
             {/* small inline parts along the routed path */}
             <g className="hero-part-in" style={{ animationDelay: "2s" }}>
-              <InlineComponent kind="resistor" x={920} y={690} rot={0} />
-              <InlineComponent kind="capacitor" x={740} y={580} rot={90} />
               <InlineComponent kind="diode" x={430} y={470} rot={180} />
               <InlineComponent kind="resistor" x={600} y={470} rot={0} />
               {/* via at corners */}
