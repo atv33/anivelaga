@@ -1717,15 +1717,51 @@ function Work() {
               exit={{ opacity: 0, y: 8 }}
               transition={{ duration: 0.35, ease: "easeOut" }}
             >
-              <button
-                type="button"
-                onClick={() => setSelected(null)}
-                className="mb-8 inline-flex items-center gap-2 rounded-sm border border-rule px-3 py-2 font-mono text-[11px] uppercase tracking-[0.25em] text-ink-dim transition-all hover:border-mark hover:text-mark"
-              >
-                <span>←</span>
-                <span>Back</span>
-              </button>
-              <CategoryBlock category={active} />
+              <div className="mb-8 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSelected(null)}
+                  className="inline-flex items-center gap-2 rounded-sm border border-rule px-3 py-2 font-mono text-[11px] uppercase tracking-[0.25em] text-ink-dim transition-all hover:border-mark hover:text-mark"
+                >
+                  <span>←</span>
+                  <span>Back</span>
+                </button>
+                <div className="relative inline-flex items-center gap-1 rounded-full border border-rule bg-secondary/30 p-1 backdrop-blur-md">
+                  {cards.map((card) => {
+                    const isActive = card.id === active.id;
+                    return (
+                      <button
+                        key={card.id}
+                        type="button"
+                        onClick={() => setSelected(card.id)}
+                        className={`relative z-10 rounded-full px-4 py-2 font-mono text-[11px] uppercase tracking-[0.25em] transition-colors ${
+                          isActive ? "text-background" : "text-ink-dim hover:text-foreground"
+                        }`}
+                      >
+                        {isActive && (
+                          <motion.span
+                            layoutId="work-tab-pill"
+                            className="absolute inset-0 -z-10 rounded-full bg-mark"
+                            transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                          />
+                        )}
+                        <span className="relative">{card.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={`block-${active.id}`}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
+                >
+                  <CategoryBlock category={active} />
+                </motion.div>
+              </AnimatePresence>
             </motion.div>
           )}
         </AnimatePresence>
