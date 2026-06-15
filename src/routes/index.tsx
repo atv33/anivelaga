@@ -485,33 +485,66 @@ function buildCircuit(_seed: number): Built {
 }
 
 function HeroText() {
-  const isMobile = useIsMobile();
+function HeroText({ bp }: { bp?: "mobile" | "tablet" | "desktop" } = {}) {
+  const breakpoint = bp ?? "desktop";
+
+  const headline = (size: string) => (
+    <h1
+      className="font-display font-black uppercase text-white"
+      style={{
+        fontSize: size,
+        letterSpacing: "-0.05em",
+        lineHeight: 0.86,
+      }}
+    >
+      Ani
+      <br />
+      Velaga
+    </h1>
+  );
+
+  const paragraph = (extra: string = "") => (
+    <p
+      className={`font-mono leading-relaxed text-neutral-400 ${extra}`}
+      style={{
+        fontSize: "clamp(0.85rem, 1.4vw, 1rem)",
+        maxWidth: "38ch",
+      }}
+    >
+      <span className="text-neutral-100">Electrical &amp; computer engineer</span> — I design
+      hardware at the board level, then push it through the networking stack into LLM
+      inference systems. Currently on CUAUV building PCBs for an autonomous submarine.
+      <span className="blink-cursor">_</span>
+    </p>
+  );
+
+  if (breakpoint === "mobile") {
+    return (
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[3] flex flex-col items-center px-5 pb-10 text-center">
+        <div className="pointer-events-auto w-full max-w-md">
+          {headline("clamp(3.8rem, 16vw, 6rem)")}
+          <div className="mt-5 flex justify-center">{paragraph("text-center")}</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (breakpoint === "tablet") {
+    return (
+      <div className="pointer-events-none absolute inset-0 z-[3] mx-auto flex max-w-5xl items-end px-8 pb-20">
+        <div className="pointer-events-auto" style={{ maxWidth: "52%" }}>
+          {headline("clamp(4rem, 9vw, 7rem)")}
+          <div className="mt-5">{paragraph()}</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div
-      className={`pointer-events-none absolute inset-0 z-[3] mx-auto flex max-w-6xl items-end px-6 ${
-        isMobile ? "pb-12" : "pb-24 sm:px-10 sm:pb-28"
-      }`}
-    >
+    <div className="pointer-events-none absolute inset-0 z-[3] mx-auto flex max-w-6xl items-end px-6 pb-24 sm:px-10 sm:pb-28">
       <div className="pointer-events-auto max-w-xl">
-        <h1
-          className="font-display font-black uppercase text-white"
-          style={{
-            fontSize: "clamp(3.25rem,10.5vw,8rem)",
-            letterSpacing: "-0.05em",
-            lineHeight: 0.86,
-          }}
-        >
-          Ani
-          <br />
-          Velaga
-        </h1>
-        <p className="mt-6 max-w-md font-mono text-[13px] leading-relaxed text-neutral-400">
-          <span className="text-neutral-100">Electrical &amp; computer engineer</span> — I design
-          hardware at the board level, then push it through the networking stack into LLM
-          inference systems. Currently on CUAUV building PCBs for an autonomous submarine.
-          <span className="blink-cursor">_</span>
-        </p>
+        {headline("clamp(5rem, 10vw, 12rem)")}
+        <div className="mt-6">{paragraph()}</div>
       </div>
     </div>
   );
