@@ -1787,11 +1787,13 @@ function ProjectRow({
   categoryId,
   onOpen,
   bare = false,
+  hideViewDetails = false,
 }: {
   project: Project;
   categoryId: string;
   onOpen?: () => void;
   bare?: boolean;
+  hideViewDetails?: boolean;
 }) {
   const clickable = !!onOpen;
   return (
@@ -1849,7 +1851,7 @@ function ProjectRow({
             ))}
           </div>
         ) : null}
-        {clickable ? (
+        {clickable && !hideViewDetails ? (
           <button
             type="button"
             onClick={(e) => {
@@ -1941,6 +1943,12 @@ function SubProjectRow({
         <p className="mt-1 max-w-md text-[11px] leading-relaxed text-ink-dim">
           {p.tagline.split(".")[0]}.
         </p>
+      </div>
+      <div
+        className="relative w-full"
+        style={{ borderTop: "1px solid rgba(255,255,255,0.06)", height: 280 }}
+        onClick={(e) => e.stopPropagation()}
+      >
         {clickable ? (
           <button
             type="button"
@@ -1948,18 +1956,12 @@ function SubProjectRow({
               e.stopPropagation();
               onOpen?.();
             }}
-            className="mt-2 inline-flex items-center gap-1.5 rounded-sm border-2 border-rule bg-secondary/40 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-foreground transition-all hover:border-mark hover:bg-mark/10 hover:text-mark"
+            className="absolute left-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-sm border-2 border-rule bg-background/80 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-foreground backdrop-blur transition-all hover:border-mark hover:bg-mark/10 hover:text-mark"
           >
             <span>View details</span>
             <span>→</span>
           </button>
         ) : null}
-      </div>
-      <div
-        className="w-full"
-        style={{ borderTop: "1px solid rgba(255,255,255,0.06)", height: 280 }}
-        onClick={(e) => e.stopPropagation()}
-      >
         <div style={{ width: "100%", height: "100%" }} className="overflow-hidden">
           <model-viewer
             src={modelSrc}
