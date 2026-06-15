@@ -715,11 +715,11 @@ function SignalPulse({ d, dur, accent }: { d: string; dur: number; accent?: "blu
 // ── Interactive lamp + button signal path ───────────────────────────────────
 // Button sits below the portrait module; trace routes around the portrait,
 // across the lower board, up past CHIP_B, and into the lamp above the name.
-const BUTTON_PAD = { x: 1190, y: 660 };
+const BUTTON_PAD = { x: 1190, y: 700 };
 const LAMP = { cx: 340, cy: 320, w: 56, h: 32 };
 const LAMP_PIN = { x: LAMP.cx, y: LAMP.cy + LAMP.h / 2 + 14 }; // 340, 350
 const SIGNAL_PATH_D =
-  `M ${BUTTON_PAD.x} ${BUTTON_PAD.y} V 690 H 700 V 470 H ${LAMP_PIN.x} V ${LAMP_PIN.y}`;
+  `M ${BUTTON_PAD.x} ${BUTTON_PAD.y} V 730 H 700 V 470 H ${LAMP_PIN.x} V ${LAMP_PIN.y}`;
 const SIGNAL_DUR_MS = 1400;
 
 function Lamp({ on }: { on: boolean }) {
