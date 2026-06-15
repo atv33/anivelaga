@@ -1674,7 +1674,13 @@ function CategoryBlock({ category: c }: { category: Category }) {
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-dim">{c.intro}</p>
         </div>
       </div>
-      <ul className="mt-12 divide-y divide-border border-y border-border">
+      <ul
+        className={
+          c.id === "01"
+            ? "mt-12 grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+            : "mt-12 divide-y divide-border border-y border-border"
+        }
+      >
         {c.projects.map((p, i) => {
           // Serial Test Board (01.B) is rendered as a sub-project inside the Serial Board (01.A) card.
           if (c.id === "01" && p.id === "B") return null;
@@ -1695,20 +1701,20 @@ function CategoryBlock({ category: c }: { category: Category }) {
                     borderRadius: 2,
                   }}
                 >
-                  <div className="flex flex-col lg:flex-row" style={{ minHeight: 160 }}>
-                    <div className="lg:w-1/2">
+                  <div className="flex flex-col">
+                    <div
+                      className="w-full"
+                      style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", minHeight: 140 }}
+                    >
+                      <InlineSerialModel embedded src={SERIAL_INLINE_GLB} />
+                    </div>
+                    <div className="w-full">
                       <ProjectRow
                         project={p}
                         categoryId={c.id}
                         onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
                         bare
                       />
-                    </div>
-                    <div
-                      className="lg:w-1/2"
-                      style={{ borderLeft: "1px solid rgba(255,255,255,0.06)" }}
-                    >
-                      <InlineSerialModel embedded src={SERIAL_INLINE_GLB} />
                     </div>
                   </div>
                   {testBoard ? (
@@ -1731,20 +1737,20 @@ function CategoryBlock({ category: c }: { category: Category }) {
                     borderRadius: 2,
                   }}
                 >
-                  <div className="flex flex-col lg:flex-row" style={{ minHeight: 160 }}>
-                    <div className="lg:w-1/2">
+                  <div className="flex flex-col">
+                    <div
+                      className="w-full"
+                      style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", minHeight: 140 }}
+                    >
+                      <InlineSerialModel embedded src={THRUSTER_INLINE_GLB} idleElevation={15} />
+                    </div>
+                    <div className="w-full">
                       <ProjectRow
                         project={p}
                         categoryId={c.id}
                         onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
                         bare
                       />
-                    </div>
-                    <div
-                      className="lg:w-1/2"
-                      style={{ borderLeft: "1px solid rgba(255,255,255,0.06)" }}
-                    >
-                      <InlineSerialModel embedded src={THRUSTER_INLINE_GLB} idleElevation={15} />
                     </div>
                   </div>
                 </div>
