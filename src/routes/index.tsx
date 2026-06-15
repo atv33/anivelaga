@@ -69,6 +69,7 @@ type Project = {
   id: string;
   name: string;
   tagline: string;
+  bullets?: string[];
   stack: string[];
   year?: string;
   links?: { label: string; href: string }[];
