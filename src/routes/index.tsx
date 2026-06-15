@@ -1077,21 +1077,23 @@ function CircuitHero() {
             {signaling && pulseId > 0 && (
               <g key={`dis-${pulseId}`} style={{ pointerEvents: "none" }}>
                 <circle r={3.4} fill="#fff4d6">
-                  <animateMotion dur={`${SIGNAL_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={SIGNAL_D} />
+                  <animateMotion dur={`${SIGNAL_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={signalD} />
                 </circle>
                 <circle r={8} fill="rgba(251,191,36,0.45)">
-                  <animateMotion dur={`${SIGNAL_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={SIGNAL_D} />
+                  <animateMotion dur={`${SIGNAL_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={signalD} />
                 </circle>
               </g>
             )}
 
             <g className="hero-part-in" style={{ animationDelay: "1.6s" }}>
-              <Lamp on={lampOn} />
+              <g transform={isMobile ? `translate(${MOBILE_LAMP.cx - LAMP.cx} ${MOBILE_LAMP.cy - LAMP.cy})` : undefined}>
+                <Lamp on={lampOn} scale={isMobile ? 1.8 : 1} />
+              </g>
             </g>
           </g>
 
           {/* layer 3: portrait module — always visible, above mask */}
-          <PortraitModule />
+          <PortraitModule mobile={isMobile} />
 
           {/* hardware-style trigger button under the portrait */}
           <g className="hero-part-in" style={{ animationDelay: "1.8s" }}>
