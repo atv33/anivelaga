@@ -318,79 +318,96 @@ function buildCircuit(_seed: number): Built {
     traces.push({ id, d: ptsToD(pts), w, o, pulse });
   };
 
-  // Routing lanes (24px grid). Vertical lanes east of portrait reused
-  // wherever possible so parallel runs stay aligned.
-  // V-lanes used near portrait left: 960, 984, 1008, 1032
-  // H-lanes used over the top: 72, 96, 120
+  // ── Routing lane plan (24px invisible grid) ───────────────────────
+  // Horizontal backbone lanes (y):  72, 216, 360, 576, 672, 792
+  // Vertical trunk lanes      (x): 264, 504, 688, 984, 1416
+  // Every trace lives on one of these lanes (or a single-lane jog at a
+  // chip-adjacent column) and lands on a real pad/pin tip or board edge.
+  //
+  // Keepouts respected:
+  //   PORT  x 1060..1320, y 270..590     (portrait body)
+  //   CTRL  x 1080..1300, y 585..725     (button/control module)
+  //   CHIP_A x 680..824, y 110..182
+  //   CHIP_B x 520..640, y 380..440
+  //   CHIP_C x 380..476, y 240..306
+  //   CHIP_D x 776..936, y 488..548
+  //   EDGE_R x 1540..1600, y 360..580
+  //   HEADER_T x 880..980, y -10..16
 
-  // ── Portrait LEFT pads → chips (8 traces, 4 to CHIP_A region, 2 to
-  //    CHIP_B, 2 to CHIP_D). All share lane discipline. ──
+  // ── Portrait LEFT pads → buses (8) ──
+  // L1 → header pin (922,20) via north backbone (y=72)
   add("L1", [{x:1052,y:296},{x:984,y:296},{x:984,y:72},{x:922,y:72},{x:922,y:20}], 1.5, 0.55, 6200);
+  // L2 → CHIP_A right pin (828,134)
   add("L2", [{x:1052,y:332},{x:984,y:332},{x:984,y:134},{x:828,y:134}], 1.25, 0.5);
+  // L3 → CHIP_A right pin (828,158)
   add("L3", [{x:1052,y:368},{x:960,y:368},{x:960,y:158},{x:828,y:158}], 1.25, 0.5, 7400);
-  add("L4", [{x:1052,y:404},{x:912,y:404},{x:912,y:400},{x:644,y:400}], 1.25, 0.5);
-  add("L5", [{x:1052,y:440},{x:936,y:440},{x:936,y:420},{x:644,y:420}], 1.0, 0.45);
-  add("L6", [{x:1052,y:476},{x:984,y:476},{x:984,y:484},{x:808,y:484}], 1.25, 0.5);
-  add("L7", [{x:1052,y:512},{x:1008,y:512},{x:1008,y:484},{x:872,y:484}], 1.0, 0.45);
-  add("L8", [{x:1052,y:548},{x:1032,y:548},{x:1032,y:484},{x:904,y:484}], 1.25, 0.5);
+  // L4 → CHIP_B right pin (644,400). Trunk at x=688, no chip-body crossing.
+  add("L4", [{x:1052,y:404},{x:688,y:404},{x:688,y:400},{x:644,y:400}], 1.25, 0.5);
+  // L5 → CHIP_B right pin (644,420)
+  add("L5", [{x:1052,y:440},{x:688,y:440},{x:688,y:420},{x:644,y:420}], 1.0, 0.45);
+  // L6 → CHIP_D top pin (808,484). Lane y=476 sits above chip body (y=488+).
+  add("L6", [{x:1052,y:476},{x:808,y:476},{x:808,y:484}], 1.25, 0.5);
+  // L7 → CHIP_D top pin (872,484). Jogs around chip body via y=476.
+  add("L7", [{x:1052,y:512},{x:984,y:512},{x:984,y:476},{x:872,y:476},{x:872,y:484}], 1.0, 0.45);
+  // L8 → CHIP_D top pin (904,484). Same lane discipline.
+  add("L8", [{x:1052,y:548},{x:984,y:548},{x:984,y:476},{x:904,y:476},{x:904,y:484}], 1.25, 0.5);
 
-  // ── Portrait TOP pads (y=262) ──
+  // ── Portrait TOP pads (5) ──
   add("T1", [{x:1103,y:262},{x:1103,y:0}], 1.0, 0.4);
   add("T2", [{x:1147,y:262},{x:1147,y:72},{x:954,y:72},{x:954,y:20}], 1.25, 0.5, 5600);
   add("T3", [{x:1190,y:262},{x:1190,y:0}], 1.5, 0.55, 4800);
   add("T4", [{x:1233,y:262},{x:1233,y:96},{x:1416,y:96},{x:1416,y:0}], 1.0, 0.45);
   add("T5", [{x:1277,y:262},{x:1277,y:120},{x:1488,y:120},{x:1488,y:0}], 1.0, 0.4);
 
-  // ── Portrait RIGHT pads (x=1328) → EDGE_R / canvas right ──
+  // ── Portrait RIGHT pads → EDGE_R / canvas right (4) ──
   add("R1", [{x:1328,y:296},{x:1600,y:296}], 1.25, 0.5, 6800);
-  add("R2", [{x:1328,y:404},{x:1464,y:404},{x:1464,y:410},{x:1536,y:410}], 1.25, 0.5);
-  add("R3", [{x:1328,y:476},{x:1464,y:476},{x:1464,y:470},{x:1536,y:470}], 1.25, 0.5);
-  add("R4", [{x:1328,y:548},{x:1464,y:548},{x:1464,y:560},{x:1536,y:560}], 1.0, 0.45);
+  add("R2", [{x:1328,y:404},{x:1416,y:404},{x:1416,y:410},{x:1536,y:410}], 1.25, 0.5);
+  add("R3", [{x:1328,y:476},{x:1416,y:476},{x:1416,y:470},{x:1536,y:470}], 1.25, 0.5);
+  add("R4", [{x:1328,y:548},{x:1416,y:548},{x:1416,y:560},{x:1536,y:560}], 1.0, 0.45);
 
-  // ── Portrait BOTTOM pads (y=598) — south rails ──
-  add("B1", [{x:1147,y:598},{x:1147,y:768},{x:1600,y:768}], 1.0, 0.4);
-  add("B2", [{x:1233,y:598},{x:1233,y:900}], 1.25, 0.45);
-
-  // ── CHIP_A north fanout: header pin → CHIP_A top pin ──
+  // ── CHIP_A north / south (2) ──
+  // header pin (938,20) → CHIP_A top pin (752,106)
   add("FA1", [{x:938,y:20},{x:938,y:72},{x:752,y:72},{x:752,y:106}], 1.0, 0.4);
+  // CHIP_A bot pin (728,186) → CHIP_D top pin (840,484) via y=216 bus then x=840 trunk
+  add("FA2", [{x:728,y:186},{x:728,y:216},{x:840,y:216},{x:840,y:484}], 1.0, 0.42);
 
-  // ── CHIP_C (upper-left small connector) fanout ──
+  // ── CHIP_C (upper-left connector) fanout (4) ──
   add("C1", [{x:404,y:236},{x:404,y:72},{x:312,y:72},{x:312,y:0}], 1.0, 0.4);
   add("C2", [{x:376,y:262},{x:264,y:262},{x:264,y:168},{x:0,y:168}], 1.0, 0.4);
-  add("C3", [{x:404,y:310},{x:404,y:360},{x:560,y:360},{x:560,y:376}], 1.0, 0.4);
-  add("C4", [{x:452,y:236},{x:452,y:134},{x:676,y:134}], 1.0, 0.42);
+  // CHIP_C top pin (452,236) → CHIP_A left pin (676,134)
+  add("C3", [{x:452,y:236},{x:452,y:134},{x:676,y:134}], 1.0, 0.42);
+  // CHIP_C bot pin (404,310) → CHIP_B left pin (516,400) via y=360 bus and x=516 trunk
+  add("C4", [{x:404,y:310},{x:404,y:360},{x:516,y:360},{x:516,y:400}], 1.0, 0.4);
 
-  // ── Inline parts: each is centered exactly on a real trace segment ──
-  // Resistors (5): SMD 0805 bodies on straight horizontal runs.
-  // - R on L2 horizontal y=134 (x 828..984)
-  // - R on L3 horizontal y=158 (x 828..960)
-  // - R on L4 horizontal y=400 (x 644..912)
-  // - R on R1 horizontal y=296 (x 1328..1600)
-  // - R on C3 horizontal y=360 (x 404..560)
-  // Capacitors (3): vertical SMD on vertical runs.
-  // - C on T1 vertical x=1103
-  // - C on T3 vertical x=1190 (decoupling near pad)
-  // - C on B2 vertical x=1233
-  // Diodes (1):
-  // - D on L6 horizontal y=484 (x 808..984)
-  // Inductors (1):
-  // - L on FA1 horizontal y=72 (x 752..938)
+  // ── CHIP_B south fanout (2) — branch into the lower-left text region ──
+  add("CB1", [{x:560,y:444},{x:560,y:576},{x:0,y:576}], 1.0, 0.32);
+  add("CB2", [{x:600,y:444},{x:600,y:672},{x:180,y:672},{x:180,y:900}], 1.0, 0.3);
+
+  // ── CHIP_D south fanout (2) — south rails ──
+  add("DS1", [{x:840,y:552},{x:840,y:720},{x:1032,y:720}], 1.0, 0.4);
+  add("DS2", [{x:872,y:552},{x:872,y:792},{x:1296,y:792},{x:1296,y:900}], 1.0, 0.4);
+
+  // ── Inline parts — each centered exactly on a real straight segment.
+  //    No part overlaps a chip body, the portrait, or the control module. ──
   const parts: Inline[] = [
-    { kind: "resistor", x: 900, y: 134, rot: 0 },
-    { kind: "resistor", x: 900, y: 158, rot: 0 },
-    { kind: "resistor", x: 792, y: 400, rot: 0 },
-    { kind: "resistor", x: 1464, y: 296, rot: 0 },
-    { kind: "resistor", x: 480, y: 360, rot: 0 },
-    { kind: "capacitor", x: 1103, y: 132, rot: 90 },
-    { kind: "capacitor", x: 1190, y: 228, rot: 90 },
-    { kind: "capacitor", x: 1233, y: 720, rot: 90 },
-    { kind: "diode",    x: 900, y: 484, rot: 0 },
-    { kind: "inductor", x: 840, y: 72,  rot: 0 },
+    // Resistors (4) — SMD 0805 on horizontal runs
+    { kind: "resistor",  x: 900,  y: 134, rot: 0 },   // on L2 segment y=134 x 828..984
+    { kind: "resistor",  x: 876,  y: 158, rot: 0 },   // on L3 segment y=158 x 828..960
+    { kind: "resistor",  x: 1464, y: 296, rot: 0 },   // on R1 segment y=296 x 1328..1600
+    { kind: "resistor",  x: 576,  y: 134, rot: 0 },   // on C3 segment y=134 x 452..676
+    // Capacitors (3) — vertical SMD on vertical runs
+    { kind: "capacitor", x: 1103, y: 192, rot: 90 },  // on T1 trunk x=1103 y 0..262
+    { kind: "capacitor", x: 1190, y: 228, rot: 90 },  // on T3 trunk x=1190 y 0..262
+    { kind: "capacitor", x: 600,  y: 576, rot: 90 },  // on CB2 trunk x=600 y 444..672
+    // Diodes (2) — horizontal, both anode-left/cathode-right
+    { kind: "diode",     x: 912,  y: 476, rot: 0 },   // on L6/L7/L8 shared y=476 lane (x 808..984)
+    { kind: "diode",     x: 840,  y: 72,  rot: 0 },   // on FA1 segment y=72 x 752..938
+    // Inductor (1)
+    { kind: "inductor",  x: 792,  y: 216, rot: 0 },   // on FA2 segment y=216 x 728..840
   ];
 
-  // ── Vias: only at actual T-junctions / branch points. We have no
-  //    electrical branches in the graph, so leave this empty rather than
-  //    sprinkle floating dots. ──
+  // ── Vias: no electrical junctions in the graph, so render none.
+  //    (Spec: remove all isolated dots and floating markers.) ──
   return { traces, vias: [], parts };
 }
 
