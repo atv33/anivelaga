@@ -301,388 +301,84 @@ type Built = {
   parts: Inline[];
 };
 
-// Seeded PRNG so the layout is repeatable per seed.
-function mulberry32(seed: number) {
-  let a = (seed >>> 0) || 1;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
 function ptsToD(pts: Pt[]): string {
   return pts
     .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`)
     .join(" ");
 }
 
-// Invisible routing grid. Intermediate bend points snap to this grid so
-// parallel runs share lanes and corners line up. Endpoints stay exact so
-// traces still terminate on real pad/pin tips.
-const GRID = 12;
-const snap = (v: number) => Math.round(v / GRID) * GRID;
-function snapPts(orig: Pt[]): Pt[] {
-  const n = orig.length;
-  if (n < 2) return orig.map((p) => ({ ...p }));
-  // Determine the shared axis of each original segment (paths are strictly
-  // orthogonal, so each adjacent pair shares exactly one coordinate).
-  const sharedAxis: ("x" | "y")[] = [];
-  for (let i = 0; i < n - 1; i++) {
-    sharedAxis.push(orig[i].x === orig[i + 1].x ? "x" : "y");
-  }
-  // Snap intermediate points to the grid; keep endpoints exact.
-  const out: Pt[] = orig.map((p, i) =>
-    i === 0 || i === n - 1
-      ? { x: p.x, y: p.y }
-      : { x: snap(p.x), y: snap(p.y) },
-  );
-  // Re-anchor the shared axis of each segment. First segment anchors to the
-  // first endpoint, last segment anchors to the last endpoint, middle
-  // segments propagate forward from the prior point.
-  for (let i = 0; i < n - 1; i++) {
-    const a = out[i];
-    const b = out[i + 1];
-    const axis = sharedAxis[i];
-    const v = i === 0 ? a[axis] : i === n - 2 ? b[axis] : a[axis];
-    a[axis] = v;
-    b[axis] = v;
-  }
-  // Drop zero-length and collinear redundant points.
-  const cleaned: Pt[] = [out[0]];
-  for (let i = 1; i < n; i++) {
-    const p = out[i];
-    const last = cleaned[cleaned.length - 1];
-    if (p.x === last.x && p.y === last.y) continue;
-    if (cleaned.length >= 2) {
-      const a = cleaned[cleaned.length - 2];
-      if ((a.x === last.x && last.x === p.x) || (a.y === last.y && last.y === p.y)) {
-        cleaned[cleaned.length - 1] = p;
-        continue;
-      }
-    }
-    cleaned.push(p);
-  }
-  return cleaned;
-}
-
-// Procedural circuit builder. Every trace begins at a real pad/pin tip and
-// ends at another real pad/pin tip or the canvas edge. Bend coordinates are
-// chosen randomly within tight constraints — composition is preserved.
-function buildCircuit(seed: number): Built {
-  const rnd = mulberry32(seed);
-  const rand = (min: number, max: number) => min + rnd() * (max - min);
-  const irand = (min: number, max: number) => Math.round(rand(min, max));
-  const pick = <T,>(arr: readonly T[]): T => arr[Math.floor(rnd() * arr.length)]!;
-
+// Deterministic, declarative routed-graph circuit. No randomness.
+// All bend points are multiples of 24 (the invisible routing grid).
+// Endpoints land exactly on real pad/pin tips, chip pins, header pins,
+// connector pins, or the canvas edge. Paths are strictly orthogonal.
+// Keepout zones (component bodies) are enforced manually per trace.
+function buildCircuit(_seed: number): Built {
   const traces: Trace[] = [];
-  type Seg = { a: Pt; b: Pt; o: number };
-  const segs: Seg[] = [];
-  const viaMap = new Map<string, Pt>();
-  const addVia = (p: Pt) => {
-    const sp = { x: snap(p.x), y: snap(p.y) };
-    viaMap.set(`${sp.x},${sp.y}`, sp);
-  };
-
-  // Bodies that should not get an endpoint via dropped on top of them
-  // (chips, headers, edge connectors, control & lamp modules).
-  const VIA_BODIES: { x: number; y: number; w: number; h: number; pad: number }[] = [
-    // pad ≥ pin length so trace endpoints landing on a real pad/pin tip
-    // never get an extra via dot dropped on top of the pad.
-    { x: PORT.x, y: PORT.y, w: PORT.w, h: PORT.h, pad: 14 },
-    { x: CHIP_A.x, y: CHIP_A.y, w: CHIP_A.w, h: CHIP_A.h, pad: 10 },
-    { x: CHIP_B.x, y: CHIP_B.y, w: CHIP_B.w, h: CHIP_B.h, pad: 10 },
-    { x: CHIP_C.x, y: CHIP_C.y, w: CHIP_C.w, h: CHIP_C.h, pad: 10 },
-    { x: CHIP_D.x, y: CHIP_D.y, w: CHIP_D.w, h: CHIP_D.h, pad: 10 },
-    { x: EDGE_R.x, y: EDGE_R.y, w: EDGE_R.w, h: EDGE_R.h, pad: 10 },
-    { x: HEADER_T.x, y: HEADER_T.y, w: HEADER_T.w, h: HEADER_T.h, pad: 10 },
-    // lamp module above the name
-    { x: 340 - 28 - 4, y: 320 - 16 - 4, w: 56 + 8, h: 32 + 8, pad: 4 },
-    // control module footprint under the portrait
-    { x: 1190 - 110, y: 585, w: 220, h: 140, pad: 4 },
-  ];
-  const isOffCanvas = (p: Pt) =>
-    p.x <= 4 || p.x >= 1596 || p.y <= 4 || p.y >= 896;
-  const nearBody = (p: Pt) =>
-    VIA_BODIES.some(
-      (b) =>
-        p.x > b.x - b.pad &&
-        p.x < b.x + b.w + b.pad &&
-        p.y > b.y - b.pad &&
-        p.y < b.y + b.h + b.pad,
-    );
-
   const add = (id: string, pts: Pt[], w: number, o: number, pulse?: number) => {
-    const snapped = snapPts(pts);
-    traces.push({ id, d: ptsToD(snapped), w, o, pulse });
-    for (let i = 0; i < snapped.length - 1; i++)
-      segs.push({ a: snapped[i], b: snapped[i + 1], o });
-    // Auto-place an endpoint via at any free endpoint (not off-canvas and
-    // not landing inside a known chip/header/edge body or signal-path module).
-    const first = snapped[0];
-    const last = snapped[snapped.length - 1];
-    for (const ep of [first, last]) {
-      if (isOffCanvas(ep)) continue;
-      if (nearBody(ep)) continue;
-      addVia(ep);
-    }
+    traces.push({ id, d: ptsToD(pts), w, o, pulse });
   };
 
-  // pulses ~ 30% of routes
-  const maybePulse = (base: number) => (rnd() < 0.35 ? base + irand(-600, 600) : undefined);
+  // ── Portrait LEFT pads (x=1052) — buses out to chips / header ──
+  // L1 y=296 → top header pin (922,20), routed north over CHIP_A
+  add("L1", [{x:1052,y:296},{x:984,y:296},{x:984,y:72},{x:922,y:72},{x:922,y:20}], 1.5, 0.55, 6200);
+  // L2 y=332 → CHIP_A right pin tip (828,134)
+  add("L2", [{x:1052,y:332},{x:984,y:332},{x:984,y:134},{x:828,y:134}], 1.25, 0.5);
+  // L3 y=368 → CHIP_A right pin tip (828,158)
+  add("L3", [{x:1052,y:368},{x:960,y:368},{x:960,y:158},{x:828,y:158}], 1.25, 0.5, 7400);
+  // L4 y=404 → CHIP_B right pin tip (644,400)
+  add("L4", [{x:1052,y:404},{x:912,y:404},{x:912,y:400},{x:644,y:400}], 1.25, 0.5);
+  // L5 y=440 → CHIP_B right pin tip (644,420)
+  add("L5", [{x:1052,y:440},{x:936,y:440},{x:936,y:420},{x:644,y:420}], 1.0, 0.45);
+  // L6 y=476 → CHIP_D top pin (808,484)
+  add("L6", [{x:1052,y:476},{x:984,y:476},{x:984,y:484},{x:808,y:484}], 1.25, 0.5);
+  // L7 y=512 → CHIP_D top pin (872,484)
+  add("L7", [{x:1052,y:512},{x:1008,y:512},{x:1008,y:484},{x:872,y:484}], 1.0, 0.45);
+  // L8 y=548 → CHIP_D top pin (904,484)
+  add("L8", [{x:1052,y:548},{x:1032,y:548},{x:1032,y:484},{x:904,y:484}], 1.25, 0.5);
 
-  // ── Portrait LEFT pads → CHIP_A / CHIP_B / CHIP_C / header ──
-  add("L1", [{x:1052,y:296},{x:irand(880,960),y:296},null!,{x:828,y:134}].map((p,i,a)=>p ?? {x:(a[1] as Pt).x,y:134}), 1.5, 0.6, maybePulse(6200) ?? 6200);
-  add("L2", [{x:1052,y:332},{x:irand(840,920),y:332},null!,{x:828,y:158}].map((p,i,a)=>p ?? {x:(a[1] as Pt).x,y:158}), 1.25, 0.5, maybePulse(7000));
+  // ── Portrait TOP pads (y=262) — buses to header / canvas top ──
+  // T1 x=1103 → straight up off-canvas
+  add("T1", [{x:1103,y:262},{x:1103,y:0}], 1.0, 0.4);
+  // T2 x=1147 → header pin (954,20)
+  add("T2", [{x:1147,y:262},{x:1147,y:72},{x:954,y:72},{x:954,y:20}], 1.25, 0.5, 5600);
+  // T3 x=1190 → straight up off-canvas (main power feed)
+  add("T3", [{x:1190,y:262},{x:1190,y:0}], 1.5, 0.55, 4800);
+  // T4 x=1233 → up & right to canvas top
+  add("T4", [{x:1233,y:262},{x:1233,y:96},{x:1416,y:96},{x:1416,y:0}], 1.0, 0.45);
+  // T5 x=1277 → up & right to canvas top
+  add("T5", [{x:1277,y:262},{x:1277,y:120},{x:1488,y:120},{x:1488,y:0}], 1.0, 0.4);
 
-  const headerPinL3 = pick([890, 906, 922] as const);
-  add("L3", [{x:1052,y:368},{x:headerPinL3,y:368},{x:headerPinL3,y:20}], 1.5, 0.58);
+  // ── Portrait RIGHT pads (x=1328) — to EDGE_R or canvas right ──
+  add("R1", [{x:1328,y:296},{x:1600,y:296}], 1.25, 0.5, 6800);
+  add("R2", [{x:1328,y:332},{x:1600,y:332}], 1.0, 0.45);
+  // R3 → EDGE_R pin (1536,410)
+  add("R3", [{x:1328,y:404},{x:1464,y:404},{x:1464,y:410},{x:1536,y:410}], 1.25, 0.5);
+  // R4 → EDGE_R pin (1536,470)
+  add("R4", [{x:1328,y:476},{x:1464,y:476},{x:1464,y:470},{x:1536,y:470}], 1.25, 0.5);
+  // R5 → EDGE_R pin (1536,560)
+  add("R5", [{x:1328,y:548},{x:1464,y:548},{x:1464,y:560},{x:1536,y:560}], 1.0, 0.45);
 
-  const L4bx = irand(720, 820);
-  add("L4", [{x:1052,y:404},{x:L4bx,y:404},{x:L4bx,y:400},{x:644,y:400}], 1.25, 0.5, 7400);
+  // ── Portrait BOTTOM pads (y=598) — south rails ──
+  // B1 x=1147 → canvas right edge low
+  add("B1", [{x:1147,y:598},{x:1147,y:768},{x:1600,y:768}], 1.0, 0.4);
+  // B2 x=1233 → straight down to canvas bottom
+  add("B2", [{x:1233,y:598},{x:1233,y:900}], 1.25, 0.45);
 
-  const L5bx = irand(720, 860);
-  add("L5", [{x:1052,y:440},{x:L5bx,y:440},{x:L5bx,y:420},{x:644,y:420}], 1.25, 0.48, maybePulse(8200));
+  // ── CHIP_A north fanout (top edge) ──
+  // Header pin (938,20) → CHIP_A top pin (752,106)
+  add("FA1", [{x:938,y:20},{x:938,y:72},{x:752,y:72},{x:752,y:106}], 1.0, 0.4);
 
-  const L6bx1 = irand(840, 940);
-  // route above CHIP_B (body y 380-440) to keep clear of its body
-  const L6my = irand(340, 374);
-  add("L6", [
-    {x:1052,y:476},{x:L6bx1,y:476},{x:L6bx1,y:L6my},{x:480,y:L6my},{x:480,y:284}
-  ], 1.25, 0.45);
+  // ── CHIP_C fanout (upper-left chip) ──
+  // C1 top pin tip (404,236) → canvas top
+  add("C1", [{x:404,y:236},{x:404,y:72},{x:312,y:72},{x:312,y:0}], 1.0, 0.4);
+  // C2 left pin tip (376,262) → canvas left
+  add("C2", [{x:376,y:262},{x:264,y:262},{x:264,y:168},{x:0,y:168}], 1.0, 0.4);
+  // C3 bottom pin tip (404,310) → CHIP_B top pin tip (560,376)
+  add("C3", [{x:404,y:310},{x:404,y:360},{x:560,y:360},{x:560,y:376}], 1.0, 0.4);
+  // C4 top pin tip (452,236) → CHIP_A left pin tip (676,134)
+  add("C4", [{x:452,y:236},{x:452,y:134},{x:676,y:134}], 1.0, 0.42);
 
-  // route right of CHIP_B (body x 520-640) so the vertical run doesn't cross it
-  const L7bx = irand(660, 740);
-  add("L7", [{x:1052,y:512},{x:L7bx,y:512},{x:L7bx,y:236},{x:452,y:236}], 1.0, 0.4);
-
-  // L8 (y=548): occasional NC short stub into a via on a long horizontal trace
-  // L8 (y=548): direct portrait pad → CHIP_D bottom-right pin
-  add("L8", [{x:1052,y:548},{x:904,y:548}], 1.25, 0.5);
-
-  // ── Portrait TOP pads ──
-  const T1pin = pick([922, 938, 954] as const);
-  add("T1", [{x:1103,y:262},{x:1103,y:irand(170,200)},null!,{x:T1pin,y:20}].map((p,i,a)=>{
-    if (p) return p;
-    const midY = (a[1] as Pt).y;
-    return {x:T1pin,y:midY};
-  }), 1.25, 0.5);
-
-  const T2pin = pick([954, 970] as const);
-  const T2my = irand(140, 175);
-  add("T2", [{x:1147,y:262},{x:1147,y:T2my},{x:T2pin,y:T2my},{x:T2pin,y:20}], 1.5, 0.55, 5600);
-
-  add("T3", [{x:1190,y:262},{x:1190,y:0}], 1.75, 0.6, 4800);
-
-  const T4my = irand(80, 130);
-  const T4bx = irand(1340, 1440);
-  add("T4", [{x:1233,y:262},{x:1233,y:T4my},{x:T4bx,y:T4my},{x:T4bx,y:0}], 1.25, 0.5, maybePulse(6400));
-
-  const T5my = irand(120, 180);
-  const T5bx = irand(1440, 1540);
-  add("T5", [{x:1277,y:262},{x:1277,y:T5my},{x:T5bx,y:T5my},{x:T5bx,y:0}], 1.0, 0.45);
-
-  // ── Portrait RIGHT pads → EDGE_R or canvas right ──
-  add("R1", [{x:1328,y:296},{x:1600,y:296}], 1.5, 0.55, 6800);
-
-  const R2bx = irand(1400, 1490);
-  add("R2", [{x:1328,y:332},{x:R2bx,y:332},{x:R2bx,y:380},{x:1536,y:380}], 1.25, 0.5);
-
-  const R3bx = irand(1440, 1520);
-  add("R3", [{x:1328,y:368},{x:R3bx,y:368},{x:R3bx,y:410},{x:1536,y:410}], 1.25, 0.5);
-
-  const R4bx = irand(1440, 1510);
-  add("R4", [{x:1328,y:404},{x:R4bx,y:404},{x:R4bx,y:440},{x:1536,y:440}], 1.25, 0.5, maybePulse(6800));
-
-  // bypass EDGE_R body (x 1540-1600, y 360-580) by routing above it
-  add("R5", [{x:1328,y:440},{x:1490,y:440},{x:1490,y:340},{x:1600,y:340}], 1.5, 0.55);
-
-  const R6bx = irand(1420, 1510);
-  add("R6", [{x:1328,y:476},{x:R6bx,y:476},{x:R6bx,y:500},{x:1536,y:500}], 1.25, 0.48);
-
-  const R7bx = irand(1400, 1480);
-  add("R7", [{x:1328,y:512},{x:R7bx,y:512},{x:R7bx,y:530},{x:1536,y:530}], 1.0, 0.42);
-
-  const R8bx = irand(1430, 1500);
-  add("R8", [{x:1328,y:548},{x:R8bx,y:548},{x:R8bx,y:560},{x:1536,y:560}], 1.25, 0.5, 7800);
-
-  // ── Portrait BOTTOM pads ──
-  const B1my = irand(680, 760);
-  const B1bx = irand(960, 1040);
-  add("B1", [{x:1103,y:598},{x:1103,y:B1my},{x:B1bx,y:B1my},{x:B1bx,y:900}], 1.25, 0.45);
-
-  const B2my = irand(700, 800);
-  add("B2", [{x:1147,y:598},{x:1147,y:B2my},{x:1600,y:B2my}], 1.0, 0.42);
-
-  add("B3", [{x:1190,y:598},{x:1190,y:900}], 1.5, 0.55, 5200);
-
-  const B4my = irand(640, 720);
-  const B4bx = irand(1440, 1540);
-  add("B4", [{x:1233,y:598},{x:1233,y:B4my},{x:B4bx,y:B4my},{x:B4bx,y:900}], 1.25, 0.48);
-
-  const B5my = irand(700, 780);
-  add("B5", [{x:1277,y:598},{x:1277,y:B5my},{x:1600,y:B5my}], 1.0, 0.42);
-
-  // ── CHIP_A pin fanout ──
-  const A1my = irand(20, 60);
-  const A1bx = irand(420, 540);
-  add("A1", [{x:704,y:106},{x:704,y:A1my},{x:A1bx,y:A1my},{x:A1bx,y:0}], 1.0, 0.4);
-
-  add("A2", [{x:728,y:106},{x:728,y:0}], 1.0, 0.38);
-
-  const A3my = irand(40, 80);
-  const A3bx = irand(1020, 1100);
-  add("A3", [{x:752,y:106},{x:752,y:A3my},{x:A3bx,y:A3my},{x:A3bx,y:0}], 1.0, 0.4);
-
-  const A4pin = pick([906, 922, 938] as const);
-  const A4my = irand(50, 90);
-  add("A4", [{x:776,y:106},{x:776,y:A4my},{x:A4pin,y:A4my},{x:A4pin,y:20}], 1.0, 0.4);
-
-  const A5candidates: readonly number[] = [938, 954, 970];
-  const A4pinNum: number = A4pin;
-  const A5pool = A5candidates.filter((p) => p !== A4pinNum);
-  const A5pin = pick(A5pool);
-  const A5my = irand(40, 80);
-  add("A5", [{x:800,y:106},{x:800,y:A5my},{x:A5pin,y:A5my},{x:A5pin,y:20}], 1.0, 0.4);
-
-  const A6bx = irand(520, 620);
-  add("A6", [{x:676,y:134},{x:A6bx,y:134},{x:A6bx,y:262},{x:480,y:262}], 1.0, 0.4);
-
-  const A7my = irand(140, 220);
-  add("A7", [{x:676,y:158},{x:irand(260, 360),y:158},null!,{x:0,y:A7my}].map((p,i,a)=>p ?? {x:(a[1] as Pt).x,y:A7my}), 1.0, 0.36);
-
-  const A8my = irand(280, 340);
-  add("A8", [{x:704,y:186},{x:704,y:A8my},{x:560,y:A8my},{x:560,y:376}], 1.25, 0.45);
-
-  // Bonus chip A bottom-pin extension to a via in the mid plane
-  // CHIP_A bottom pins → portrait top pads (direct pad-to-pad)
-  add("Ax", [{x:728,y:186},{x:728,y:240},{x:1103,y:240},{x:1103,y:262}], 1.0, 0.42);
-  add("Ay", [{x:752,y:186},{x:752,y:216},{x:1147,y:216},{x:1147,y:262}], 1.0, 0.40);
-
-  // ── CHIP_C fanout ──
-  const C1bx = irand(160, 260);
-  const C1my = irand(40, 100);
-  add("C1", [{x:404,y:236},{x:404,y:C1my},{x:C1bx,y:C1my},{x:C1bx,y:0}], 1.0, 0.4);
-
-  if (rnd() < 0.65) {
-    // direct CHIP_C top pin → top edge (off-canvas)
-    add("C1b", [{x:428,y:236},{x:428,y:60},{x:300,y:60},{x:300,y:0}], 1.0, 0.36);
-  }
-
-  const C2my = irand(240, 290);
-  const C2bx = irand(160, 260);
-  add("C2", [{x:376,y:262},{x:C2bx,y:262},{x:C2bx,y:C2my},{x:0,y:C2my}], 1.0, 0.36);
-
-  if (rnd() < 0.6) {
-    // direct CHIP_C left pin → left canvas edge
-    add("C2b", [{x:376,y:284},{x:240,y:284},{x:240,y:336},{x:0,y:336}], 1.0, 0.34);
-  }
-
-  add("C3", [{x:404,y:310},{x:404,y:400},{x:516,y:400}], 1.0, 0.4);
-
-  if (rnd() < 0.7) {
-    const cmy = irand(330, 365);
-    add("C3b", [{x:428,y:310},{x:428,y:cmy},{x:600,y:cmy},{x:600,y:376}], 1.0, 0.38);
-  }
-
-  // ── CHIP_B fanout ──
-  const BBmy = irand(430, 480);
-  const BBbx = irand(180, 280);
-  add("BB1", [{x:516,y:420},{x:BBbx,y:420},{x:BBbx,y:BBmy},{x:0,y:BBmy}], 1.0, 0.38);
-
-  // CHIP_B bottom pins → portrait left pads (direct pad-to-pad)
-  add("BBb", [{x:600,y:444},{x:600,y:488},{x:1052,y:488},{x:1052,y:476}], 1.0, 0.42);
-  add("BBc", [{x:560,y:444},{x:560,y:524},{x:1052,y:524},{x:1052,y:512}], 1.0, 0.40);
-
-  // ── Filler routing in emptier regions (deterministic with light jitter) ──
-  // Upper-right gap between CHIP_A and the right edge
-  // Upper-right: HEADER_T pin → portrait top pad (direct pad-to-pad)
-  add("FR1", [{x:970,y:20},{x:970,y:204},{x:1277,y:204},{x:1277,y:262}], 1.0, 0.36);
-  // Upper-mid gap between CHIP_A and CHIP_C
-  // CHIP_C top pin → CHIP_A left pin (direct pad-to-pad)
-  add("FR2", [{x:452,y:236},{x:452,y:144},{x:676,y:144},{x:676,y:158}], 1.0, 0.36);
-  // Mid-right gap below CHIP_A toward the lower-right
-  // CHIP_A right pin → portrait top pad (direct pad-to-pad)
-  add("FR3", [{x:828,y:158},{x:996,y:158},{x:996,y:228},{x:1190,y:228},{x:1190,y:262}], 1.0, 0.34);
-  // Lower-mid gap (well above the control module footprint y<560)
-  // CHIP_B right pin → portrait left pad (direct pad-to-pad)
-  add("FR4", [{x:644,y:400},{x:828,y:400},{x:828,y:404},{x:1052,y:404}], 1.0, 0.32);
-  // CHIP_D ↔ CHIP_A pad-to-pad routing (top of CHIP_D up to CHIP_A bottom pins)
-  add("D1", [{x:808,y:484},{x:808,y:220},{x:704,y:220},{x:704,y:186}], 1.25, 0.5);
-  add("D2", [{x:840,y:484},{x:840,y:244},{x:728,y:244},{x:728,y:186}], 1.0, 0.42);
-  add("D3", [{x:872,y:484},{x:872,y:268},{x:776,y:268},{x:776,y:186}], 1.0, 0.4);
-  // CHIP_D bottom-left pin → canvas bottom (power/ground rail)
-  add("D4", [{x:808,y:548},{x:808,y:900}], 1.5, 0.5);
-  // CHIP_D bottom-mid pin → canvas bottom
-  add("D5", [{x:872,y:548},{x:872,y:900}], 1.0, 0.4);
-  // Upper-left bus: connects CHIP_C left side area up to top edge
-  // Left canvas edge → CHIP_C left pin (direct edge-to-pad)
-  add("FR6", [{x:0,y:72},{x:180,y:72},{x:180,y:262},{x:376,y:262}], 1.0, 0.32);
-  // Mid-right secondary: from EDGE_R area inward to a CHIP_A right pin region
-  // EDGE_R pin → CHIP_A right pin (direct pad-to-pad)
-  add("FR7", [{x:1536,y:470},{x:1416,y:470},{x:1416,y:134},{x:828,y:134}], 1.0, 0.30);
-  // Top-mid: header-area outward bus going right
-  // HEADER_T pin → CHIP_A top pin (direct pad-to-pad)
-  add("FR8", [{x:890,y:20},{x:890,y:84},{x:752,y:84},{x:752,y:106}], 1.0, 0.34);
-
-  // ── Inline parts placed on actual segments (text-zone + chip keep-out) ──
-  const KEEP_OUT: { x:number; y:number; w:number; h:number }[] = [
-    { x: PORT.x, y: PORT.y, w: PORT.w, h: PORT.h },
-    { x: CHIP_A.x, y: CHIP_A.y, w: CHIP_A.w, h: CHIP_A.h },
-    { x: CHIP_B.x, y: CHIP_B.y, w: CHIP_B.w, h: CHIP_B.h },
-    { x: CHIP_C.x, y: CHIP_C.y, w: CHIP_C.w, h: CHIP_C.h },
-    { x: EDGE_R.x, y: EDGE_R.y, w: EDGE_R.w, h: EDGE_R.h },
-    { x: HEADER_T.x, y: HEADER_T.y, w: HEADER_T.w, h: HEADER_T.h },
-    // Lamp module above the name
-    { x: 340 - 28 - 8, y: 320 - 16 - 8, w: 56 + 16, h: 32 + 16 },
-    // Hard-coded signal-path inline components (avoid overlap)
-    { x: 430 - 14, y: 470 - 10, w: 28, h: 20 },
-    { x: 600 - 14, y: 470 - 10, w: 28, h: 20 },
-    // Control module footprint under the portrait
-    { x: 1190 - 110, y: 585, w: 220, h: 140 },
-  ];
-  const inAnyBody = (cx: number, cy: number, pad = 8) =>
-    KEEP_OUT.some(
-      (r) =>
-        cx > r.x - pad && cx < r.x + r.w + pad &&
-        cy > r.y - pad && cy < r.y + r.h + pad,
-    );
-  // Avoid placing inline parts on top of the active signal trace.
-  // SIGNAL_PATH_D: V from (1190,700) to (1190,730), H to (700,730),
-  // V to (700,470), H to (340,470), V to (340, LAMP_PIN.y=350).
-  const onSignalPath = (cx: number, cy: number, pad = 14) => {
-    // vertical: x=1190, y 700..730
-    if (Math.abs(cx - 1190) < pad && cy > 700 - pad && cy < 730 + pad) return true;
-    // horizontal: y=730, x 700..1190
-    if (Math.abs(cy - 730) < pad && cx > 700 - pad && cx < 1190 + pad) return true;
-    // vertical: x=700, y 470..730
-    if (Math.abs(cx - 700) < pad && cy > 470 - pad && cy < 730 + pad) return true;
-    // horizontal: y=470, x 340..700
-    if (Math.abs(cy - 470) < pad && cx > 340 - pad && cx < 700 + pad) return true;
-    // vertical: x=340, y 350..470
-    if (Math.abs(cx - 340) < pad && cy > 350 - pad && cy < 470 + pad) return true;
-    return false;
-  };
-  const parts: Inline[] = [];
-  // Curated, intentional inline parts. Each one sits on a real pad-to-pad
-  // trace at a coordinate we already know exists and isn't on the signal path.
-  const curated: Inline[] = [
-    // Series resistor on the long EDGE_R → CHIP_A trace (FR7, y=134, x 828..1416)
-    { kind: "resistor", x: 1200, y: 134, rot: 0 },
-    // Bypass capacitor on the FR2 trace into CHIP_A left pin (vertical x=452, y 144..236)
-    { kind: "capacitor", x: 452, y: 192, rot: 90 },
-    // Inductor on the portrait T3 power trace (vertical x=1190, y 0..262)
-    { kind: "inductor", x: 1190, y: 156, rot: 90 },
-    // Series resistor on the CHIP_D ↔ CHIP_A trace D1 (vertical x=808)
-    { kind: "resistor", x: 808, y: 360, rot: 90 },
-    // Diode on CHIP_D power rail D4 going down to the bottom edge
-    { kind: "diode", x: 808, y: 820, rot: 90 },
-  ];
-  const viaList = Array.from(viaMap.values());
-  parts.push(...curated);
-
-  return { traces, vias: viaList, parts };
+  return { traces, vias: [], parts: [] };
 }
 
 function HeroText() {
