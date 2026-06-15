@@ -907,25 +907,12 @@ function SignalPulse({ d, dur, accent }: { d: string; dur: number; accent?: "blu
 const BUTTON_PAD = { x: 1190, y: 700 };
 const LAMP = { cx: 340, cy: 320, w: 56, h: 32 };
 const LAMP_PIN = { x: LAMP.cx, y: LAMP.cy + LAMP.h / 2 + 14 }; // 340, 350
-// Capacitor C1 sits directly under the portrait module, above the control
-// box, on the same vertical axis (x=1190) as the red switch S1.
-// Top plate ← portrait bottom pad (charge source). Bottom plate → switch S1.
-const PORTRAIT_BOT_Y = 598; // portrait bottom pad center y
-const CAP_PT = { x: BUTTON_PAD.x, y: 640 };
-const CAP_TOP_Y = CAP_PT.y - 4; // top plate y
-const CAP_BOT_Y = CAP_PT.y + 4; // bottom plate y
-// Feed: portrait bottom pad → top plate of C1.
-const FEED_D = `M ${CAP_PT.x} ${PORTRAIT_BOT_Y} V ${CAP_TOP_Y}`;
-// Switch leg: bottom plate of C1 → switch input (top of red button).
-const SWITCH_LEG_D = `M ${CAP_PT.x} ${CAP_BOT_Y} V ${BUTTON_PAD.y}`;
-// Discharge: from C1 bottom plate, through the closed switch, then along a
-// single grid-aligned path to the lamp above the name. Routes through y=730
-// (well below the text) and up the left side, avoiding the headline letters.
-const DISCHARGE_D =
-  `M ${CAP_PT.x} ${CAP_BOT_Y} V 730 H 700 V 470 H ${LAMP_PIN.x} V ${LAMP_PIN.y}`;
-const DISCHARGE_DUR_MS = 1150;
-const SWITCH_CLOSE_MS = 180;
-const FEED_PULSE_MS = 900;
+// Single grid-aligned signal trace from the red button (S1) up to the lamp
+// (D1) above the name. Routes through y=740 (well below the text) and up the
+// left side, avoiding the headline letters.
+const SIGNAL_D =
+  `M ${BUTTON_PAD.x} ${BUTTON_PAD.y} V 740 H 700 V 470 H ${LAMP_PIN.x} V ${LAMP_PIN.y}`;
+const SIGNAL_DUR_MS = 1150;
 
 function Lamp({ on }: { on: boolean }) {
   return (
