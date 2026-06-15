@@ -1,5 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Cpu, Terminal, BrainCircuit } from "lucide-react";
+import { NavBar } from "@/components/ui/tubelight-navbar";
 import {
   Sheet,
   SheetContent,
@@ -242,24 +245,14 @@ function Index() {
 
 function TopBar() {
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5 sm:px-10">
-        <a href="#top" className="font-mono text-sm font-bold tracking-tight uppercase">
-          Ani Velaga
-        </a>
-        <nav className="flex items-center gap-7 font-mono text-xs uppercase tracking-[0.18em]">
-          {NAV.map(([label, href]) => (
-            <a
-              key={href}
-              href={href}
-              className="nav-link text-ink-dim transition hover:text-foreground"
-            >
-              {label}
-            </a>
-          ))}
-        </nav>
-      </div>
-    </header>
+    <NavBar
+      items={[
+        { name: "Home", href: "#hero" },
+        { name: "Work", href: "#work" },
+        { name: "Experience", href: "#experience" },
+        { name: "Contact", href: "#contact" },
+      ]}
+    />
   );
 }
 
