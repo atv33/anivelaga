@@ -283,7 +283,6 @@ const MOBILE_PORT_INSET = 18;
 const MOBILE_BUTTON_PAD = { x: 960, y: 920 };
 const MOBILE_LAMP = { cx: 230, cy: 240 };
 const MOBILE_LAMP_SCALE = 1.8;
-const MOBILE_LAMP_PIN_Y = MOBILE_LAMP.cy + (LAMP.h / 2 + 14) * MOBILE_LAMP_SCALE;
 const MOBILE_TRACE_TOP_Y = 360;
 
 // Pin pad layout helpers
