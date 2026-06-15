@@ -635,6 +635,12 @@ function buildCircuit(seed: number): Built {
   for (const s of segs) {
     // skip faint traces — inline parts on them read as floating
     if (s.o < 0.4) continue;
+    // skip segments that exit the visible canvas — a part on a trace whose
+    // other end vanishes off-screen reads as floating
+    const exitsCanvas =
+      s.a.x <= 20 || s.a.x >= 1580 || s.a.y <= 20 || s.a.y >= 880 ||
+      s.b.x <= 20 || s.b.x >= 1580 || s.b.y <= 20 || s.b.y >= 880;
+    if (exitsCanvas) continue;
     const isH = s.a.y === s.b.y;
     const len = isH ? Math.abs(s.b.x - s.a.x) : Math.abs(s.b.y - s.a.y);
     if (len < 50) continue;
@@ -651,6 +657,10 @@ function buildCircuit(seed: number): Built {
     if (inAnyBody(cx, cy)) continue;
     // skip if it would sit on top of the live signal trace
     if (onSignalPath(cx, cy)) continue;
+    // extra clearance for the lower-right region near the portrait/control —
+    // any inline part here tends to read as floating
+    if (cx > 1000 && cy > 600) continue;
+    if (cx > 700 && cx < 1100 && cy > 540 && cy < 720) continue;
     const key = `${cx},${cy}`;
     if (usedCenters.has(key)) continue;
     usedCenters.add(key);
