@@ -399,12 +399,12 @@ function buildCircuit(_seed: number): Built {
   // ── Extra pad-to-pad routes across the visible center board ──
   // CHIP_C right (480,262) → CHIP_A left (676,132) via y=200 lane
   add("CA1", [{x:528,y:262},{x:548,y:262},{x:548,y:200},{x:660,y:200},{x:660,y:132},{x:676,y:132}], 1.0, 0.4);
-  // CHIP_C right (480,284) → CHIP_B left (516,420)
-  add("CB1", [{x:528,y:284},{x:548,y:284},{x:548,y:372},{x:516,y:372},{x:516,y:400}], 1.0, 0.4);
-  // CHIP_C bot (428,310) → CHIP_B top (560,376) via y=336 lane
-  add("CB2", [{x:476,y:310},{x:476,y:336},{x:560,y:336},{x:560,y:376}], 1.0, 0.38);
-  // CHIP_C bot (452,310) → CHIP_B top (600,376) via y=348 lane
-  add("CB3", [{x:500,y:310},{x:500,y:348},{x:600,y:348},{x:600,y:376}], 1.0, 0.38);
+  // CHIP_C right (528,284) → CHIP_B right (644,420) — route around CHIP_B from the right
+  add("CB1", [{x:528,y:284},{x:680,y:284},{x:680,y:420},{x:644,y:420}], 1.0, 0.4);
+  // CHIP_C bot (452,310) → CHIP_B top (560,376) via y=328 lane (spaced apart from CB3/C4)
+  add("CB2", [{x:452,y:310},{x:452,y:328},{x:560,y:328},{x:560,y:376}], 1.0, 0.38);
+  // CHIP_C bot (500,310) → CHIP_B top (600,376) via y=352 lane
+  add("CB3", [{x:500,y:310},{x:500,y:352},{x:600,y:352},{x:600,y:376}], 1.0, 0.38);
   // CHIP_A bot (776,186) → CHIP_D top pin3 (872,484). Long vertical drops only; shared y=228 lane sits far above CHIP_D.
   add("AD1", [{x:776,y:186},{x:776,y:228},{x:872,y:228},{x:872,y:484}], 1.0, 0.4);
   // CHIP_A bot (800,186) → CHIP_D top pin4 (904,484) via y=240 lane (well above chip)
@@ -420,6 +420,20 @@ function buildCircuit(_seed: number): Built {
   // ── Header → CHIP_A more pins (use y=72 backbone) ──
   add("HA3", [{x:922,y:20},{x:922,y:88},{x:776,y:88},{x:776,y:106}], 1.0, 0.36);
   add("HA4", [{x:970,y:20},{x:970,y:88},{x:800,y:88},{x:800,y:106}], 1.0, 0.36);
+
+  // ── Portrait BOTTOM pads (5) → escape routes. Center pin (1190,590) drops into
+  //    the button (1190,700). Other 4 fan out to bottom/edges, avoiding the button. ──
+  add("PB_CTR", [{x:1190,y:590},{x:1190,y:700}], 1.25, 0.5);
+  add("PB1", [{x:1103,y:590},{x:1103,y:628},{x:980,y:628},{x:980,y:900}], 1.0, 0.4);
+  add("PB2", [{x:1147,y:590},{x:1147,y:652},{x:1040,y:652},{x:1040,y:900}], 1.0, 0.38);
+  add("PB3", [{x:1233,y:590},{x:1233,y:628},{x:1360,y:628},{x:1360,y:900}], 1.0, 0.4);
+  add("PB4", [{x:1277,y:590},{x:1277,y:652},{x:1420,y:652},{x:1420,y:900}], 1.0, 0.38);
+
+  // ── Fill right-side blank area (between CHIP_A right and portrait top) ──
+  // EDGE_R extra pin → portrait right pad row at y=332
+  add("ER1", [{x:1536,y:320},{x:1416,y:320},{x:1416,y:332},{x:1328,y:332}], 1.0, 0.38);
+  // CHIP_A right pin (828,158) extension already exists via L3. Add header→CHIP_A top (824)
+  add("HA5", [{x:954,y:20},{x:954,y:96},{x:824,y:96},{x:824,y:106}], 1.0, 0.36);
 
   // ── Inline parts — each centered exactly on a real straight segment.
   //    No part overlaps a chip body, the portrait, or the control module. ──
