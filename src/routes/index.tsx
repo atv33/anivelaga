@@ -1252,15 +1252,15 @@ function CircuitHero() {
                 <style>{`
                   @keyframes hwBoxPulse {
                     0%, 100% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 0 0 rgba(251,191,36,0); border-color: #2c2c2c; }
-                    50%      { box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 0 14px rgba(251,191,36,0.10); border-color: #3a3a3a; }
+                    50%      { box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 0 22px rgba(251,191,36,0.18); border-color: #4a4030; }
                   }
                   @keyframes hwBtnBob {
                     0%, 100% { transform: translateY(0); }
-                    50%      { transform: translateY(-2px); }
+                    50%      { transform: translateY(-5px); }
                   }
-                  .hw-module { animation: hwBoxPulse 2.8s ease-in-out infinite; }
-                  .hw-module.is-hot { animation-duration: 1.4s; }
-                  .hw-btn-wrap { animation: hwBtnBob 2.8s ease-in-out infinite; }
+                  .hw-module { animation: hwBoxPulse 2.0s ease-in-out infinite; }
+                  .hw-module.is-hot { animation-duration: 1.2s; }
+                  .hw-btn-wrap { animation: hwBtnBob 1.8s ease-in-out infinite; }
                   .hw-btn-wrap.is-pressed { animation: none; }
                 `}</style>
 
