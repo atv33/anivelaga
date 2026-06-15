@@ -1511,10 +1511,12 @@ function useMouseSpin(defaultSpeed = 20) {
 function InlineSerialModel({
   embedded = false,
   src = SERIAL_INLINE_GLB,
+  cameraOrbit = "0deg 75deg 105%",
 }: {
   embedded?: boolean;
   src?: string;
   idleElevation?: number;
+  cameraOrbit?: string;
 }) {
   const ref = useMouseSpin(20);
   return (
@@ -1534,6 +1536,7 @@ function InlineSerialModel({
           auto-rotate
           auto-rotate-delay={0}
           rotation-per-second="20deg"
+          camera-orbit={cameraOrbit}
           interaction-prompt="none"
           loading="eager"
           reveal="auto"
@@ -1706,7 +1709,7 @@ function CategoryBlock({ category: c }: { category: Category }) {
                       className="w-full"
                       style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", height: 450 }}
                     >
-                      <InlineSerialModel embedded src={SERIAL_INLINE_GLB} />
+                      <InlineSerialModel embedded src={SERIAL_INLINE_GLB} cameraOrbit="35deg 70deg 105%" />
                     </div>
                     <div className="w-full">
                       <ProjectRow
@@ -1742,7 +1745,7 @@ function CategoryBlock({ category: c }: { category: Category }) {
                       className="w-full"
                       style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", height: 450 }}
                     >
-                      <InlineSerialModel embedded src={THRUSTER_INLINE_GLB} idleElevation={15} />
+                      <InlineSerialModel embedded src={THRUSTER_INLINE_GLB} idleElevation={15} cameraOrbit="-120deg 80deg 105%" />
                     </div>
                     <div className="w-full">
                       <ProjectRow
