@@ -94,7 +94,7 @@ const CATEGORIES: Category[] = [
     projects: [
       {
         id: "A",
-        name: "Serial Board",
+        name: "Serial Communication Board",
         year: "Spring 2026",
         tagline:
           "Central communication hub for the submarine. Aggregates 16 RS-232 RX/TX channels from sensors and peripherals into a single USB-C connection to the Jetson AI computer. Uses FTDI USB-to-UART ICs with RS-232 level shifting. Spring 2026 added SMF05CT1G TVS diode arrays for ESD protection on all 32 signal lines, DVL direct-connect header, and hot-swap EEPROM footprint. 4-layer PCB, 3.701\" x 4.291\".",
@@ -110,13 +110,10 @@ const CATEGORIES: Category[] = [
       },
       {
         id: "C",
-        name: "Thruster Board — Orion",
+        name: "High-Power Thruster Control Board",
         tagline:
           "Motor driver PCB for the Orion vehicle's thruster array. Receives PWM/CAN commands from the Jetson via backplane connector and drives 8 brushless DC thrusters. Handles power distribution, overcurrent protection, and ESC signal conditioning.",
         stack: ["Altium Designer", "Motor Control", "CAN Bus", "PWM", "Power Distribution"],
-        links: [
-          { label: "Wiki", href: "https://wiki.cuauv.org/electrical/orion/documentation/Thrusters-Orion" },
-        ],
       },
     ],
   },
@@ -1814,7 +1811,7 @@ function ProjectRow({
               ? "— Cornell ECE Research"
               : categoryId === "03"
                 ? "— Personal project"
-                : "— Internal project"}
+                : ""}
           </span>
         ) : null}
       </div>
@@ -1903,8 +1900,10 @@ function ProjectDetails({
   project: Project;
   categoryId: string;
 }) {
-  const isSerial = p.name === "Serial Board";
-  const isThruster = p.name.startsWith("Thruster Board");
+  const isSerial = p.name === "Serial Communication Board";
+  const isThruster =
+    p.name === "High-Power Thruster Control Board" ||
+    p.name.startsWith("Thruster Board");
 
   return (
     <div className="flex flex-col gap-6">
