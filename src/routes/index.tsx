@@ -1300,8 +1300,18 @@ function CircuitHero() {
                     0%, 100% { opacity: 0.35; }
                     50%      { opacity: 1; }
                   }
-                  .hw-silhouette { animation: hwSilhouettePulse 2.0s ease-in-out infinite; }
-                  .hw-silhouette.is-hot { animation-duration: 1.2s; }
+                  @keyframes hwSilhouetteBob {
+                    0%, 100% { transform: translateY(0); }
+                    50%      { transform: translateY(-3px); }
+                  }
+                  .hw-silhouette {
+                    animation: hwSilhouettePulse 2.0s ease-in-out infinite,
+                               hwSilhouetteBob 2.0s ease-in-out infinite;
+                  }
+                  .hw-silhouette.is-hot {
+                    animation: hwSilhouettePulse 1.2s ease-in-out infinite,
+                               hwSilhouetteBob 1.2s ease-in-out infinite;
+                  }
                 `}</style>
 
                 {/* Unified glowing outline around button + box silhouette */}
