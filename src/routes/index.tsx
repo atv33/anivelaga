@@ -1957,10 +1957,10 @@ function SubProjectRow({
       </div>
       <div
         className="w-full"
-        style={{ borderTop: "1px solid rgba(255,255,255,0.06)", minHeight: 120 }}
+        style={{ borderTop: "1px solid rgba(255,255,255,0.06)", height: 280 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ width: "100%", height: "100%", minHeight: 120 }} className="overflow-hidden">
+        <div style={{ width: "100%", height: "100%" }} className="overflow-hidden">
           <model-viewer
             src={modelSrc}
             alt={`${p.name} 3D model`}
@@ -1971,7 +1971,7 @@ function SubProjectRow({
             interaction-prompt="none"
             loading="eager"
             reveal="auto"
-            style={{ width: "100%", height: "100%", minHeight: 200, backgroundColor: "transparent" } as React.CSSProperties}
+            style={{ width: "100%", height: "100%", backgroundColor: "transparent" } as React.CSSProperties}
           />
         </div>
       </div>
