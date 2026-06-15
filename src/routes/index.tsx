@@ -715,11 +715,11 @@ function SignalPulse({ d, dur, accent }: { d: string; dur: number; accent?: "blu
 // ── Interactive lamp + button signal path ───────────────────────────────────
 // Button sits below the portrait module; trace routes around the portrait,
 // across the lower board, up past CHIP_B, and into the lamp above the name.
-const BUTTON_PAD = { x: 1190, y: 660 };
+const BUTTON_PAD = { x: 1190, y: 700 };
 const LAMP = { cx: 340, cy: 320, w: 56, h: 32 };
 const LAMP_PIN = { x: LAMP.cx, y: LAMP.cy + LAMP.h / 2 + 14 }; // 340, 350
 const SIGNAL_PATH_D =
-  `M ${BUTTON_PAD.x} ${BUTTON_PAD.y} V 690 H 700 V 470 H ${LAMP_PIN.x} V ${LAMP_PIN.y}`;
+  `M ${BUTTON_PAD.x} ${BUTTON_PAD.y} V 730 H 700 V 470 H ${LAMP_PIN.x} V ${LAMP_PIN.y}`;
 const SIGNAL_DUR_MS = 1400;
 
 function Lamp({ on }: { on: boolean }) {
@@ -1145,70 +1145,180 @@ function CircuitHero() {
               </g>
             )}
             <foreignObject
-              x={BUTTON_PAD.x - 90}
-              y={595}
-              width={180}
-              height={42}
+              x={BUTTON_PAD.x - 110}
+              y={585}
+              width={220}
+              height={140}
               style={{ overflow: "visible", pointerEvents: "auto" }}
             >
               <div
-                style={{ display: "flex", justifyContent: "center", width: "100%" }}
+                style={{
+                  position: "relative",
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "flex-end",
+                  paddingBottom: 18,
+                  boxSizing: "border-box",
+                }}
               >
-                <button
-                  type="button"
-                  onClick={triggerSignal}
-                  onMouseEnter={onButtonEnter}
-                  onMouseLeave={onButtonLeave}
-                  onFocus={onButtonEnter}
-                  onBlur={onButtonLeave}
-                  aria-pressed={lampOn}
+                <style>{`
+                  @keyframes hwBoxPulse {
+                    0%, 100% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 0 0 rgba(251,191,36,0); border-color: #2c2c2c; }
+                    50%      { box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 0 14px rgba(251,191,36,0.10); border-color: #3a3a3a; }
+                  }
+                  @keyframes hwBtnBob {
+                    0%, 100% { transform: translateY(0); }
+                    50%      { transform: translateY(-2px); }
+                  }
+                  .hw-module { animation: hwBoxPulse 2.8s ease-in-out infinite; }
+                  .hw-module.is-hot { animation-duration: 1.4s; }
+                  .hw-btn-wrap { animation: hwBtnBob 2.8s ease-in-out infinite; }
+                  .hw-btn-wrap.is-pressed { animation: none; }
+                `}</style>
+
+                {/* rectangular control housing */}
+                <div
+                  className={`hw-module${hovering || charging || lampOn ? " is-hot" : ""}`}
                   style={{
-                    fontFamily:
-                      "JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, monospace",
-                    fontSize: 10,
-                    letterSpacing: "0.22em",
-                    textTransform: "uppercase",
-                    color: lampOn || charging ? "#fbbf24" : hovering ? "#e8d28a" : "#bdbdbd",
-                    background: pressed ? "#070707" : "#0d0d0d",
-                    border: `1px solid ${lampOn || charging ? "#7a5a1a" : hovering ? "#4a4030" : "#2c2c2c"}`,
-                    borderTopColor: pressed
-                      ? "#1c1c1c"
-                      : lampOn || charging
-                        ? "#a07720"
-                        : hovering
-                          ? "#6a5a30"
-                          : "#3a3a3a",
-                    padding: "8px 14px",
-                    borderRadius: 2,
-                    cursor: "pointer",
-                    boxShadow: pressed
-                      ? "inset 0 1px 0 rgba(0,0,0,0.6)"
-                      : lampOn || charging
-                        ? "0 0 14px rgba(251,191,36,0.3), inset 0 1px 0 rgba(255,255,255,0.04)"
-                        : hovering
-                          ? "0 0 10px rgba(251,191,36,0.15), inset 0 1px 0 rgba(255,255,255,0.04)"
-                          : "inset 0 1px 0 rgba(255,255,255,0.04)",
-                    transform: pressed ? "translateY(1px)" : "none",
-                    transition:
-                      "background 120ms ease, color 200ms ease, border-color 200ms ease, box-shadow 200ms ease, transform 80ms ease",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 8,
+                    width: 180,
+                    height: 56,
+                    background:
+                      "linear-gradient(180deg, #131313 0%, #0a0a0a 100%)",
+                    border: "1px solid #2c2c2c",
+                    borderRadius: 3,
+                    display: "flex",
+                    alignItems: "flex-end",
+                    justifyContent: "center",
+                    paddingBottom: 8,
+                    position: "relative",
                   }}
                 >
+                  {/* tiny corner screws */}
+                  {[
+                    { top: 4, left: 4 },
+                    { top: 4, right: 4 },
+                    { bottom: 4, left: 4 },
+                    { bottom: 4, right: 4 },
+                  ].map((p, i) => (
+                    <span
+                      key={i}
+                      style={{
+                        position: "absolute",
+                        width: 3,
+                        height: 3,
+                        borderRadius: 999,
+                        background: "#1a1a1a",
+                        border: "0.5px solid #333",
+                        ...p,
+                      }}
+                    />
+                  ))}
                   <span
                     style={{
-                      display: "inline-block",
-                      width: 6,
-                      height: 6,
-                      borderRadius: 999,
-                      background: lampOn || charging ? "#fbbf24" : hovering ? "#7a5a1a" : "#3a3a3a",
-                      boxShadow: lampOn || charging ? "0 0 6px #fbbf24" : "none",
-                      transition: "background 200ms ease, box-shadow 200ms ease",
+                      fontFamily:
+                        "JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, monospace",
+                      fontSize: 10,
+                      letterSpacing: "0.22em",
+                      textTransform: "uppercase",
+                      color:
+                        lampOn || charging
+                          ? "#fbbf24"
+                          : hovering
+                            ? "#e8d28a"
+                            : "#9a9a9a",
+                      transition: "color 200ms ease",
                     }}
-                  />
-                  Click me :)
-                </button>
+                  >
+                    Click me :)
+                  </span>
+                </div>
+
+                {/* red push button mounted on top of housing */}
+                <div
+                  className={`hw-btn-wrap${pressed ? " is-pressed" : ""}`}
+                  style={{
+                    position: "absolute",
+                    top: 6,
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    width: 64,
+                    height: 64,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={triggerSignal}
+                    onMouseEnter={onButtonEnter}
+                    onMouseLeave={onButtonLeave}
+                    onFocus={onButtonEnter}
+                    onBlur={onButtonLeave}
+                    aria-label="Click me"
+                    aria-pressed={lampOn}
+                    style={{
+                      position: "relative",
+                      width: 52,
+                      height: 52,
+                      borderRadius: "50%",
+                      border: "none",
+                      padding: 0,
+                      cursor: "pointer",
+                      // dark base / collar
+                      background:
+                        "radial-gradient(circle at 50% 55%, #1a0606 0%, #0a0202 70%, #050101 100%)",
+                      boxShadow: pressed
+                        ? "0 1px 0 rgba(0,0,0,0.8), inset 0 2px 4px rgba(0,0,0,0.7)"
+                        : hovering
+                          ? "0 6px 10px rgba(0,0,0,0.55), 0 0 18px rgba(220,38,38,0.35), inset 0 -2px 4px rgba(0,0,0,0.5)"
+                          : "0 4px 7px rgba(0,0,0,0.55), 0 0 10px rgba(220,38,38,0.18), inset 0 -2px 4px rgba(0,0,0,0.5)",
+                      transform: hovering && !pressed ? "scale(1.06)" : "scale(1)",
+                      transition:
+                        "transform 140ms ease, box-shadow 200ms ease",
+                    }}
+                  >
+                    {/* glossy red dome */}
+                    <span
+                      aria-hidden
+                      style={{
+                        position: "absolute",
+                        inset: 6,
+                        borderRadius: "50%",
+                        background:
+                          "radial-gradient(circle at 38% 32%, #ff8a8a 0%, #ef4444 28%, #b91c1c 65%, #7f1010 100%)",
+                        boxShadow: pressed
+                          ? "inset 0 3px 6px rgba(0,0,0,0.55), inset 0 -1px 2px rgba(255,255,255,0.05)"
+                          : "inset 0 -3px 6px rgba(0,0,0,0.45), inset 0 2px 3px rgba(255,255,255,0.18)",
+                        transform: pressed
+                          ? "translateY(2px) scale(0.98)"
+                          : "translateY(0)",
+                        transition:
+                          "transform 100ms ease, box-shadow 200ms ease",
+                      }}
+                    />
+                    {/* specular highlight */}
+                    <span
+                      aria-hidden
+                      style={{
+                        position: "absolute",
+                        top: 10,
+                        left: 14,
+                        width: 16,
+                        height: 9,
+                        borderRadius: "50%",
+                        background:
+                          "radial-gradient(ellipse at center, rgba(255,255,255,0.55), rgba(255,255,255,0) 70%)",
+                        opacity: pressed ? 0.25 : 0.7,
+                        pointerEvents: "none",
+                        transition: "opacity 150ms ease",
+                      }}
+                    />
+                  </button>
+                </div>
               </div>
             </foreignObject>
           </g>
