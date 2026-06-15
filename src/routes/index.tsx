@@ -860,7 +860,7 @@ function CircuitHero() {
   const preserve = isMobile
     ? "xMidYMid meet"
     : isTablet
-      ? "xMidYMid meet"
+      ? "xMidYMin meet"
       : "xMidYMid slice";
   const buttonPad = isMobile ? MOBILE_BUTTON_PAD : BUTTON_PAD;
   const signalD = isMobile
