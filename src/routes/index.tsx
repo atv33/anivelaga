@@ -1222,11 +1222,12 @@ function CircuitHero() {
             ))}
           </g>
 
-          {/* Interactive signal path: button → board → lamp. Drawn ABOVE the
-              text mask so it stays fully visible. */}
+          {/* Interactive switch → capacitor → lamp path. Drawn ABOVE the text
+              mask so it stays fully visible. */}
           <g>
+            {/* Base traces (PRE = switch→cap, POST = cap→lamp, FEED = charge source→cap) */}
             <path
-              d={SIGNAL_PATH_D}
+              d={SIGNAL_PATH_PRE}
               fill="none"
               stroke="#3a3a3a"
               strokeOpacity={0.55}
@@ -1237,61 +1238,134 @@ function CircuitHero() {
               className="hero-trace-draw"
               style={{ animationDelay: "1.4s" }}
             />
-            {/* Progressive amber fill — same path, revealed via dashoffset.
-                Click → fill from 1 → 0 over SIGNAL_DUR_MS (charging).
-                Hover → preview, peel ~8% from the button end. */}
             <path
-              d={SIGNAL_PATH_D}
+              d={SIGNAL_PATH_POST}
+              fill="none"
+              stroke="#3a3a3a"
+              strokeOpacity={0.55}
+              strokeWidth={1.4}
+              strokeLinecap="square"
+              strokeLinejoin="round"
+              pathLength={1}
+              className="hero-trace-draw"
+              style={{ animationDelay: "1.5s" }}
+            />
+            <path
+              d={CHARGE_FEED_D}
+              fill="none"
+              stroke="#3a3a3a"
+              strokeOpacity={0.45}
+              strokeWidth={1.1}
+              strokeLinecap="square"
+              strokeLinejoin="round"
+              pathLength={1}
+              className="hero-trace-draw"
+              style={{ animationDelay: "1.6s" }}
+            />
+
+            {/* PRE highlight — flashes when the switch closes */}
+            <path
+              d={SIGNAL_PATH_PRE}
               fill="none"
               stroke="#fbbf24"
-              strokeOpacity={lampOn ? 1 : 0.92}
               strokeWidth={1.8}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeOpacity={closing ? 0.95 : 0}
+              style={{
+                transition: "stroke-opacity 220ms ease",
+                filter: "drop-shadow(0 0 4px rgba(251,191,36,0.6))",
+                pointerEvents: "none",
+              }}
+            />
+
+            {/* POST progressive discharge fill (cap → lamp) */}
+            <path
+              d={SIGNAL_PATH_POST}
+              fill="none"
+              stroke="#fbbf24"
+              strokeOpacity={discharging || lampOn ? 1 : 0}
+              strokeWidth={1.9}
               strokeLinecap="round"
               strokeLinejoin="round"
               pathLength={1}
               strokeDasharray="1 1"
-              strokeDashoffset={
-                charging || lampOn ? 0 : hovering ? 0.92 : 1
-              }
+              strokeDashoffset={discharging || lampOn ? 0 : 1}
               style={{
-                transition:
-                  charging
-                    ? `stroke-dashoffset ${SIGNAL_DUR_MS}ms linear, stroke-opacity 200ms ease`
-                    : hovering
-                      ? "stroke-dashoffset 380ms ease-out, stroke-opacity 200ms ease"
-                      : "stroke-dashoffset 600ms ease-in, stroke-opacity 300ms ease",
-                filter: "drop-shadow(0 0 3px rgba(251,191,36,0.55))",
+                transition: discharging
+                  ? `stroke-dashoffset ${DISCHARGE_DUR_MS}ms linear, stroke-opacity 120ms ease`
+                  : "stroke-dashoffset 400ms ease, stroke-opacity 400ms ease",
+                filter: "drop-shadow(0 0 4px rgba(251,191,36,0.65))",
                 pointerEvents: "none",
               }}
             />
+
             {/* small inline parts along the routed path */}
             <g className="hero-part-in" style={{ animationDelay: "2s" }}>
               <InlineComponent kind="diode" x={430} y={470} rot={180} />
               <InlineComponent kind="resistor" x={600} y={470} rot={0} />
-              {/* via at corners */}
+              {/* vias at corners */}
               <circle cx={700} cy={690} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
               <circle cx={700} cy={470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
               <circle cx={340} cy={470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
             </g>
-            {/* leading dot that travels with the fill on click */}
-            {charging && pulseId > 0 && (
-              <g key={`click-${pulseId}`} style={{ pointerEvents: "none" }}>
+
+            {/* C1 capacitor sitting on the path between switch and lamp */}
+            <g className="hero-part-in" style={{ animationDelay: "1.7s" }}>
+              <Capacitor
+                cx={CAP_PT.x}
+                cy={CAP_PT.y}
+                stored={!discharging && !lampOn}
+                draining={discharging}
+              />
+            </g>
+
+            {/* Idle charge flow: dots traveling along CHARGE_FEED into top
+                plate of C1 — energy being stored. */}
+            {!charging && !lampOn && (
+              <g style={{ pointerEvents: "none" }}>
+                <circle r={2.4} fill="rgba(251,191,36,0.95)">
+                  <animateMotion dur="2.6s" repeatCount="indefinite" path={CHARGE_FEED_D} />
+                </circle>
+                <circle r={2.4} fill="rgba(251,191,36,0.95)">
+                  <animateMotion dur="2.6s" begin="0.85s" repeatCount="indefinite" path={CHARGE_FEED_D} />
+                </circle>
+                <circle r={2.4} fill="rgba(251,191,36,0.95)">
+                  <animateMotion dur="2.6s" begin="1.7s" repeatCount="indefinite" path={CHARGE_FEED_D} />
+                </circle>
+              </g>
+            )}
+
+            {/* Switch-close pulse: a quick dot from button up to the cap */}
+            {closing && pulseId > 0 && (
+              <g key={`sw-${pulseId}`} style={{ pointerEvents: "none" }}>
+                <circle r={3.2} fill="#fff4d6">
+                  <animateMotion dur={`${SWITCH_CLOSE_MS / 1000}s`} repeatCount="1" fill="freeze" path={SIGNAL_PATH_PRE} />
+                </circle>
+              </g>
+            )}
+
+            {/* Discharge leading dot — travels along POST path with the fill */}
+            {discharging && pulseId > 0 && (
+              <g key={`dis-${pulseId}`} style={{ pointerEvents: "none" }}>
                 <circle r={3.4} fill="#fff4d6">
-                  <animateMotion dur={`${SIGNAL_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={SIGNAL_PATH_D} />
+                  <animateMotion dur={`${DISCHARGE_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={SIGNAL_PATH_POST} />
                 </circle>
                 <circle r={8} fill="rgba(251,191,36,0.45)">
-                  <animateMotion dur={`${SIGNAL_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={SIGNAL_PATH_D} />
+                  <animateMotion dur={`${DISCHARGE_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={SIGNAL_PATH_POST} />
                 </circle>
               </g>
             )}
-            {/* hover preview: a tiny pulse that nudges into the route then fades */}
-            {hovering && hoverPulseId > 0 && (
+
+            {/* hover preview: a tiny pulse that nudges into the PRE route */}
+            {hovering && hoverPulseId > 0 && !charging && !lampOn && (
               <g key={`hov-${hoverPulseId}`} style={{ pointerEvents: "none" }}>
                 <circle r={2.6} fill="rgba(251,191,36,0.85)">
-                  <animateMotion dur="0.9s" repeatCount="indefinite" path={SIGNAL_PATH_D} keyPoints="0;0.1" keyTimes="0;1" calcMode="linear" />
+                  <animateMotion dur="0.9s" repeatCount="indefinite" path={SIGNAL_PATH_PRE} keyPoints="0;0.15" keyTimes="0;1" calcMode="linear" />
                 </circle>
               </g>
             )}
+
             <g className="hero-part-in" style={{ animationDelay: "1.6s" }}>
               <Lamp on={lampOn} />
             </g>
