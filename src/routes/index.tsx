@@ -244,368 +244,401 @@ function Hero() {
     <section
       id="top"
       data-section="00"
-      className="hero-bg relative mx-auto flex h-screen max-w-6xl flex-col justify-center px-6 sm:px-10"
+      className="relative w-full overflow-hidden"
+      style={{ minHeight: "100vh", background: "#050505" }}
     >
-      <HeroCircuits />
-      <div className="relative z-[2]">
-        <h1 className="font-display text-[clamp(2.5rem,8vw,6rem)] font-black uppercase">
-          Ani
-          <br />
-          Velaga
-        </h1>
-        <p className="mt-8 max-w-2xl text-lg leading-relaxed text-ink-dim sm:text-xl">
-          <span className="text-foreground">Electrical & computer engineer</span> — I design
-          hardware at the board level, then push it through the networking stack into LLM
-          inference systems. Currently on CUAUV building PCBs for an autonomous submarine.
-          <span className="blink-cursor">_</span>
-        </p>
+      <CircuitBackground />
+      <div className="pointer-events-none absolute inset-0 z-[3] mx-auto flex max-w-6xl items-end px-6 pb-28 sm:px-10 sm:pb-32">
+        <div className="pointer-events-auto max-w-xl">
+          <h1
+            className="font-display font-black uppercase text-white"
+            style={{ fontSize: "clamp(3rem,10vw,7.5rem)", letterSpacing: "-0.04em", lineHeight: 0.88 }}
+          >
+            Ani
+            <br />
+            Velaga
+          </h1>
+          <p
+            className="mt-6 max-w-md font-mono text-[13px] leading-relaxed text-neutral-400 sm:text-sm"
+          >
+            <span className="text-neutral-100">Electrical &amp; computer engineer</span> — I design
+            hardware at the board level, then push it through the networking stack into LLM
+            inference systems. Currently on CUAUV building PCBs for an autonomous submarine.
+            <span className="blink-cursor">_</span>
+          </p>
+        </div>
       </div>
-      <div className="absolute inset-x-0 bottom-8 flex items-center justify-center gap-3 px-6 font-mono text-xs uppercase tracking-[0.28em] text-ink-dim sm:px-10">
-        <span className="size-1.5 rounded-full bg-mark" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-6 z-[3] flex items-center justify-center gap-3 px-6 font-mono text-[10px] uppercase tracking-[0.28em] text-neutral-500 sm:px-10">
+        <span className="size-1.5 rounded-full bg-neutral-300" />
         Available for new work — 2026
       </div>
     </section>
   );
 }
 
-function HeroCircuits() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    const dpr = window.devicePixelRatio || 1;
-    let W = 0;
-    let H = 0;
-    let raf = 0;
+// ============================================================
+// CircuitBackground — full SVG, deterministic branching traces
+// ============================================================
+const VB_W = 1600;
+const VB_H = 900;
 
-    // ===== Style =====
-    const CHIP_OPACITY = 0.2;
-    const TRACE_OPACITY = 0.13;
-    const PAD_OPACITY = 0.18;
-    const CHIP_DURATION = 600;
-    const SPEED = 600; // px/s
-    const STAGGER = 100;
-    const POP_DURATION = 150;
-    const PIN_LEN = 14;
-    const PAD_SIZE = 5;
+type Pt = [number, number];
+type Side = "t" | "b" | "l" | "r";
+type Chip = { x: number; y: number; w: number; h: number; perSide: number };
 
-    // ===== Helpers =====
-    const fadeAt = (y: number) => {
-      const top = H * 0.70;
-      const bot = H * 0.83;
-      if (y <= top) return 1;
-      if (y >= bot) return 0;
-      return 1 - (y - top) / (bot - top);
-    };
-    const setStroke = (a: number, w: number) => {
-      ctx.strokeStyle = `rgba(255,255,255,${a})`;
-      ctx.lineWidth = w;
-    };
-    const setFill = (a: number) => { ctx.fillStyle = `rgba(255,255,255,${a})`; };
-    const line = (x1: number, y1: number, x2: number, y2: number) => {
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-      ctx.stroke();
-    };
+function mulberry32(a: number) {
+  return function () {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
-    // ===== Chip / Pin model =====
-    type Side = "top" | "bottom" | "left" | "right";
-    type Pin = { base: [number, number]; tip: [number, number]; side: Side };
-    type Chip = { x: number; y: number; w: number; h: number; pins: Record<Side, Pin[]> };
+const DIRS: Pt[] = [
+  [1, 0],
+  [0, 1],
+  [-1, 0],
+  [0, -1],
+];
 
-    const makeChipFrame = (cx: number, cy: number, w: number, h: number, perSide: number): Chip => {
-      const x = Math.round(cx - w / 2);
-      const y = Math.round(cy - h / 2);
-      const xOffs = Array.from({ length: perSide }, (_, i) => ((i + 1) * w) / (perSide + 1));
-      const yOffs = Array.from({ length: perSide }, (_, i) => ((i + 1) * h) / (perSide + 1));
-      const top: Pin[] = xOffs.map((o) => ({ base: [x + o, y], tip: [x + o, y - PIN_LEN], side: "top" }));
-      const bottom: Pin[] = xOffs.map((o) => ({ base: [x + o, y + h], tip: [x + o, y + h + PIN_LEN], side: "bottom" }));
-      const left: Pin[] = yOffs.map((o) => ({ base: [x, y + o], tip: [x - PIN_LEN, y + o], side: "left" }));
-      const right: Pin[] = yOffs.map((o) => ({ base: [x + w, y + o], tip: [x + w + PIN_LEN, y + o], side: "right" }));
-      return { x, y, w, h, pins: { top, bottom, left, right } };
-    };
-    const makeChip = (cx: number, cy: number, size: number, perSide: number): Chip =>
-      makeChipFrame(cx, cy, size, size, perSide);
+function chipPins(c: Chip) {
+  const out: { p: Pt; side: Side; dir: number }[] = [];
+  const xs = Array.from({ length: c.perSide }, (_, i) => c.x + ((i + 1) * c.w) / (c.perSide + 1));
+  const ys = Array.from({ length: c.perSide }, (_, i) => c.y + ((i + 1) * c.h) / (c.perSide + 1));
+  xs.forEach((x) => out.push({ p: [x, c.y], side: "t", dir: 3 }));
+  xs.forEach((x) => out.push({ p: [x, c.y + c.h], side: "b", dir: 1 }));
+  ys.forEach((y) => out.push({ p: [c.x, y], side: "l", dir: 2 }));
+  ys.forEach((y) => out.push({ p: [c.x + c.w, y], side: "r", dir: 0 }));
+  return out;
+}
 
-    // ===== Trace model =====
-    type Trace = { pts: [number, number][]; segLens: number[]; total: number; delayIdx: number };
-    const buildTrace = (pts: [number, number][], delayIdx: number): Trace => {
-      const segLens: number[] = [];
-      let total = 0;
-      for (let i = 0; i < pts.length - 1; i++) {
-        const dx = pts[i + 1][0] - pts[i][0];
-        const dy = pts[i + 1][1] - pts[i][1];
-        const L = Math.hypot(dx, dy);
-        segLens.push(L);
-        total += L;
+// Lower-left "clean zone" where text lives — traces avoid entering deeply.
+const CLEAN = { x: 0, y: 560, w: 720, h: 340 };
+function inClean(x: number, y: number, slack = 20) {
+  return x < CLEAN.x + CLEAN.w - slack && y > CLEAN.y + slack;
+}
+
+function snap(v: number, g = 8) { return Math.round(v / g) * g; }
+
+type Trace = { d: string; w: number };
+type Via = { x: number; y: number; pulse?: boolean };
+type Pad = { x: number; y: number; w: number; h: number };
+
+type Generated = {
+  traces: Trace[];
+  vias: Via[];
+  pads: Pad[];
+  resistors: { x: number; y: number; w: number; h: number; horiz: boolean }[];
+  capacitors: { x: number; y: number; horiz: boolean }[];
+};
+
+function generateCircuit(): Generated {
+  const rand = mulberry32(20260615);
+  const traces: Trace[] = [];
+  const vias: Via[] = [];
+  const pads: Pad[] = [];
+  const resistors: Generated["resistors"] = [];
+  const capacitors: Generated["capacitors"] = [];
+
+  const terminate = (x: number, y: number) => {
+    const r = rand();
+    if (r < 0.45) {
+      vias.push({ x, y });
+    } else if (r < 0.7) {
+      pads.push({ x: x - 3, y: y - 3, w: 6, h: 6 });
+    } else if (r < 0.88) {
+      // small resistor (SMD 0805) inline-ish
+      resistors.push({ x: x - 6, y: y - 3, w: 12, h: 6, horiz: rand() > 0.5 });
+    } else {
+      // capacitor symbol pair
+      capacitors.push({ x, y, horiz: rand() > 0.5 });
+    }
+  };
+
+  // Grow an orthogonal polyline. Returns nothing; appends to `traces`.
+  // depth controls recursion for branches.
+  const grow = (
+    sx: number,
+    sy: number,
+    sd: number,
+    depth: number,
+    branchChance: number,
+    maxSegs: number,
+    weight: number,
+  ) => {
+    const pts: Pt[] = [[sx, sy]];
+    let cx = sx;
+    let cy = sy;
+    let cd = sd;
+    let segs = 0;
+    while (segs < maxSegs) {
+      const len = snap(40 + Math.floor(rand() * 140));
+      const [dx, dy] = DIRS[cd];
+      let nx = cx + dx * len;
+      let ny = cy + dy * len;
+      // clip to bounds
+      nx = Math.max(-30, Math.min(VB_W + 30, nx));
+      ny = Math.max(-30, Math.min(VB_H + 30, ny));
+      // avoid plunging into clean zone — shorten or stop
+      if (inClean(nx, ny, 0)) {
+        // try to clip the segment so it stops at the clean zone edge
+        if (dy > 0) ny = Math.min(ny, CLEAN.y + 24);
+        if (dx < 0 && cy > CLEAN.y) nx = Math.max(nx, CLEAN.x + CLEAN.w - 24);
+        if (inClean(nx, ny, 0)) break;
       }
-      return { pts, segLens, total, delayIdx };
-    };
-    const pointAt = (t: Trace, dist: number): [number, number] => {
-      let d = dist;
-      for (let i = 0; i < t.segLens.length; i++) {
-        if (d <= t.segLens[i]) {
-          const f = t.segLens[i] === 0 ? 0 : d / t.segLens[i];
-          return [t.pts[i][0] + (t.pts[i + 1][0] - t.pts[i][0]) * f,
-                  t.pts[i][1] + (t.pts[i + 1][1] - t.pts[i][1]) * f];
-        }
-        d -= t.segLens[i];
+      if (Math.abs(nx - cx) < 4 && Math.abs(ny - cy) < 4) break;
+      pts.push([nx, ny]);
+      cx = nx;
+      cy = ny;
+      segs++;
+      // out-of-bounds → off-screen continuation, end here
+      if (cx <= 0 || cx >= VB_W || cy <= 0 || cy >= VB_H) break;
+      // maybe spawn a branch at this bend
+      if (depth < 2 && rand() < branchChance) {
+        const turn = rand() < 0.5 ? 1 : 3;
+        const nd = (cd + turn) & 3;
+        // small via at the bend marking the branch
+        vias.push({ x: cx, y: cy });
+        grow(cx, cy, nd, depth + 1, branchChance * 0.55, Math.max(2, maxSegs - 2), Math.max(1, weight - 0.4));
       }
-      return t.pts[t.pts.length - 1];
-    };
-
-    // ===== State =====
-    let chipA: Chip;
-    let chipB: Chip;
-    let chipH: Chip;
-    let traces: Trace[] = [];
-    type Via = { x: number; y: number; traceIdx: number; dist: number };
-    let vias: Via[] = [];
-    let startTime = 0;
-    const headshotImg = new Image();
-    headshotImg.src = headshotAsset.url;
-    let imgReady = headshotImg.complete && headshotImg.naturalWidth > 0;
-    headshotImg.onload = () => {
-      imgReady = true;
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(render);
-    };
-
-    // ===== Layout =====
-    const layout = () => {
-      chipA = makeChip(W * 0.22, H * 0.22, 80, 6);
-      chipB = makeChip(W * 0.55, H * 0.18, 70, 5);
-      // Photo "chip" — outer frame is 166x201 (inner photo 150x185 + 8px on each side).
-      // Pin stubs originate from the OUTER frame edge.
-      chipH = makeChipFrame(W * 0.78, H * 0.38, 166, 201, 4);
-      traces = [];
-      vias = [];
-      let order = 0;
-
-      const push = (pts: [number, number][]) => {
-        traces.push(buildTrace(pts, order++));
-        return traces.length - 1;
-      };
-
-      // Route every pin outward to its nearest canvas edge with an L-shape.
-      // Stagger run length per pin to avoid overlap. Drop a via at the bend.
-      const PAD = 14; // distance from canvas edge where trace terminates
-      const maxBotY = H * 0.8; // keep bottom-bound traces above hard fade
-
-      const routePins = (chip: Chip) => {
-        // top -> top edge
-        chip.pins.top.forEach((p, k) => {
-          const run = 24 + k * 10;
-          const bx = p.tip[0];
-          const by = p.tip[1] - run;
-          const ex = bx + (k - (chip.pins.top.length - 1) / 2) * 14;
-          const idx = push([[p.base[0], p.base[1]], [p.tip[0], p.tip[1]], [bx, by], [ex, by], [ex, PAD]]);
-          vias.push({ x: bx, y: by, traceIdx: idx, dist: PIN_LEN + run });
-        });
-        // bottom -> bottom (capped by fade)
-        chip.pins.bottom.forEach((p, k) => {
-          const run = 24 + k * 10;
-          const bx = p.tip[0];
-          const by = Math.min(maxBotY, p.tip[1] + run);
-          const ex = bx + (k - (chip.pins.bottom.length - 1) / 2) * 14;
-          const ey = Math.min(maxBotY, by + 80);
-          const idx = push([[p.base[0], p.base[1]], [p.tip[0], p.tip[1]], [bx, by], [ex, by], [ex, ey]]);
-          vias.push({ x: bx, y: by, traceIdx: idx, dist: PIN_LEN + (by - p.tip[1]) });
-        });
-        // left -> left edge
-        chip.pins.left.forEach((p, k) => {
-          const run = 24 + k * 10;
-          const bx = p.tip[0] - run;
-          const by = p.tip[1];
-          const ey = by + (k - (chip.pins.left.length - 1) / 2) * 14;
-          const idx = push([[p.base[0], p.base[1]], [p.tip[0], p.tip[1]], [bx, by], [bx, ey], [PAD, ey]]);
-          vias.push({ x: bx, y: by, traceIdx: idx, dist: PIN_LEN + run });
-        });
-        // right -> right edge
-        chip.pins.right.forEach((p, k) => {
-          const run = 24 + k * 10;
-          const bx = p.tip[0] + run;
-          const by = p.tip[1];
-          const ey = by + (k - (chip.pins.right.length - 1) / 2) * 14;
-          const idx = push([[p.base[0], p.base[1]], [p.tip[0], p.tip[1]], [bx, by], [bx, ey], [W - PAD, ey]]);
-          vias.push({ x: bx, y: by, traceIdx: idx, dist: PIN_LEN + run });
-        });
-      };
-
-      routePins(chipA);
-      routePins(chipB);
-      routePins(chipH);
-    };
-
-    // ===== Drawing =====
-    const drawChip = (c: Chip, progress: number) => {
-      const a = CHIP_OPACITY * progress * fadeAt(c.y + c.h / 2);
-      setStroke(a, 1);
-      ctx.strokeRect(c.x + 0.5, c.y + 0.5, c.w, c.h);
-    };
-    const drawPinsAndPads = (c: Chip) => {
-      const all = [...c.pins.top, ...c.pins.bottom, ...c.pins.left, ...c.pins.right];
-      for (const p of all) {
-        const f = fadeAt(p.tip[1]);
-        if (f <= 0) continue;
-        setStroke(CHIP_OPACITY * f, 1);
-        line(p.base[0] + 0.5, p.base[1] + 0.5, p.tip[0] + 0.5, p.tip[1] + 0.5);
-        setFill(PAD_OPACITY * f);
-        const px = p.tip[0] - PAD_SIZE / 2;
-        const py = p.tip[1] - PAD_SIZE / 2;
-        ctx.fillRect(Math.round(px), Math.round(py), PAD_SIZE, PAD_SIZE);
+      // choose next direction (continue or turn)
+      if (rand() < 0.55) {
+        cd = (cd + (rand() < 0.5 ? 1 : 3)) & 3;
       }
-    };
-    const drawTrace = (t: Trace, drawnDist: number) => {
-      if (drawnDist <= 0) return;
-      let remaining = drawnDist;
-      ctx.lineWidth = 1.5;
-      for (let i = 0; i < t.segLens.length; i++) {
-        const L = t.segLens[i];
-        if (L === 0) continue;
-        const take = Math.min(L, remaining);
-        const f = take / L;
-        const [x1, y1] = t.pts[i];
-        const x2 = x1 + (t.pts[i + 1][0] - x1) * f;
-        const y2 = y1 + (t.pts[i + 1][1] - y1) * f;
-        const yMid = (y1 + y2) / 2;
-        const a = TRACE_OPACITY * fadeAt(yMid);
-        if (a > 0.002) {
-          ctx.strokeStyle = `rgba(255,255,255,${a})`;
-          ctx.beginPath();
-          ctx.moveTo(x1, y1);
-          ctx.lineTo(x2, y2);
-          ctx.stroke();
-        }
-        remaining -= take;
-        if (remaining <= 0) break;
-      }
-    };
-    const drawVia = (v: Via, s: number) => {
-      const f = fadeAt(v.y);
-      if (f <= 0) return;
-      const r1 = 2 * s;
-      const r2 = 4 * s;
-      setFill(PAD_OPACITY * f);
-      ctx.beginPath();
-      ctx.arc(v.x, v.y, r1, 0, Math.PI * 2);
-      ctx.fill();
-      setStroke(PAD_OPACITY * f, 1);
-      ctx.beginPath();
-      ctx.arc(v.x, v.y, r2, 0, Math.PI * 2);
-      ctx.stroke();
-    };
-    const drawHeadshot = (c: Chip, progress: number) => {
-      // c is the OUTER frame (166x201). Photo is 150x185 centered inside.
-      const ow = c.w;
-      const oh = c.h;
-      const pw = 150;
-      const ph = 185;
-      const px = c.x + (ow - pw) / 2;
-      const py = c.y + (oh - ph) / 2;
-      if (imgReady) {
-        ctx.save();
-        ctx.globalAlpha = progress;
-        ctx.drawImage(headshotImg, px, py, pw, ph);
-        ctx.restore();
-      }
-      // Inner photo frame (150x185, 2px, opacity 0.5)
-      setStroke(0.5 * progress, 2);
-      ctx.strokeRect(px + 1, py + 1, pw - 2, ph - 2);
-      // Outer IC package frame (166x201, 1px, opacity 0.25)
-      setStroke(0.25 * progress, 1);
-      ctx.strokeRect(c.x + 0.5, c.y + 0.5, ow, oh);
-    };
+    }
+    if (pts.length >= 2) {
+      const d =
+        "M" +
+        pts.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join(" L ");
+      traces.push({ d, w: weight });
+      const [ex, ey] = pts[pts.length - 1];
+      if (ex > 4 && ex < VB_W - 4 && ey > 4 && ey < VB_H - 4) terminate(ex, ey);
+    }
+  };
 
-    // ===== Render loop =====
-    const tracesStartAt = (i: number) => CHIP_DURATION + i * STAGGER;
-    const elementProgress = (drawnDist: number, popDist: number) => {
-      // returns scale 0..1 for pop after trace reaches popDist
-      if (drawnDist < popDist) return 0;
-      const t = Math.min(1, ((drawnDist - popDist) / SPEED) * 1000 / POP_DURATION);
-      // ease-out cubic
-      return 1 - Math.pow(1 - t, 3);
-    };
+  // ----- Chips -----
+  const chips: Chip[] = [
+    { x: 360, y: 190, w: 120, h: 84, perSide: 4 },
+    { x: 720, y: 110, w: 96, h: 72, perSide: 3 },
+    { x: 880, y: 470, w: 78, h: 64, perSide: 3 },
+  ];
+  for (const c of chips) {
+    const pins = chipPins(c);
+    for (const { p, dir } of pins) {
+      // pin stub
+      const [dx, dy] = DIRS[dir];
+      const tip: Pt = [p[0] + dx * 10, p[1] + dy * 10];
+      pads.push({ x: tip[0] - 2, y: tip[1] - 2, w: 4, h: 4 });
+      grow(tip[0], tip[1], dir, 0, 0.5, 6, 1.4);
+    }
+  }
 
-    const render = (now: number) => {
-      ctx.clearRect(0, 0, W, H);
-      const elapsed = now - startTime;
+  // ----- Portrait chip pins → dense branching outward -----
+  const portrait: Chip = { x: PORTRAIT.x, y: PORTRAIT.y, w: PORTRAIT.w, h: PORTRAIT.h, perSide: 6 };
+  for (const { p, dir, side } of chipPins(portrait)) {
+    const [dx, dy] = DIRS[dir];
+    const stubLen = 16;
+    const tip: Pt = [p[0] + dx * stubLen, p[1] + dy * stubLen];
+    pads.push({ x: tip[0] - 2.5, y: tip[1] - 2.5, w: 5, h: 5 });
+    // a few left-going traces should fade before hitting text — handled by mask
+    grow(tip[0], tip[1], dir, 0, side === "l" ? 0.6 : 0.65, side === "l" ? 5 : 7, 1.6);
+    // sometimes a second branch in the perpendicular dir
+    if (rand() < 0.3) {
+      const turn = rand() < 0.5 ? 1 : 3;
+      grow(tip[0], tip[1], (dir + turn) & 3, 1, 0.4, 4, 1.2);
+    }
+    vias.push({ x: p[0], y: p[1] });
+  }
 
-      // Chips
-      const chipP = Math.min(1, elapsed / CHIP_DURATION);
-      drawChip(chipA, chipP);
-      drawChip(chipB, chipP);
-      drawHeadshot(chipH, chipP);
+  // ----- Edge-origin trunks -----
+  const edgeSources: { x: number; y: number; dir: number }[] = [
+    { x: 0, y: 120, dir: 0 },
+    { x: 0, y: 360, dir: 0 },
+    { x: 0, y: 480, dir: 0 },
+    { x: VB_W, y: 760, dir: 2 },
+    { x: VB_W, y: 180, dir: 2 },
+    { x: 1120, y: 0, dir: 1 },
+    { x: 280, y: 0, dir: 1 },
+    { x: 980, y: 0, dir: 1 },
+  ];
+  for (const s of edgeSources) {
+    grow(s.x, s.y, s.dir, 0, 0.55, 7, 1.5);
+  }
 
-      let anyActive = chipP < 1;
+  // A handful of pulsing vias near portrait + upper chips
+  const pulseTargets = [
+    [PORTRAIT.x - 30, PORTRAIT.y + 60],
+    [PORTRAIT.x + PORTRAIT.w + 24, PORTRAIT.y + PORTRAIT.h - 40],
+    [chips[0].x + chips[0].w + 40, chips[0].y - 20],
+    [chips[1].x - 30, chips[1].y + chips[1].h + 30],
+  ];
+  for (const [x, y] of pulseTargets) {
+    vias.push({ x, y, pulse: true });
+  }
 
-      if (chipP >= 1) {
-        drawPinsAndPads(chipA);
-        drawPinsAndPads(chipB);
-        drawPinsAndPads(chipH);
+  return { traces, vias, pads, resistors, capacitors };
+}
 
-        // Traces
-        const traceDrawn: number[] = new Array(traces.length).fill(0);
-        for (let i = 0; i < traces.length; i++) {
-          const t = traces[i];
-          const te = elapsed - tracesStartAt(i);
-          if (te <= 0) { anyActive = true; continue; }
-          const d = Math.min(t.total, (te / 1000) * SPEED);
-          traceDrawn[i] = d;
-          drawTrace(t, d);
-          if (d < t.total) anyActive = true;
-        }
+const PORTRAIT = { x: 1180, y: 280, w: 240, h: 300 };
+const CIRCUIT = generateCircuit();
 
-        // Vias pop in
-        for (const v of vias) {
-          const d = traceDrawn[v.traceIdx] || 0;
-          const s = elementProgress(d, v.dist);
-          if (s > 0) drawVia(v, s);
-          else if (d < v.dist) anyActive = true;
-        }
-      }
-
-      if (anyActive) raf = requestAnimationFrame(render);
-    };
-
-    const resize = () => {
-      const rect = canvas.getBoundingClientRect();
-      W = rect.width;
-      H = rect.height;
-      canvas.width = Math.max(1, Math.floor(W * dpr));
-      canvas.height = Math.max(1, Math.floor(H * dpr));
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      layout();
-      startTime = performance.now();
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(render);
-    };
-
-    resize();
-    const ro = new ResizeObserver(resize);
-    ro.observe(canvas);
-    return () => {
-      cancelAnimationFrame(raf);
-      ro.disconnect();
-    };
-  }, []);
+function PortraitChip() {
+  const ix = PORTRAIT.x + 14;
+  const iy = PORTRAIT.y + 14;
+  const iw = PORTRAIT.w - 28;
+  const ih = PORTRAIT.h - 28;
   return (
-    <canvas
-      ref={canvasRef}
-      aria-hidden
-      style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: "100%",
-        zIndex: 1,
-        pointerEvents: "none",
-      }}
-    />
+    <g>
+      {/* subtle muted glow */}
+      <rect
+        x={PORTRAIT.x - 18}
+        y={PORTRAIT.y - 18}
+        width={PORTRAIT.w + 36}
+        height={PORTRAIT.h + 36}
+        fill="url(#portraitGlow)"
+        opacity="0.55"
+      />
+      {/* outer IC package */}
+      <rect
+        x={PORTRAIT.x}
+        y={PORTRAIT.y}
+        width={PORTRAIT.w}
+        height={PORTRAIT.h}
+        fill="#0a0a0a"
+        stroke="rgba(255,255,255,0.32)"
+        strokeWidth="1"
+      />
+      {/* inner photo frame */}
+      <rect
+        x={ix - 2}
+        y={iy - 2}
+        width={iw + 4}
+        height={ih + 4}
+        fill="none"
+        stroke="rgba(255,255,255,0.55)"
+        strokeWidth="1.5"
+      />
+      <image href={headshotAsset.url} x={ix} y={iy} width={iw} height={ih} preserveAspectRatio="xMidYMid slice" />
+      {/* corner notch (orientation mark) */}
+      <circle cx={PORTRAIT.x + 10} cy={PORTRAIT.y + 10} r="2.5" fill="rgba(255,255,255,0.45)" />
+    </g>
+  );
+}
+
+function CircuitBackground() {
+  return (
+    <div className="pointer-events-none absolute inset-0 z-[1] overflow-hidden">
+      <svg
+        viewBox={`0 0 ${VB_W} ${VB_H}`}
+        preserveAspectRatio="xMidYMid slice"
+        className="hero-circuit-fade absolute inset-0 h-full w-full"
+        aria-hidden
+      >
+        <defs>
+          <radialGradient id="portraitGlow" cx="50%" cy="50%" r="55%">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.08)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+          </radialGradient>
+          {/* Fade mask: bright everywhere except a soft falloff in the lower-left text zone */}
+          <radialGradient id="cleanFade" cx="18%" cy="88%" r="42%">
+            <stop offset="0%" stopColor="#000" />
+            <stop offset="55%" stopColor="#222" />
+            <stop offset="100%" stopColor="#fff" />
+          </radialGradient>
+          <mask id="circuitMask" maskUnits="userSpaceOnUse" x="0" y="0" width={VB_W} height={VB_H}>
+            <rect x="0" y="0" width={VB_W} height={VB_H} fill="url(#cleanFade)" />
+          </mask>
+        </defs>
+
+        {/* Traces + components live inside the mask */}
+        <g mask="url(#circuitMask)" stroke="rgba(255,255,255,0.32)" fill="none">
+          {/* ICs */}
+          <g opacity="0.35">
+            {[
+              { x: 360, y: 190, w: 120, h: 84 },
+              { x: 720, y: 110, w: 96, h: 72 },
+              { x: 880, y: 470, w: 78, h: 64 },
+            ].map((c, i) => (
+              <g key={i}>
+                <rect x={c.x} y={c.y} width={c.w} height={c.h} fill="#070707" strokeWidth="1" />
+                <circle cx={c.x + 8} cy={c.y + 8} r="2" fill="rgba(255,255,255,0.4)" stroke="none" />
+              </g>
+            ))}
+          </g>
+
+          {/* Traces */}
+          <g strokeLinecap="square" strokeLinejoin="miter">
+            {CIRCUIT.traces.map((t, i) => (
+              <path
+                key={i}
+                d={t.d}
+                stroke={`rgba(255,255,255,${0.1 + (t.w - 1) * 0.04})`}
+                strokeWidth={t.w}
+              />
+            ))}
+          </g>
+
+          {/* Pads */}
+          <g fill="rgba(255,255,255,0.45)" stroke="none">
+            {CIRCUIT.pads.map((p, i) => (
+              <rect key={i} x={p.x} y={p.y} width={p.w} height={p.h} />
+            ))}
+          </g>
+
+          {/* Resistors (small rect with end caps) */}
+          <g stroke="rgba(255,255,255,0.4)" strokeWidth="1" fill="#0a0a0a">
+            {CIRCUIT.resistors.map((r, i) => (
+              <rect
+                key={i}
+                x={r.horiz ? r.x : r.x + (r.w - r.h) / 2}
+                y={r.horiz ? r.y : r.y - (r.w - r.h) / 2}
+                width={r.horiz ? r.w : r.h}
+                height={r.horiz ? r.h : r.w}
+              />
+            ))}
+          </g>
+
+          {/* Capacitors (parallel lines) */}
+          <g stroke="rgba(255,255,255,0.45)" strokeWidth="1.2">
+            {CIRCUIT.capacitors.map((c, i) =>
+              c.horiz ? (
+                <g key={i}>
+                  <line x1={c.x - 2} y1={c.y - 5} x2={c.x - 2} y2={c.y + 5} />
+                  <line x1={c.x + 2} y1={c.y - 5} x2={c.x + 2} y2={c.y + 5} />
+                </g>
+              ) : (
+                <g key={i}>
+                  <line x1={c.x - 5} y1={c.y - 2} x2={c.x + 5} y2={c.y - 2} />
+                  <line x1={c.x - 5} y1={c.y + 2} x2={c.x + 5} y2={c.y + 2} />
+                </g>
+              ),
+            )}
+          </g>
+
+          {/* Vias */}
+          <g>
+            {CIRCUIT.vias.map((v, i) => (
+              <g key={i}>
+                <circle
+                  cx={v.x}
+                  cy={v.y}
+                  r={v.pulse ? 3.5 : 2.4}
+                  fill="#0a0a0a"
+                  stroke="rgba(255,255,255,0.55)"
+                  strokeWidth="1"
+                  className={v.pulse ? "hero-via-pulse" : undefined}
+                />
+              </g>
+            ))}
+          </g>
+        </g>
+
+        {/* Portrait — sits ABOVE mask so it is never faded */}
+        <PortraitChip />
+      </svg>
+    </div>
   );
 }
 
