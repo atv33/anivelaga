@@ -1375,7 +1375,7 @@ function CircuitHero() {
             <circle cx={BUTTON_PAD.x} cy={BUTTON_PAD.y} r={3.5} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.9} />
             {/* idle invite-pulse around the button pad (always on, restrained).
                 Intensifies on hover. */}
-            {!charging && !lampOn && (
+            {!signaling && !lampOn && (
               <g style={{ pointerEvents: "none" }}>
                 <circle
                   cx={BUTTON_PAD.x}
@@ -1433,7 +1433,7 @@ function CircuitHero() {
               style={{ overflow: "visible", pointerEvents: "auto" }}
             >
               <div
-                className={`hw-assembly${hovering || charging || lampOn ? " is-hot" : ""}`}
+                className={`hw-assembly${hovering || signaling || lampOn ? " is-hot" : ""}`}
                 style={{
                   position: "relative",
                   width: "100%",
@@ -1496,7 +1496,7 @@ function CircuitHero() {
                 {/* Unified glowing outline around button + box silhouette */}
                 <svg
                   aria-hidden
-                  className={`hw-silhouette${hovering || charging || lampOn ? " is-hot" : ""}`}
+                  className={`hw-silhouette${hovering || signaling || lampOn ? " is-hot" : ""}`}
                   width="220"
                   height="140"
                   viewBox="0 0 220 140"
@@ -1510,7 +1510,7 @@ function CircuitHero() {
                   <path
                     d="M 84 62 H 136 Q 140 62 140 66 V 77 H 142 V 86 H 174 Q 178 86 178 90 V 118 Q 178 122 174 122 H 46 Q 42 122 42 118 V 90 Q 42 86 46 86 H 78 V 77 H 80 V 66 Q 80 62 84 62 Z"
                     fill="none"
-                    stroke={hovering || charging || lampOn ? "#fbbf24" : "#c89832"}
+                    stroke={hovering || signaling || lampOn ? "#fbbf24" : "#c89832"}
                     strokeWidth="1.2"
                     strokeLinejoin="round"
                     style={{
@@ -1523,7 +1523,7 @@ function CircuitHero() {
 
                 {/* rectangular control housing */}
                 <div
-                  className={`hw-module${hovering || charging || lampOn ? " is-hot" : ""}`}
+                  className={`hw-module${hovering || signaling || lampOn ? " is-hot" : ""}`}
                   style={{
                     width: 132,
                     height: 36,
@@ -1569,7 +1569,7 @@ function CircuitHero() {
                       paddingLeft: "0.24em",
                       textTransform: "uppercase",
                       color:
-                        lampOn || charging
+                        lampOn || signaling
                           ? "#fbbf24"
                           : hovering
                             ? "#e8d28a"
@@ -1626,7 +1626,7 @@ function CircuitHero() {
                     aria-label="Click me"
                     aria-pressed={lampOn}
                     className={
-                      !pressed && !hovering && !charging && !lampOn ? "hw-cap" : ""
+                      !pressed && !hovering && !signaling && !lampOn ? "hw-cap" : ""
                     }
                     style={{
                       position: "relative",
