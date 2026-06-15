@@ -924,12 +924,12 @@ function CircuitHero() {
   const isMobile = useIsMobile();
   // On mobile, compose a tighter hero board so the portrait, lamp, and button
   // are intentionally placed instead of relying on the wide desktop crop.
-  const mobileViewBox = `120 190 1120 640`;
+  const mobileViewBox = `60 120 1080 1080`;
   const viewBox = isMobile ? mobileViewBox : `0 0 ${VB_W} ${VB_H}`;
   const preserve = isMobile ? "xMidYMid meet" : "xMidYMid slice";
   const buttonPad = isMobile ? MOBILE_BUTTON_PAD : BUTTON_PAD;
   const signalD = isMobile
-    ? `M ${MOBILE_BUTTON_PAD.x} ${MOBILE_BUTTON_PAD.y} H 700 V 520 H ${MOBILE_LAMP.cx} V ${MOBILE_LAMP.cy + LAMP.h / 2 + 14}`
+    ? `M ${MOBILE_BUTTON_PAD.x} ${MOBILE_BUTTON_PAD.y} V ${MOBILE_TRACE_TOP_Y} H ${MOBILE_LAMP.cx} V ${MOBILE_LAMP.cy + (LAMP.h / 2 + 14) * MOBILE_LAMP_SCALE}`
     : SIGNAL_D;
   const timers = useRef<number[]>([]);
   const clearAllTimers = () => {
