@@ -333,7 +333,6 @@ function buildCircuit(seed: number): Built {
 
   const add = (id: string, pts: Pt[], w: number, o: number, pulse?: number) => {
     traces.push({ id, d: ptsToD(pts), w, o, pulse });
-    for (let i = 1; i < pts.length - 1; i++) addVia(pts[i]);
     for (let i = 0; i < pts.length - 1; i++) segs.push({ a: pts[i], b: pts[i + 1] });
   };
 
