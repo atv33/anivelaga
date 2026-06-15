@@ -376,29 +376,50 @@ type Inline =
   | { kind: "diode";     x: number; y: number; rot?: 0 | 90 | 180 | 270 }
   | { kind: "testpad";   x: number; y: number };
 
+// Every inline part is placed on a real trace segment. Horizontal parts (rot 0)
+// sit on horizontal segments, rot 90 sit on vertical segments.
 const INLINE_PARTS: Inline[] = [
-  // On L2 horizontal section (y=332, x 980..1052)
-  { kind: "resistor", x: 1010, y: 332 },
-  // On L3 horizontal section (y=265, x 560..860)
-  { kind: "resistor", x: 720, y: 265 },
-  // On T2 horizontal (y=200, x 1147..1500)
-  { kind: "diode",    x: 1330, y: 200 },
-  // On T1 horizontal (y=180, x 920..1103)
+  // L1 H1 segment (y=296, x 940..1052)
+  { kind: "resistor", x: 996, y: 296 },
+  // L2 H1 segment (y=332, x 900..1052)
+  { kind: "resistor", x: 980, y: 332 },
+  // L2 vertical (x=900, y 158..332)
+  { kind: "capacitor", x: 900, y: 245, rot: 90 },
+  // L4 H1 segment (y=404, x 800..1052)
+  { kind: "resistor", x: 920, y: 404 },
+  // L4 H2 segment (y=400, x 644..800)
+  { kind: "diode", x: 720, y: 400 },
+  // L5 H2 segment (y=420, x 644..840)
+  { kind: "inductor", x: 750, y: 420 },
+  // L6 vertical (x=480, y 262..380)
+  { kind: "capacitor", x: 480, y: 330, rot: 90 },
+  // T1 H segment (y=180, x 954..1103)
   { kind: "capacitor", x: 1020, y: 180 },
-  // On R4 horizontal (y=404, x 1328..1540)
-  { kind: "capacitor", x: 1430, y: 404 },
-  // On R8 horizontal (y=680, x 1420..1600)
-  { kind: "inductor", x: 1500, y: 680 },
-  // On B3 vertical (x=1190, y 598..900) — rotate for vertical orientation
-  { kind: "capacitor", x: 1190, y: 770, rot: 90 },
-  // On L1 vertical (x=920, y 200..296) — vertical resistor
-  { kind: "resistor", x: 920, y: 245, rot: 90 },
-  // Test pads at notable junctions / endpoints
-  { kind: "testpad", x: 940, y: 440 },
-  { kind: "testpad", x: 1500, y: 480 },
-  { kind: "testpad", x: 1300, y: 740 },
-  { kind: "testpad", x: 880, y: 280 },
-  { kind: "testpad", x: 1400, y: 60 },
+  // T4 H segment (y=100, x 1233..1400)
+  { kind: "diode", x: 1320, y: 100 },
+  // R4 V segment (x=1480, y 404..440)
+  { kind: "resistor", x: 1480, y: 422, rot: 90 },
+  // R5 horizontal (y=440, x 1328..1600)
+  { kind: "resistor", x: 1432, y: 440 },
+  // R8 horizontal (y=530, x 1480..1536)
+  { kind: "capacitor", x: 1508, y: 530 },
+  // B3 vertical (x=1190, y 598..900)
+  { kind: "capacitor", x: 1190, y: 760, rot: 90 },
+  // B5 horizontal (y=720, x 1277..1600)
+  { kind: "inductor", x: 1500, y: 720 },
+  // A6 horizontal (y=262, x 480..580)
+  { kind: "resistor", x: 540, y: 262 },
+  // C1 vertical (x=404, y 60..236)
+  { kind: "capacitor", x: 404, y: 150, rot: 90 },
+  // C3 horizontal (y=400, x 404..520)
+  { kind: "resistor", x: 470, y: 400 },
+  // BB1 horizontal (y=460, x 0..200)
+  { kind: "resistor", x: 130, y: 460 },
+  // Test pads at notable on-trace junctions
+  { kind: "testpad", x: 880, y: 476 },
+  { kind: "testpad", x: 1480, y: 530 },
+  { kind: "testpad", x: 1400, y: 100 },
+  { kind: "testpad", x: 560, y: 320 },
 ];
 
 function HeroText() {
