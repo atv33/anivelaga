@@ -248,7 +248,7 @@ function Hero() {
     >
       <HeroCircuits />
       <div className="relative z-[2]">
-        <h1 className="font-display text-[clamp(3rem,10vw,9rem)] font-black uppercase">
+        <h1 className="font-display text-[clamp(2.5rem,8vw,6rem)] font-black uppercase">
           Ani
           <br />
           Velaga
