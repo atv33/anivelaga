@@ -1911,9 +1911,17 @@ function SubProjectRow({
           {p.tagline.split(".")[0]}.
         </p>
         {clickable ? (
-          <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.25em] text-ink-faint hover:text-mark">
-            → View details
-          </div>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpen?.();
+            }}
+            className="mt-3 inline-flex items-center gap-2 rounded-sm border border-rule bg-secondary/40 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-foreground transition-all hover:border-mark hover:bg-mark/10 hover:text-mark"
+          >
+            <span>View details</span>
+            <span>→</span>
+          </button>
         ) : null}
       </div>
       <div
