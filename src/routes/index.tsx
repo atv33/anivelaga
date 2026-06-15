@@ -596,10 +596,11 @@ function CircuitTraceLayer() {
       <g opacity="0.85">
         <SecondaryChip {...CHIP_A} pinsTop={5} pinsBot={5} pinsLeft={3} pinsRight={3} />
         <SecondaryChip {...CHIP_C} pinsTop={3} pinsBot={3} pinsLeft={2} pinsRight={2} />
+        <SecondaryChip {...CHIP_B} pinsTop={2} pinsBot={2} pinsLeft={2} pinsRight={2} />
         {/* right-edge connector — partially off-screen */}
         <g>
           <rect x={EDGE_R.x} y={EDGE_R.y} width={EDGE_R.w} height={EDGE_R.h} fill="#111" stroke="#333" strokeWidth="1" />
-          {[400, 420, 440, 460, 480, 500, 520].map((cy, i) => (
+          {EDGE_R_PINS.map((cy, i) => (
             <rect key={i} x={EDGE_R.x - 4} y={cy - 3} width={4} height={6} fill="#262626" stroke="#3d3d3d" strokeWidth="0.5" />
           ))}
         </g>
