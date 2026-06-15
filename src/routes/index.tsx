@@ -614,8 +614,8 @@ function buildCircuit(seed: number): Built {
   add("D3", [{x:872,y:484},{x:872,y:268},{x:776,y:268},{x:776,y:186}], 1.0, 0.4);
   // CHIP_D bottom-left pin → canvas bottom (power/ground rail)
   add("D4", [{x:808,y:548},{x:808,y:900}], 1.5, 0.5);
-  // CHIP_D bottom-mid pin → CHIP_B right pin (short hop)
-  add("D5", [{x:840,y:548},{x:840,y:600},{x:680,y:600},{x:680,y:420},{x:644,y:420}], 1.0, 0.4);
+  // CHIP_D bottom-mid pin → off-canvas right (data bus)
+  add("D5", [{x:872,y:548},{x:872,y:580},{x:1000,y:580},{x:1000,y:900}], 1.0, 0.4);
   // Upper-left bus: connects CHIP_C left side area up to top edge
   // Left canvas edge → CHIP_C left pin (direct edge-to-pad)
   add("FR6", [{x:0,y:72},{x:180,y:72},{x:180,y:262},{x:376,y:262}], 1.0, 0.32);
