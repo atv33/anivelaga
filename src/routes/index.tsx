@@ -130,38 +130,6 @@ const CATEGORIES: Category[] = [
     ],
   },
   {
-    id: "02",
-    label: "Networking / LLM Inference Research",
-    intro:
-      "Research into distributed inference systems at Cornell ECE. Focus on KV-cache networking and throughput optimization across multi-GPU clusters.",
-    projects: [
-      {
-        id: "A",
-        name: "Distributed KV-Cache Networking",
-        year: "Fall 2025",
-        tagline:
-          "Research into optimizing KV-cache transfer across GPU nodes during LLM inference. Profiled NCCL all-gather latency on 4-GPU clusters and experimented with RDMA-based direct peer-to-peer transfers to cut inter-node round-trip time. Built a Python harness using PyTorch distributed to benchmark cache hit rate vs. recompute cost under varying sequence lengths.",
-        bullets: [
-          "RDMA peer-to-peer KV-cache transfer across 4-GPU clusters",
-          "PyTorch harness profiling NCCL all-gather latency",
-        ],
-        stack: ["CUDA", "NCCL", "RDMA", "PyTorch", "Python"],
-      },
-      {
-        id: "B",
-        name: "LLM Inference Throughput Benchmarking",
-        year: "Spring 2026",
-        tagline:
-          "End-to-end benchmarking pipeline for transformer inference on NVIDIA A100s. Measured tokens/sec, memory bandwidth utilization, and KV-cache memory footprint across batch sizes and context lengths. Identified bottlenecks in attention kernel scheduling and proposed a batching strategy that improved throughput by ~18% on long-context workloads.",
-        bullets: [
-          "End-to-end transformer inference benchmarks on A100s",
-          "~18% throughput gain on long-context workloads",
-        ],
-        stack: ["CUDA", "TensorRT", "Python", "NVIDIA A100"],
-      },
-    ],
-  },
-  {
     id: "03",
     label: "Personal Projects",
     intro: "Side projects in hardware and infrastructure.",
@@ -1677,17 +1645,10 @@ function CategoryBlock({ category: c }: { category: Category }) {
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-dim">{c.intro}</p>
         </div>
       </div>
-      {c.id === "02" ? (
-        <div className="mt-12 flex items-center justify-center border-y border-border px-6 py-20">
-          <p className="max-w-2xl text-center font-display text-lg leading-relaxed text-ink-dim sm:text-xl">
-            Doing some cool stuff @ByteDance with Charon, Vidur and LLM inference simulation. Will update soon :)
-          </p>
-        </div>
-      ) : (
       <ul
         className={
           c.id === "01"
-            ? "mt-12 grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+            ? "mt-12 grid gap-4 sm:grid-cols-2"
             : "mt-12 divide-y divide-border border-y border-border"
         }
       >
@@ -1803,7 +1764,6 @@ function CategoryBlock({ category: c }: { category: Category }) {
           );
         })}
       </ul>
-      )}
       <Sheet open={!!openProject} onOpenChange={(o) => !o && setOpenId(null)}>
         <SheetContent
           side="right"
