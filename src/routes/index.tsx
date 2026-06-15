@@ -923,7 +923,6 @@ function CircuitHero() {
   const viewBox = isMobile ? mobileViewBox : `0 0 ${VB_W} ${VB_H}`;
   const preserve = isMobile ? "xMidYMid meet" : "xMidYMid slice";
   const buttonPad = isMobile ? MOBILE_BUTTON_PAD : BUTTON_PAD;
-  const lampPoint = isMobile ? MOBILE_LAMP : LAMP;
   const signalD = isMobile
     ? `M ${MOBILE_BUTTON_PAD.x} ${MOBILE_BUTTON_PAD.y} H 700 V 520 H ${MOBILE_LAMP.cx} V ${MOBILE_LAMP.cy + LAMP.h / 2 + 14}`
     : SIGNAL_D;
@@ -1112,8 +1111,8 @@ function CircuitHero() {
             {!signaling && !lampOn && (
               <g style={{ pointerEvents: "none" }}>
                 <circle
-                  cx={BUTTON_PAD.x}
-                  cy={BUTTON_PAD.y}
+                  cx={buttonPad.x}
+                  cy={buttonPad.y}
                   r={6}
                   fill="none"
                   stroke={hovering ? "#fbbf24" : "#6a6a6a"}
@@ -1134,8 +1133,8 @@ function CircuitHero() {
                   />
                 </circle>
                 <circle
-                  cx={BUTTON_PAD.x}
-                  cy={BUTTON_PAD.y}
+                  cx={buttonPad.x}
+                  cy={buttonPad.y}
                   r={6}
                   fill="none"
                   stroke={hovering ? "#fbbf24" : "#6a6a6a"}
