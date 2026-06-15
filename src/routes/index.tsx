@@ -980,7 +980,7 @@ function CircuitHero() {
         className="pointer-events-none absolute left-0 right-0 z-[1]"
         style={
           isMobile
-            ? { top: "96px", height: "44vh" }
+            ? { top: "74px", height: "43vh" }
             : { top: 0, bottom: 0 }
         }
       >
@@ -1031,7 +1031,7 @@ function CircuitHero() {
           <g>
             {/* Base signal trace: button (S1) → lamp (D1) */}
             <path
-              d={SIGNAL_D}
+              d={signalD}
               fill="none"
               stroke="#3a3a3a"
               strokeOpacity={0.55}
@@ -1046,7 +1046,7 @@ function CircuitHero() {
             {/* Progressive signal fill: button → lamp, one continuous line
                 that fills via stroke-dashoffset. */}
             <path
-              d={SIGNAL_D}
+              d={signalD}
               fill="none"
               stroke="#fbbf24"
               strokeOpacity={signaling || lampOn ? 1 : 0}
