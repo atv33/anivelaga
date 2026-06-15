@@ -269,70 +269,104 @@ const bottomPads: Pad[] = xPads.map((x) => ({ x: x - 5, y: PORT.y + PORT.h,    w
 // Trace data: d = SVG path, w = stroke width, o = opacity (0..1), pulse?: ms duration
 type Trace = { id: string; d: string; w: number; o: number; pulse?: number };
 
-// Curated trace list — every path begins at a portrait-module pin and ends
-// at a via, a secondary chip pin, an edge connector, or off-screen.
+// ─── Secondary chip / connector geometry (pin tips computed to integers) ───
+// CHIP_A — upper-mid. xs(5): x + (i+1)*144/6 = 704,728,752,776,800 ✓
+//                    ys(2): y + (i+1)*72/3  = 134,158 ✓
+const CHIP_A = { x: 680, y: 110, w: 144, h: 72 };
+// CHIP_C — upper-left. xs(3): 404,428,452. ys(2): 240 + 22*(i+1) = 262,284
+const CHIP_C = { x: 380, y: 240, w: 96, h: 66 };
+// CHIP_B — center-left support chip. xs(2): 520 + 40*(i+1) = 560,600. ys(2): 380+20*(i+1) = 400,420
+const CHIP_B = { x: 520, y: 380, w: 120, h: 60 };
+// Edge connector right (partially off-canvas)
+const EDGE_R = { x: 1540, y: 360, w: 60, h: 220 };
+const EDGE_R_PINS = [380, 410, 440, 470, 500, 530, 560]; // y tips, x tip = 1536
+// Top edge header — 6 pins, tip y = -10 + 26 + 4 = 20, pin xs are pin centers
+const HEADER_T = { x: 880, y: -10, w: 100, h: 26, pins: [890, 906, 922, 938, 954, 970] };
+
+// Curated trace list — every path begins at a real pad/pin tip and ends at
+// another real pad/pin tip, a defined via, or the canvas edge (intentional
+// off-board continuation). All segments are strictly orthogonal.
 const TRACES: Trace[] = [
-  // ── LEFT side (avoiding the lower-left text zone) ──────────────────
-  { id: "L1", d: "M 1052 296 H 920 V 200 H 760 V 175",      w: 1.5, o: 0.62, pulse: 6200 },
-  { id: "L2", d: "M 1052 332 H 980 V 280 H 880",            w: 1.25, o: 0.5 },
-  { id: "L3", d: "M 1052 368 H 860 V 265 H 560",            w: 1.5, o: 0.58 },
-  { id: "L4", d: "M 1052 404 H 940 V 440 H 820",            w: 1.25, o: 0.45, pulse: 7400 },
-  { id: "L5", d: "M 1052 440 H 980",                         w: 1, o: 0.4 },
-  { id: "L6", d: "M 1052 476 H 900 V 510 H 720",            w: 1.25, o: 0.42 },
-  // ── TOP side ───────────────────────────────────────────────────────
-  { id: "T1", d: "M 1103 262 V 180 H 920 V 80",             w: 1.25, o: 0.5 },
-  { id: "T2", d: "M 1147 262 V 200 H 1500",                  w: 1.5, o: 0.58, pulse: 5600 },
-  { id: "T3", d: "M 1190 262 V 0",                           w: 1.75, o: 0.62, pulse: 4800 },
-  { id: "T4", d: "M 1233 262 V 150 H 1400 V 40",            w: 1.25, o: 0.48 },
-  { id: "T5", d: "M 1277 262 V 200 H 1380",                  w: 1, o: 0.42 },
-  // ── RIGHT side ─────────────────────────────────────────────────────
-  { id: "R1", d: "M 1328 296 H 1500 V 220 H 1600",          w: 1.5, o: 0.55, pulse: 6800 },
-  { id: "R2", d: "M 1328 332 H 1460 V 290 H 1600",          w: 1.25, o: 0.45 },
-  { id: "R3", d: "M 1328 368 H 1480 V 400 H 1540",          w: 1.5, o: 0.55 },
-  { id: "R4", d: "M 1328 404 H 1540",                        w: 1.5, o: 0.55 },
-  { id: "R5", d: "M 1328 440 H 1500 V 480 H 1540",          w: 1.25, o: 0.48 },
-  { id: "R6", d: "M 1328 476 H 1480 V 540 H 1600",          w: 1.25, o: 0.45 },
-  { id: "R7", d: "M 1328 512 H 1440 V 600 H 1600",          w: 1, o: 0.4 },
-  { id: "R8", d: "M 1328 548 H 1420 V 680 H 1600",          w: 1.25, o: 0.45, pulse: 7800 },
-  // ── BOTTOM (lower-right only — keeps lower-left text clean) ────────
-  { id: "B1", d: "M 1103 598 V 700 H 1000",                  w: 1.25, o: 0.45 },
-  { id: "B2", d: "M 1147 598 V 740 H 1300",                  w: 1, o: 0.4 },
-  { id: "B3", d: "M 1190 598 V 900",                          w: 1.5, o: 0.55, pulse: 5200 },
-  { id: "B4", d: "M 1233 598 V 680 H 1500 V 760",            w: 1.25, o: 0.48 },
-  { id: "B5", d: "M 1277 598 V 720 H 1600",                  w: 1, o: 0.42 },
-  // ── Secondary chip extensions (fanout away from chips) ─────────────
-  { id: "CA1", d: "M 730 110 V 60 H 380",                    w: 1, o: 0.38 },
-  { id: "CA2", d: "M 700 130 H 600 V 70",                    w: 1, o: 0.35 },
-  { id: "CA3", d: "M 830 130 H 950 V 60 H 1080",             w: 1, o: 0.4 },
-  { id: "CC1", d: "M 510 240 V 180 H 380",                   w: 1, o: 0.34 },
-  { id: "CC2", d: "M 480 265 H 360 V 320",                   w: 1, o: 0.34 },
+  // ── Portrait LEFT pads (tip x=1052) ────────────────────────────────
+  { id: "L1", d: "M 1052 296 H 940 V 134 H 828",         w: 1.5,  o: 0.6,  pulse: 6200 }, // → CHIP_A right pin 1
+  { id: "L2", d: "M 1052 332 H 900 V 158 H 828",         w: 1.25, o: 0.5  },               // → CHIP_A right pin 2
+  { id: "L3", d: "M 1052 368 H 890 V 20",                w: 1.5,  o: 0.58 },               // → HEADER_T pin 1
+  { id: "L4", d: "M 1052 404 H 800 V 400 H 644",         w: 1.25, o: 0.5,  pulse: 7400 }, // → CHIP_B right pin 1
+  { id: "L5", d: "M 1052 440 H 840 V 420 H 644",         w: 1.25, o: 0.48 },               // → CHIP_B right pin 2
+  { id: "L6", d: "M 1052 476 H 880 V 380 H 480 V 284",   w: 1.25, o: 0.45 },               // → CHIP_C right pin 2
+  { id: "L7", d: "M 1052 512 H 600 V 236 H 452",         w: 1.0,  o: 0.4  },               // → CHIP_C top pin 3
+  // L8 (y=548) intentionally NC
+
+  // ── Portrait TOP pads (tip y=262) ──────────────────────────────────
+  { id: "T1", d: "M 1103 262 V 180 H 954 V 20",          w: 1.25, o: 0.5  },               // → HEADER_T pin 5
+  { id: "T2", d: "M 1147 262 V 160 H 970 V 20",          w: 1.5,  o: 0.55, pulse: 5600 }, // → HEADER_T pin 6
+  { id: "T3", d: "M 1190 262 V 0",                       w: 1.75, o: 0.6,  pulse: 4800 }, // off-canvas
+  { id: "T4", d: "M 1233 262 V 100 H 1400 V 0",          w: 1.25, o: 0.5  },               // off-canvas (top)
+  { id: "T5", d: "M 1277 262 V 140 H 1500 V 0",          w: 1.0,  o: 0.45 },               // off-canvas (top)
+
+  // ── Portrait RIGHT pads (tip x=1328) ───────────────────────────────
+  { id: "R1", d: "M 1328 296 H 1600",                    w: 1.5,  o: 0.55, pulse: 6800 }, // off-canvas (right)
+  { id: "R2", d: "M 1328 332 H 1460 V 380 H 1536",       w: 1.25, o: 0.5  },               // → EDGE_R pin 1
+  { id: "R3", d: "M 1328 368 H 1500 V 410 H 1536",       w: 1.25, o: 0.5  },               // → EDGE_R pin 2
+  { id: "R4", d: "M 1328 404 H 1480 V 440 H 1536",       w: 1.25, o: 0.5  },               // → EDGE_R pin (y=440)
+  { id: "R5", d: "M 1328 440 H 1600",                    w: 1.5,  o: 0.55 },               // off-canvas (right)
+  { id: "R6", d: "M 1328 476 H 1500 V 470 H 1536",       w: 1.25, o: 0.48 },               // → EDGE_R pin (y=470)
+  { id: "R7", d: "M 1328 512 H 1460 V 500 H 1536",       w: 1.0,  o: 0.42 },               // → EDGE_R pin (y=500)
+  { id: "R8", d: "M 1328 548 H 1480 V 530 H 1536",       w: 1.25, o: 0.5,  pulse: 7800 }, // → EDGE_R pin (y=530)
+
+  // ── Portrait BOTTOM pads (tip y=598) — lower-right only ────────────
+  { id: "B1", d: "M 1103 598 V 720 H 1000 V 900",        w: 1.25, o: 0.45 },               // off-canvas (bottom)
+  { id: "B2", d: "M 1147 598 V 760 H 1600",              w: 1.0,  o: 0.42 },               // off-canvas (right)
+  { id: "B3", d: "M 1190 598 V 900",                     w: 1.5,  o: 0.55, pulse: 5200 }, // off-canvas (bottom)
+  { id: "B4", d: "M 1233 598 V 680 H 1500 V 900",        w: 1.25, o: 0.48 },               // off-canvas (bottom)
+  { id: "B5", d: "M 1277 598 V 720 H 1600",              w: 1.0,  o: 0.42 },               // off-canvas (right)
+
+  // ── CHIP_A fanout (top/left/bottom pin tips) ───────────────────────
+  { id: "A1", d: "M 704 106 V 40 H 500 V 0",             w: 1.0,  o: 0.4  },               // off-canvas (top)
+  { id: "A2", d: "M 728 106 V 0",                        w: 1.0,  o: 0.38 },               // off-canvas (top)
+  { id: "A3", d: "M 752 106 V 60 H 1080 V 0",            w: 1.0,  o: 0.4  },               // off-canvas (top)
+  { id: "A4", d: "M 776 106 V 80 H 922 V 20",            w: 1.0,  o: 0.4  },               // → HEADER_T pin 3
+  { id: "A5", d: "M 800 106 V 60 H 938 V 20",            w: 1.0,  o: 0.4  },               // → HEADER_T pin 4
+  { id: "A6", d: "M 676 134 H 580 V 262 H 480",          w: 1.0,  o: 0.4  },               // → CHIP_C right pin 1
+  { id: "A7", d: "M 676 158 H 0",                        w: 1.0,  o: 0.36 },               // off-canvas (left)
+  { id: "A8", d: "M 704 186 V 320 H 560 V 376",          w: 1.25, o: 0.45 },               // → CHIP_B top pin 1
+
+  // ── CHIP_C fanout (remaining pin tips) ─────────────────────────────
+  { id: "C1", d: "M 404 236 V 60 H 200 V 0",             w: 1.0,  o: 0.4  },               // off-canvas (top)
+  { id: "C2", d: "M 376 262 H 0",                        w: 1.0,  o: 0.36 },               // off-canvas (left)
+  { id: "C3", d: "M 404 310 V 400 H 516",                w: 1.0,  o: 0.4  },               // → CHIP_B left pin 1
+
+  // ── CHIP_B fanout (remaining pin tips) ─────────────────────────────
+  { id: "BB1", d: "M 516 420 H 200 V 460 H 0",           w: 1.0,  o: 0.38 },               // off-canvas (left)
 ];
 
-// Endpoint markers (vias) — placed at trace terminations not absorbed by a chip
+// Vias — every coord is either a trace corner, a trace endpoint that is not
+// already a chip pad, or sits on a defined trace segment. No floating points.
 const ENDPOINTS: { x: number; y: number; r?: number }[] = [
-  { x: 880, y: 280 },
-  { x: 820, y: 440 },
-  { x: 980, y: 440 },
-  { x: 720, y: 510 },
-  { x: 1380, y: 200, r: 3 },
-  { x: 1500, y: 200 },
-  { x: 1000, y: 700 },
-  { x: 1300, y: 740 },
-  { x: 1500, y: 760 },
-  { x: 380, y: 60 },
-  { x: 380, y: 180 },
-  { x: 600, y: 70 },
-  { x: 1080, y: 60 },
-  { x: 560, y: 320 },
+  // L-series corners
+  { x: 940, y: 296 }, { x: 940, y: 134 },
+  { x: 900, y: 332 }, { x: 900, y: 158 },
+  { x: 890, y: 368 },
+  { x: 800, y: 400 }, { x: 840, y: 420 },
+  { x: 880, y: 476 }, { x: 880, y: 380 }, { x: 480, y: 380 },
+  { x: 600, y: 236 },
+  // T-series corners
+  { x: 954, y: 180 }, { x: 970, y: 160 },
+  { x: 1400, y: 100 }, { x: 1500, y: 140 },
+  // R-series corners
+  { x: 1460, y: 380 }, { x: 1500, y: 410 }, { x: 1480, y: 440 },
+  { x: 1500, y: 470 }, { x: 1460, y: 500 }, { x: 1480, y: 530 },
+  // B-series corners
+  { x: 1000, y: 720 }, { x: 1500, y: 680 },
+  // CHIP_A corners
+  { x: 500, y: 40 }, { x: 1080, y: 60 }, { x: 922, y: 80 }, { x: 938, y: 60 },
+  { x: 580, y: 134 }, { x: 580, y: 262 },
+  { x: 704, y: 320 }, { x: 560, y: 320 },
+  // CHIP_C corners
+  { x: 200, y: 60 }, { x: 404, y: 400 },
+  // CHIP_B corners
+  { x: 200, y: 420 }, { x: 200, y: 460 },
 ];
-
-// Secondary components — 1 chip upper-mid, 1 chip upper-left, 1 edge connector right
-const CHIP_A = { x: 700, y: 110, w: 130, h: 70 };   // upper-mid
-const CHIP_C = { x: 480, y: 240, w: 80,  h: 50 };   // upper-left
-const EDGE_R = { x: 1540, y: 380, w: 60, h: 160 };  // right edge connector (off-screen partial)
-
-// Header connector at top edge (6 pins, partially off-canvas)
-const HEADER_T = { x: 860, y: -10, w: 100, h: 26, pins: [880, 896, 912, 928, 944, 960] };
 
 // Inline component placements — every coord lies exactly on a real trace segment.
 type Inline =
@@ -342,29 +376,50 @@ type Inline =
   | { kind: "diode";     x: number; y: number; rot?: 0 | 90 | 180 | 270 }
   | { kind: "testpad";   x: number; y: number };
 
+// Every inline part is placed on a real trace segment. Horizontal parts (rot 0)
+// sit on horizontal segments, rot 90 sit on vertical segments.
 const INLINE_PARTS: Inline[] = [
-  // On L2 horizontal section (y=332, x 980..1052)
-  { kind: "resistor", x: 1010, y: 332 },
-  // On L3 horizontal section (y=265, x 560..860)
-  { kind: "resistor", x: 720, y: 265 },
-  // On T2 horizontal (y=200, x 1147..1500)
-  { kind: "diode",    x: 1330, y: 200 },
-  // On T1 horizontal (y=180, x 920..1103)
+  // L1 H1 segment (y=296, x 940..1052)
+  { kind: "resistor", x: 996, y: 296 },
+  // L2 H1 segment (y=332, x 900..1052)
+  { kind: "resistor", x: 980, y: 332 },
+  // L2 vertical (x=900, y 158..332)
+  { kind: "capacitor", x: 900, y: 245, rot: 90 },
+  // L4 H1 segment (y=404, x 800..1052)
+  { kind: "resistor", x: 920, y: 404 },
+  // L4 H2 segment (y=400, x 644..800)
+  { kind: "diode", x: 720, y: 400 },
+  // L5 H2 segment (y=420, x 644..840)
+  { kind: "inductor", x: 750, y: 420 },
+  // L6 vertical (x=480, y 262..380)
+  { kind: "capacitor", x: 480, y: 330, rot: 90 },
+  // T1 H segment (y=180, x 954..1103)
   { kind: "capacitor", x: 1020, y: 180 },
-  // On R4 horizontal (y=404, x 1328..1540)
-  { kind: "capacitor", x: 1430, y: 404 },
-  // On R8 horizontal (y=680, x 1420..1600)
-  { kind: "inductor", x: 1500, y: 680 },
-  // On B3 vertical (x=1190, y 598..900) — rotate for vertical orientation
-  { kind: "capacitor", x: 1190, y: 770, rot: 90 },
-  // On L1 vertical (x=920, y 200..296) — vertical resistor
-  { kind: "resistor", x: 920, y: 245, rot: 90 },
-  // Test pads at notable junctions / endpoints
-  { kind: "testpad", x: 940, y: 440 },
-  { kind: "testpad", x: 1500, y: 480 },
-  { kind: "testpad", x: 1300, y: 740 },
-  { kind: "testpad", x: 880, y: 280 },
-  { kind: "testpad", x: 1400, y: 60 },
+  // T4 H segment (y=100, x 1233..1400)
+  { kind: "diode", x: 1320, y: 100 },
+  // R4 V segment (x=1480, y 404..440)
+  { kind: "resistor", x: 1480, y: 422, rot: 90 },
+  // R5 horizontal (y=440, x 1328..1600)
+  { kind: "resistor", x: 1432, y: 440 },
+  // R8 horizontal (y=530, x 1480..1536)
+  { kind: "capacitor", x: 1508, y: 530 },
+  // B3 vertical (x=1190, y 598..900)
+  { kind: "capacitor", x: 1190, y: 760, rot: 90 },
+  // B5 horizontal (y=720, x 1277..1600)
+  { kind: "inductor", x: 1500, y: 720 },
+  // A6 horizontal (y=262, x 480..580)
+  { kind: "resistor", x: 540, y: 262 },
+  // C1 vertical (x=404, y 60..236)
+  { kind: "capacitor", x: 404, y: 150, rot: 90 },
+  // C3 horizontal (y=400, x 404..520)
+  { kind: "resistor", x: 470, y: 400 },
+  // BB1 horizontal (y=460, x 0..200)
+  { kind: "resistor", x: 130, y: 460 },
+  // Test pads at notable on-trace junctions
+  { kind: "testpad", x: 880, y: 476 },
+  { kind: "testpad", x: 1480, y: 530 },
+  { kind: "testpad", x: 1400, y: 100 },
+  { kind: "testpad", x: 560, y: 320 },
 ];
 
 function HeroText() {
@@ -539,12 +594,13 @@ function CircuitTraceLayer() {
     <g>
       {/* secondary chips (rendered before traces so trace endpoints sit on them) */}
       <g opacity="0.85">
-        <SecondaryChip {...CHIP_A} pinsTop={5} pinsBot={5} pinsLeft={3} pinsRight={3} />
+        <SecondaryChip {...CHIP_A} pinsTop={5} pinsBot={5} pinsLeft={2} pinsRight={2} />
         <SecondaryChip {...CHIP_C} pinsTop={3} pinsBot={3} pinsLeft={2} pinsRight={2} />
+        <SecondaryChip {...CHIP_B} pinsTop={2} pinsBot={2} pinsLeft={2} pinsRight={2} />
         {/* right-edge connector — partially off-screen */}
         <g>
           <rect x={EDGE_R.x} y={EDGE_R.y} width={EDGE_R.w} height={EDGE_R.h} fill="#111" stroke="#333" strokeWidth="1" />
-          {[400, 420, 440, 460, 480, 500, 520].map((cy, i) => (
+          {EDGE_R_PINS.map((cy, i) => (
             <rect key={i} x={EDGE_R.x - 4} y={cy - 3} width={4} height={6} fill="#262626" stroke="#3d3d3d" strokeWidth="0.5" />
           ))}
         </g>
