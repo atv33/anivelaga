@@ -368,11 +368,16 @@ function buildCircuit(seed: number): Built {
   type Seg = { a: Pt; b: Pt; o: number };
   const segs: Seg[] = [];
   const viaMap = new Map<string, Pt>();
-  const addVia = (p: Pt) => viaMap.set(`${p.x},${p.y}`, p);
+  const addVia = (p: Pt) => {
+    const sp = { x: snap(p.x), y: snap(p.y) };
+    viaMap.set(`${sp.x},${sp.y}`, sp);
+  };
 
   const add = (id: string, pts: Pt[], w: number, o: number, pulse?: number) => {
-    traces.push({ id, d: ptsToD(pts), w, o, pulse });
-    for (let i = 0; i < pts.length - 1; i++) segs.push({ a: pts[i], b: pts[i + 1], o });
+    const snapped = snapPts(pts);
+    traces.push({ id, d: ptsToD(snapped), w, o, pulse });
+    for (let i = 0; i < snapped.length - 1; i++)
+      segs.push({ a: snapped[i], b: snapped[i + 1], o });
   };
 
   // pulses ~ 30% of routes
