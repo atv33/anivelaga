@@ -354,12 +354,14 @@ function buildCircuit(seed: number): Built {
   add("L5", [{x:1052,y:440},{x:L5bx,y:440},{x:L5bx,y:420},{x:644,y:420}], 1.25, 0.48, maybePulse(8200));
 
   const L6bx1 = irand(840, 940);
-  const L6my = irand(360, 400);
+  // route above CHIP_B (body y 380-440) to keep clear of its body
+  const L6my = irand(340, 374);
   add("L6", [
     {x:1052,y:476},{x:L6bx1,y:476},{x:L6bx1,y:L6my},{x:480,y:L6my},{x:480,y:284}
   ], 1.25, 0.45);
 
-  const L7bx = irand(560, 660);
+  // route right of CHIP_B (body x 520-640) so the vertical run doesn't cross it
+  const L7bx = irand(660, 740);
   add("L7", [{x:1052,y:512},{x:L7bx,y:512},{x:L7bx,y:236},{x:452,y:236}], 1.0, 0.4);
 
   // L8 (y=548): occasional NC short stub into a via on a long horizontal trace
@@ -403,7 +405,8 @@ function buildCircuit(seed: number): Built {
   const R4bx = irand(1440, 1510);
   add("R4", [{x:1328,y:404},{x:R4bx,y:404},{x:R4bx,y:440},{x:1536,y:440}], 1.25, 0.5, maybePulse(6800));
 
-  add("R5", [{x:1328,y:440},{x:1600,y:440}], 1.5, 0.55);
+  // bypass EDGE_R body (x 1540-1600, y 360-580) by routing above it
+  add("R5", [{x:1328,y:440},{x:1490,y:440},{x:1490,y:340},{x:1600,y:340}], 1.5, 0.55);
 
   const R6bx = irand(1420, 1510);
   add("R6", [{x:1328,y:476},{x:R6bx,y:476},{x:R6bx,y:500},{x:1536,y:500}], 1.25, 0.48);
@@ -522,7 +525,21 @@ function buildCircuit(seed: number): Built {
     addVia({x:bbx, y:bby});
   }
 
-  // ── Inline parts placed on actual segments (with text-zone guard) ──
+  // ── Inline parts placed on actual segments (text-zone + chip keep-out) ──
+  const KEEP_OUT: { x:number; y:number; w:number; h:number }[] = [
+    { x: PORT.x, y: PORT.y, w: PORT.w, h: PORT.h },
+    { x: CHIP_A.x, y: CHIP_A.y, w: CHIP_A.w, h: CHIP_A.h },
+    { x: CHIP_B.x, y: CHIP_B.y, w: CHIP_B.w, h: CHIP_B.h },
+    { x: CHIP_C.x, y: CHIP_C.y, w: CHIP_C.w, h: CHIP_C.h },
+    { x: EDGE_R.x, y: EDGE_R.y, w: EDGE_R.w, h: EDGE_R.h },
+    { x: HEADER_T.x, y: HEADER_T.y, w: HEADER_T.w, h: HEADER_T.h },
+  ];
+  const inAnyBody = (cx: number, cy: number, pad = 8) =>
+    KEEP_OUT.some(
+      (r) =>
+        cx > r.x - pad && cx < r.x + r.w + pad &&
+        cy > r.y - pad && cy < r.y + r.h + pad,
+    );
   const parts: Inline[] = [];
   const usedCenters = new Set<string>();
   const kinds: Inline["kind"][] = ["resistor", "capacitor", "inductor", "diode"];
@@ -539,8 +556,8 @@ function buildCircuit(seed: number): Built {
     const cy = isH ? s.a.y : Math.round(s.a.y + dir * t);
     // skip lower-left text zone
     if (cx < 860 && cy > 560) continue;
-    // skip inside portrait region
-    if (cx > PORT.x - 20 && cx < PORT.x + PORT.w + 20 && cy > PORT.y - 20 && cy < PORT.y + PORT.h + 20) continue;
+    // skip if inside or hugging any chip / portrait / connector body
+    if (inAnyBody(cx, cy)) continue;
     const key = `${cx},${cy}`;
     if (usedCenters.has(key)) continue;
     usedCenters.add(key);
@@ -563,6 +580,7 @@ function buildCircuit(seed: number): Built {
     const v = viaList[Math.floor(rnd() * viaList.length)];
     if (!v) continue;
     if (v.x < 860 && v.y > 560) continue;
+    if (inAnyBody(v.x, v.y, 4)) continue;
     const key = `tp:${v.x},${v.y}`;
     if (usedCenters.has(key)) continue;
     usedCenters.add(key);
@@ -606,8 +624,6 @@ function PortraitModule() {
   const ih = PORT.h - PORT_INSET * 2;
   return (
     <g>
-      {/* very soft shadow under the module */}
-      <ellipse cx={PORT.x + PORT.w / 2} cy={PORT.y + PORT.h + 22} rx={PORT.w / 2 + 30} ry={14} fill="rgba(0,0,0,0.55)" />
       {/* outer dark package */}
       <rect
         x={PORT.x}
