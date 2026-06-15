@@ -331,6 +331,42 @@ const CHIP_A = { x: 700, y: 110, w: 130, h: 70 };   // upper-mid
 const CHIP_C = { x: 480, y: 240, w: 80,  h: 50 };   // upper-left
 const EDGE_R = { x: 1540, y: 380, w: 60, h: 160 };  // right edge connector (off-screen partial)
 
+// Header connector at top edge (6 pins, partially off-canvas)
+const HEADER_T = { x: 860, y: -10, w: 100, h: 26, pins: [880, 896, 912, 928, 944, 960] };
+
+// Inline component placements — every coord lies exactly on a real trace segment.
+type Inline =
+  | { kind: "resistor";  x: number; y: number; rot?: 0 | 90 }
+  | { kind: "capacitor"; x: number; y: number; rot?: 0 | 90 }
+  | { kind: "inductor";  x: number; y: number; rot?: 0 | 90 }
+  | { kind: "diode";     x: number; y: number; rot?: 0 | 90 | 180 | 270 }
+  | { kind: "testpad";   x: number; y: number };
+
+const INLINE_PARTS: Inline[] = [
+  // On L2 horizontal section (y=332, x 980..1052)
+  { kind: "resistor", x: 1010, y: 332 },
+  // On L3 horizontal section (y=265, x 560..860)
+  { kind: "resistor", x: 720, y: 265 },
+  // On T2 horizontal (y=200, x 1147..1500)
+  { kind: "diode",    x: 1330, y: 200 },
+  // On T1 horizontal (y=180, x 920..1103)
+  { kind: "capacitor", x: 1020, y: 180 },
+  // On R4 horizontal (y=404, x 1328..1540)
+  { kind: "capacitor", x: 1430, y: 404 },
+  // On R8 horizontal (y=680, x 1420..1600)
+  { kind: "inductor", x: 1500, y: 680 },
+  // On B3 vertical (x=1190, y 598..900) — rotate for vertical orientation
+  { kind: "capacitor", x: 1190, y: 770, rot: 90 },
+  // On L1 vertical (x=920, y 200..296) — vertical resistor
+  { kind: "resistor", x: 920, y: 245, rot: 90 },
+  // Test pads at notable junctions / endpoints
+  { kind: "testpad", x: 940, y: 440 },
+  { kind: "testpad", x: 1500, y: 480 },
+  { kind: "testpad", x: 1300, y: 740 },
+  { kind: "testpad", x: 880, y: 280 },
+  { kind: "testpad", x: 1400, y: 60 },
+];
+
 function HeroText() {
   return (
     <div className="pointer-events-none absolute inset-0 z-[3] mx-auto flex max-w-6xl items-end px-6 pb-24 sm:px-10 sm:pb-28">
