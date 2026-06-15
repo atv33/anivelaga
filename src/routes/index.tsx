@@ -445,8 +445,8 @@ function generateCircuit(): Generated {
     // a few left-going traces should fade before hitting text — handled by mask
     grow(tip[0], tip[1], dir, 0, side === "l" ? 0.6 : 0.65, side === "l" ? 5 : 7, 1.6);
     // sometimes a second branch in the perpendicular dir
-    if (Math.random() < 0.3) {
-      const turn = Math.random() < 0.5 ? 1 : 3;
+    if (rand() < 0.3) {
+      const turn = rand() < 0.5 ? 1 : 3;
       grow(tip[0], tip[1], (dir + turn) & 3, 1, 0.4, 4, 1.2);
     }
     vias.push({ x: p[0], y: p[1] });
