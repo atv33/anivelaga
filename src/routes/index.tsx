@@ -388,6 +388,15 @@ function buildCircuit(seed: number): Built {
     traces.push({ id, d: ptsToD(snapped), w, o, pulse });
     for (let i = 0; i < snapped.length - 1; i++)
       segs.push({ a: snapped[i], b: snapped[i + 1], o });
+    // Auto-place an endpoint via at any free endpoint (not off-canvas and
+    // not landing inside a known chip/header/edge body or signal-path module).
+    const first = snapped[0];
+    const last = snapped[snapped.length - 1];
+    for (const ep of [first, last]) {
+      if (isOffCanvas(ep)) continue;
+      if (nearBody(ep)) continue;
+      addVia(ep);
+    }
   };
 
   // pulses ~ 30% of routes
