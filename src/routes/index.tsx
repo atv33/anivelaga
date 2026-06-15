@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Cpu, Terminal, BrainCircuit } from "lucide-react";
 import { NavBar } from "@/components/ui/tubelight-navbar";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile, useBreakpoint } from "@/hooks/use-mobile";
 import {
   Sheet,
   SheetContent,
