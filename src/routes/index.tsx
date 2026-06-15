@@ -99,8 +99,8 @@ const CATEGORIES: Category[] = [
         tagline:
           "Central communication hub for the submarine. Aggregates 16 RS-232 RX/TX channels from sensors and peripherals into a single USB-C connection to the Jetson AI computer. Uses FTDI USB-to-UART ICs with RS-232 level shifting. Spring 2026 added SMF05CT1G TVS diode arrays for ESD protection on all 32 signal lines, DVL direct-connect header, and hot-swap EEPROM footprint. 4-layer PCB, 3.701\" x 4.291\".",
         bullets: [
-          "16 RS-232 channels → USB-C via FTDI ICs",
-          "4-layer PCB, 3.701\" x 4.291\" with ESD protection",
+          "16 RS-232 sensor channels multiplexed to USB-C using FTDI USB-to-UART ICs with RS-232 level shifting",
+          "TVS diode ESD protection on all 32 signal lines; hot-swap EEPROM footprint and DVL direct-connect header",
         ],
         stack: ["Altium Designer", "4-Layer PCB", "RS-232", "USB-C", "FTDI", "ESD Protection"],
         placeholderCaption: "Serial Board 3D Render",
@@ -111,8 +111,8 @@ const CATEGORIES: Category[] = [
         tagline:
           "Breakout and validation board for the Serial Board. Exposes all 16 RS-232 channels as labeled headers for bench testing without the full submarine harness. Used during bring-up to verify level-shifter voltages, FTDI enumeration, and loopback integrity on each channel pair.",
         bullets: [
-          "Bench harness for the Serial Board",
-          "Per-channel headers for loopback + level-shifter validation",
+          "Companion breakout board that fans all 16 RS-232 channels out to labeled headers for bench validation without the full submarine harness",
+          "Used during Serial Board bring-up to verify level-shifter voltages, FTDI enumeration, and per-channel loopback integrity",
         ],
         stack: ["Altium Designer", "Test & Validation", "RS-232", "Breakout Board"],
       },
@@ -122,8 +122,8 @@ const CATEGORIES: Category[] = [
         tagline:
           "Motor driver PCB for the Orion vehicle's thruster array. Receives PWM/CAN commands from the Jetson via backplane connector and drives 8 brushless DC thrusters. Handles power distribution, overcurrent protection, and ESC signal conditioning.",
         bullets: [
-          "Drives 8 brushless DC thrusters via PWM/CAN",
-          "Power distribution + overcurrent protection",
+          "Motor driver PCB driving 8 brushless DC thrusters from the Jetson over a backplane connector with PWM/CAN command paths and per-channel ESC signal conditioning",
+          "Architected the high-current power distribution and overcurrent protection for the submarine's propulsion system, surviving stalled-thruster and inrush conditions",
         ],
         stack: ["Altium Designer", "Motor Control", "CAN Bus", "PWM", "Power Distribution"],
       },
