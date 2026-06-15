@@ -282,6 +282,15 @@
 .hero-circuit-fade {
   animation: hero-circuit-in 1.2s ease-out 0.1s both;
 }
+
+/* Gentle trace draw-in: paths fade in (no per-path dashing — keeps SSR stable) */
+@keyframes hero-trace-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.hero-trace-draw {
+  animation: hero-trace-in 1.4s ease-out 0.3s both;
+}
 @keyframes hero-via-pulse {
   0%, 100% { opacity: 0.35; r: 3; }
   50% { opacity: 0.9; r: 4.5; }
