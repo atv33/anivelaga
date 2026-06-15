@@ -1268,16 +1268,36 @@ function CircuitHero() {
                   className={`hw-btn-wrap${pressed ? " is-pressed" : ""}`}
                   style={{
                     position: "absolute",
-                    top: 6,
+                    top: 20,
                     left: "50%",
                     transform: "translateX(-50%)",
-                    width: 64,
-                    height: 64,
+                    width: 56,
+                    height: 44,
                     display: "flex",
-                    alignItems: "center",
+                    alignItems: "flex-end",
                     justifyContent: "center",
+                    pointerEvents: "none",
                   }}
                 >
+                  {/* dark mount/base — connects the cap into the housing */}
+                  <span
+                    aria-hidden
+                    style={{
+                      position: "absolute",
+                      left: "50%",
+                      bottom: 0,
+                      transform: "translateX(-50%)",
+                      width: 40,
+                      height: 10,
+                      borderRadius: "3px 3px 2px 2px",
+                      background:
+                        "linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%)",
+                      border: "1px solid #2c2c2c",
+                      borderBottom: "none",
+                      boxShadow:
+                        "inset 0 1px 0 rgba(255,255,255,0.04), 0 1px 0 rgba(0,0,0,0.6)",
+                    }}
+                  />
                   <button
                     type="button"
                     onClick={triggerSignal}
@@ -1289,23 +1309,25 @@ function CircuitHero() {
                     aria-pressed={lampOn}
                     style={{
                       position: "relative",
-                      width: 52,
-                      height: 52,
+                      width: 30,
+                      height: 30,
+                      marginBottom: 6,
                       borderRadius: "50%",
                       border: "none",
                       padding: 0,
                       cursor: "pointer",
-                      // dark base / collar
+                      pointerEvents: "auto",
+                      // dark collar around the cap
                       background:
-                        "radial-gradient(circle at 50% 55%, #1a0606 0%, #0a0202 70%, #050101 100%)",
+                        "radial-gradient(circle at 50% 55%, #1a0606 0%, #0a0202 65%, #050101 100%)",
                       boxShadow: pressed
-                        ? "0 1px 0 rgba(0,0,0,0.8), inset 0 2px 4px rgba(0,0,0,0.7)"
+                        ? "0 1px 0 rgba(0,0,0,0.8), inset 0 1px 3px rgba(0,0,0,0.7)"
                         : hovering
-                          ? "0 6px 10px rgba(0,0,0,0.55), 0 0 18px rgba(220,38,38,0.35), inset 0 -2px 4px rgba(0,0,0,0.5)"
-                          : "0 4px 7px rgba(0,0,0,0.55), 0 0 10px rgba(220,38,38,0.18), inset 0 -2px 4px rgba(0,0,0,0.5)",
-                      transform: hovering && !pressed ? "scale(1.06)" : "scale(1)",
+                          ? "0 3px 5px rgba(0,0,0,0.6), 0 0 10px rgba(220,38,38,0.30), inset 0 -1px 2px rgba(0,0,0,0.55)"
+                          : "0 2px 3px rgba(0,0,0,0.55), 0 0 6px rgba(220,38,38,0.15), inset 0 -1px 2px rgba(0,0,0,0.5)",
+                      transform: hovering && !pressed ? "scale(1.05)" : "scale(1)",
                       transition:
-                        "transform 140ms ease, box-shadow 200ms ease",
+                        "transform 120ms ease, box-shadow 200ms ease",
                     }}
                   >
                     {/* glossy red dome */}
@@ -1313,15 +1335,15 @@ function CircuitHero() {
                       aria-hidden
                       style={{
                         position: "absolute",
-                        inset: 6,
+                        inset: 4,
                         borderRadius: "50%",
                         background:
-                          "radial-gradient(circle at 38% 32%, #ff8a8a 0%, #ef4444 28%, #b91c1c 65%, #7f1010 100%)",
+                          "radial-gradient(circle at 38% 32%, #ff7575 0%, #e23a3a 30%, #a01717 70%, #6a0e0e 100%)",
                         boxShadow: pressed
-                          ? "inset 0 3px 6px rgba(0,0,0,0.55), inset 0 -1px 2px rgba(255,255,255,0.05)"
-                          : "inset 0 -3px 6px rgba(0,0,0,0.45), inset 0 2px 3px rgba(255,255,255,0.18)",
+                          ? "inset 0 2px 4px rgba(0,0,0,0.55), inset 0 -1px 1px rgba(255,255,255,0.04)"
+                          : "inset 0 -2px 4px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.16)",
                         transform: pressed
-                          ? "translateY(2px) scale(0.98)"
+                          ? "translateY(1px) scale(0.97)"
                           : "translateY(0)",
                         transition:
                           "transform 100ms ease, box-shadow 200ms ease",
@@ -1332,14 +1354,14 @@ function CircuitHero() {
                       aria-hidden
                       style={{
                         position: "absolute",
-                        top: 10,
-                        left: 14,
-                        width: 16,
-                        height: 9,
+                        top: 6,
+                        left: 8,
+                        width: 10,
+                        height: 5,
                         borderRadius: "50%",
                         background:
                           "radial-gradient(ellipse at center, rgba(255,255,255,0.55), rgba(255,255,255,0) 70%)",
-                        opacity: pressed ? 0.25 : 0.7,
+                        opacity: pressed ? 0.2 : 0.65,
                         pointerEvents: "none",
                         transition: "opacity 150ms ease",
                       }}
