@@ -1265,8 +1265,12 @@ function CircuitHero() {
               >
                 <style>{`
                   @keyframes hwBoxPulse {
-                    0%, 100% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 0 0 rgba(251,191,36,0); border-color: #2c2c2c; }
-                    50%      { box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 0 22px rgba(251,191,36,0.18); border-color: #4a4030; }
+                    0%, 100% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); border-color: #2c2c2c; }
+                    50%      { box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); border-color: #3a3a3a; }
+                  }
+                  @keyframes hwHaloPulse {
+                    0%, 100% { opacity: 0.35; transform: scale(0.96); }
+                    50%      { opacity: 0.85; transform: scale(1.04); }
                   }
                   @keyframes hwBtnBob {
                     0%, 100% { transform: translateX(-50%) translateY(0); }
@@ -1274,16 +1278,37 @@ function CircuitHero() {
                   }
                   .hw-module { animation: hwBoxPulse 2.0s ease-in-out infinite; }
                   .hw-module.is-hot { animation-duration: 1.2s; }
+                  .hw-halo { animation: hwHaloPulse 2.0s ease-in-out infinite; }
+                  .hw-halo.is-hot { animation-duration: 1.2s; }
                   .hw-btn-wrap { animation: hwBtnBob 1.8s ease-in-out infinite; }
                   .hw-btn-wrap.is-pressed { animation: none; }
                 `}</style>
+
+                {/* glow halo that pulses around the button + box */}
+                <span
+                  aria-hidden
+                  className={`hw-halo${hovering || charging || lampOn ? " is-hot" : ""}`}
+                  style={{
+                    position: "absolute",
+                    left: "50%",
+                    bottom: 8,
+                    transform: "translateX(-50%)",
+                    width: 180,
+                    height: 92,
+                    borderRadius: 16,
+                    pointerEvents: "none",
+                    background:
+                      "radial-gradient(ellipse at center, rgba(251,191,36,0.22) 0%, rgba(251,191,36,0.10) 45%, rgba(251,191,36,0) 75%)",
+                    filter: "blur(2px)",
+                  }}
+                />
 
                 {/* rectangular control housing */}
                 <div
                   className={`hw-module${hovering || charging || lampOn ? " is-hot" : ""}`}
                   style={{
                     width: 132,
-                    height: 56,
+                    height: 36,
                     background:
                       "linear-gradient(180deg, #131313 0%, #0a0a0a 100%)",
                     border: "1px solid #2c2c2c",
@@ -1343,7 +1368,7 @@ function CircuitHero() {
                   className={`hw-btn-wrap${pressed ? " is-pressed" : ""}`}
                   style={{
                     position: "absolute",
-                    top: 14,
+                    top: 38,
                     left: "50%",
                     transform: "translateX(-50%)",
                     width: 72,
