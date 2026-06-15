@@ -232,10 +232,10 @@ function Index() {
         <div id="hero">
           <Hero />
         </div>
+        <About />
+        <PcbDivider />
         <Ticker />
         <Work />
-        <PcbDivider />
-        <About />
         <PcbDivider />
         <Experience />
         <PcbDivider />
