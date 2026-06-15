@@ -1301,11 +1301,11 @@ function CircuitHero() {
                   className={`hw-btn-wrap${pressed ? " is-pressed" : ""}`}
                   style={{
                     position: "absolute",
-                    top: 20,
+                    top: 14,
                     left: "50%",
                     transform: "translateX(-50%)",
-                    width: 56,
-                    height: 44,
+                    width: 72,
+                    height: 48,
                     display: "flex",
                     alignItems: "flex-end",
                     justifyContent: "center",
@@ -1320,9 +1320,9 @@ function CircuitHero() {
                       left: "50%",
                       bottom: 0,
                       transform: "translateX(-50%)",
-                      width: 40,
-                      height: 10,
-                      borderRadius: "3px 3px 2px 2px",
+                      width: 60,
+                      height: 9,
+                      borderRadius: "2px 2px 1px 1px",
                       background:
                         "linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%)",
                       border: "1px solid #2c2c2c",
@@ -1342,59 +1342,63 @@ function CircuitHero() {
                     aria-pressed={lampOn}
                     style={{
                       position: "relative",
-                      width: 30,
-                      height: 30,
+                      width: 52,
+                      height: 26,
                       marginBottom: 6,
-                      borderRadius: "50%",
+                      borderRadius: 4,
                       border: "none",
                       padding: 0,
                       cursor: "pointer",
                       pointerEvents: "auto",
-                      // dark collar around the cap
+                      // darker red base / sides of the cap
                       background:
-                        "radial-gradient(circle at 50% 55%, #1a0606 0%, #0a0202 65%, #050101 100%)",
+                        "linear-gradient(180deg, #5a0e0e 0%, #3a0707 60%, #1c0303 100%)",
                       boxShadow: pressed
-                        ? "0 1px 0 rgba(0,0,0,0.8), inset 0 1px 3px rgba(0,0,0,0.7)"
+                        ? "0 1px 0 rgba(0,0,0,0.85), inset 0 2px 3px rgba(0,0,0,0.55)"
                         : hovering
-                          ? "0 3px 5px rgba(0,0,0,0.6), 0 0 10px rgba(220,38,38,0.30), inset 0 -1px 2px rgba(0,0,0,0.55)"
-                          : "0 2px 3px rgba(0,0,0,0.55), 0 0 6px rgba(220,38,38,0.15), inset 0 -1px 2px rgba(0,0,0,0.5)",
-                      transform: hovering && !pressed ? "scale(1.05)" : "scale(1)",
+                          ? "0 4px 6px rgba(0,0,0,0.6), 0 0 14px rgba(220,38,38,0.35), inset 0 -2px 3px rgba(0,0,0,0.5)"
+                          : "0 3px 4px rgba(0,0,0,0.55), 0 0 8px rgba(220,38,38,0.18), inset 0 -2px 3px rgba(0,0,0,0.5)",
+                      transform: hovering && !pressed ? "scale(1.04)" : "scale(1)",
                       transition:
                         "transform 120ms ease, box-shadow 200ms ease",
+                      overflow: "hidden",
                     }}
                   >
-                    {/* glossy red dome */}
+                    {/* red top surface */}
                     <span
                       aria-hidden
                       style={{
                         position: "absolute",
-                        inset: 4,
-                        borderRadius: "50%",
+                        left: 2,
+                        right: 2,
+                        top: 2,
+                        bottom: 4,
+                        borderRadius: 3,
                         background:
-                          "radial-gradient(circle at 38% 32%, #ff7575 0%, #e23a3a 30%, #a01717 70%, #6a0e0e 100%)",
+                          "linear-gradient(180deg, #ff5a5a 0%, #e02a2a 45%, #a51414 100%)",
                         boxShadow: pressed
-                          ? "inset 0 2px 4px rgba(0,0,0,0.55), inset 0 -1px 1px rgba(255,255,255,0.04)"
-                          : "inset 0 -2px 4px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.16)",
+                          ? "inset 0 2px 3px rgba(0,0,0,0.5), inset 0 -1px 1px rgba(255,255,255,0.04)"
+                          : "inset 0 -2px 3px rgba(0,0,0,0.45), inset 0 1px 1px rgba(255,255,255,0.22)",
                         transform: pressed
-                          ? "translateY(1px) scale(0.97)"
+                          ? "translateY(2px)"
                           : "translateY(0)",
                         transition:
                           "transform 100ms ease, box-shadow 200ms ease",
                       }}
                     />
-                    {/* specular highlight */}
+                    {/* horizontal specular highlight */}
                     <span
                       aria-hidden
                       style={{
                         position: "absolute",
-                        top: 6,
-                        left: 8,
-                        width: 10,
-                        height: 5,
-                        borderRadius: "50%",
+                        top: 4,
+                        left: 6,
+                        right: 6,
+                        height: 3,
+                        borderRadius: 2,
                         background:
-                          "radial-gradient(ellipse at center, rgba(255,255,255,0.55), rgba(255,255,255,0) 70%)",
-                        opacity: pressed ? 0.2 : 0.65,
+                          "linear-gradient(180deg, rgba(255,255,255,0.55), rgba(255,255,255,0))",
+                        opacity: pressed ? 0.2 : 0.55,
                         pointerEvents: "none",
                         transition: "opacity 150ms ease",
                       }}
