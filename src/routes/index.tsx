@@ -1806,17 +1806,19 @@ function ProjectRow({
             }
           : undefined
       }
-      className={`group grid grid-cols-12 items-baseline transition-colors ${
-        bare ? "gap-3 py-3 px-4" : "gap-6 py-10"
+      className={`group transition-colors ${
+        bare
+          ? "flex flex-col gap-2 py-3 px-4"
+          : "grid grid-cols-12 items-baseline gap-6 py-10"
       } ${
         p.comingSoon ? "opacity-50" : ""
       } ${clickable ? (bare ? "cursor-pointer" : "cursor-pointer hover:bg-secondary/40 -mx-4 px-4 rounded-sm transition-transform duration-200 hover:scale-[1.02]") : ""}`}
     >
-      <div className={`col-span-12 font-mono uppercase tracking-[0.25em] text-ink-faint sm:col-span-2 ${bare ? "text-[10px]" : "text-xs"}`}>
+      <div className={`font-mono uppercase tracking-[0.25em] text-ink-faint ${bare ? "text-[10px]" : "col-span-12 text-xs sm:col-span-2"}`}>
         {categoryId}.{p.id}
         {p.year ? <> / {p.year}</> : null}
       </div>
-      <div className="col-span-12 sm:col-span-7">
+      <div className={bare ? "" : "col-span-12 sm:col-span-7"}>
         <h4 className={`font-display font-bold tracking-tight text-foreground ${bare ? "text-base sm:text-lg" : "text-2xl sm:text-3xl"}`}>
           {p.name}
           {p.comingSoon ? (
@@ -1859,7 +1861,7 @@ function ProjectRow({
         ) : null}
       </div>
       <div
-        className="col-span-12 flex flex-wrap gap-6 text-sm sm:col-span-3 sm:justify-end"
+        className={`flex flex-wrap text-sm ${bare ? "gap-3" : "col-span-12 gap-6 sm:col-span-3 sm:justify-end"}`}
         onClick={(e) => e.stopPropagation()}
       >
         {p.links?.map((l) => (
