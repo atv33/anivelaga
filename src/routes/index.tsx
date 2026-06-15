@@ -122,8 +122,8 @@ const CATEGORIES: Category[] = [
         tagline:
           "Motor driver PCB for the Orion vehicle's thruster array. Receives PWM/CAN commands from the Jetson via backplane connector and drives 8 brushless DC thrusters. Handles power distribution, overcurrent protection, and ESC signal conditioning.",
         bullets: [
-          "Motor driver PCB driving 8 brushless DC thrusters from the Jetson over a backplane connector with PWM/CAN command paths and per-channel ESC signal conditioning",
-          "Architected the high-current power distribution and overcurrent protection for the submarine's propulsion system, surviving stalled-thruster and inrush conditions",
+          "8-channel ESC motor driver with CAN bus control for thruster actuation",
+          "Multi-rail power design: 16V, 7.4V, and 3.3V lines managed via LDOs with optimized dropout voltages",
         ],
         stack: ["Altium Designer", "Motor Control", "CAN Bus", "PWM", "Power Distribution"],
       },
