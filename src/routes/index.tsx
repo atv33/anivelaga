@@ -906,32 +906,49 @@ function CircuitTraceLayer({ built }: { built: Built }) {
 }
 
 function CircuitHero() {
-  // Seed: stable on server + initial client render, then randomized on mount.
-  const [seed, setSeed] = useState(1);
-  useEffect(() => {
-    setSeed(((Math.random() * 0xffffffff) >>> 0) || 1);
-  }, []);
+  // Deterministic seed: same intentional layout every reload, but still
+  // visibly "generates" via staggered trace-draw + pulses.
+  const seed = 0x5a17c0de;
   const built = useMemo(() => buildCircuit(seed), [seed]);
   const pulses = built.traces.filter((t) => t.pulse);
   const [lampOn, setLampOn] = useState(false);
+  const [charging, setCharging] = useState(false);
+  const [hovering, setHovering] = useState(false);
   const [pulseId, setPulseId] = useState(0);
+  const [hoverPulseId, setHoverPulseId] = useState(0);
   const [pressed, setPressed] = useState(false);
-  const lampOffTimer = useRef<number | null>(null);
-  const lampOnTimer = useRef<number | null>(null);
+  const timers = useRef<number[]>([]);
+  const clearAllTimers = () => {
+    timers.current.forEach((t) => window.clearTimeout(t));
+    timers.current = [];
+  };
 
   const triggerSignal = () => {
-    if (lampOffTimer.current) window.clearTimeout(lampOffTimer.current);
-    if (lampOnTimer.current) window.clearTimeout(lampOnTimer.current);
+    clearAllTimers();
     setPressed(true);
-    window.setTimeout(() => setPressed(false), 180);
-    if (lampOn) {
+    timers.current.push(window.setTimeout(() => setPressed(false), 180));
+    if (lampOn || charging) {
       setLampOn(false);
+      setCharging(false);
       return;
     }
     setPulseId((n) => n + 1);
-    lampOnTimer.current = window.setTimeout(() => setLampOn(true), SIGNAL_DUR_MS - 80);
-    lampOffTimer.current = window.setTimeout(() => setLampOn(false), SIGNAL_DUR_MS + 5000);
+    setCharging(true);
+    timers.current.push(window.setTimeout(() => setLampOn(true), SIGNAL_DUR_MS));
+    timers.current.push(
+      window.setTimeout(() => {
+        setLampOn(false);
+        setCharging(false);
+      }, SIGNAL_DUR_MS + 5000),
+    );
   };
+
+  const onButtonEnter = () => {
+    if (charging || lampOn) return;
+    setHovering(true);
+    setHoverPulseId((n) => n + 1);
+  };
+  const onButtonLeave = () => setHovering(false);
   return (
     <section
       id="top"
@@ -942,7 +959,6 @@ function CircuitHero() {
       {/* layer 2: circuit SVG */}
       <div className="pointer-events-none absolute inset-0 z-[1]">
         <svg
-          key={seed}
           viewBox={`0 0 ${VB_W} ${VB_H}`}
           preserveAspectRatio="xMidYMid slice"
           className="hero-circuit-fade absolute inset-0 h-full w-full"
@@ -990,27 +1006,71 @@ function CircuitHero() {
             <path
               d={SIGNAL_PATH_D}
               fill="none"
-              stroke={lampOn ? "#7a5a1a" : "#3a3a3a"}
-              strokeOpacity={lampOn ? 0.85 : 0.55}
+              stroke="#3a3a3a"
+              strokeOpacity={0.55}
               strokeWidth={1.4}
               strokeLinecap="square"
               strokeLinejoin="round"
               pathLength={1}
               className="hero-trace-draw"
-              style={{ animationDelay: "1.4s", transition: "stroke 300ms ease" }}
+              style={{ animationDelay: "1.4s" }}
+            />
+            {/* Progressive amber fill — same path, revealed via dashoffset.
+                Click → fill from 1 → 0 over SIGNAL_DUR_MS (charging).
+                Hover → preview, peel ~8% from the button end. */}
+            <path
+              d={SIGNAL_PATH_D}
+              fill="none"
+              stroke="#fbbf24"
+              strokeOpacity={lampOn ? 1 : 0.92}
+              strokeWidth={1.8}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              pathLength={1}
+              strokeDasharray="1 1"
+              strokeDashoffset={
+                charging || lampOn ? 0 : hovering ? 0.92 : 1
+              }
+              style={{
+                transition:
+                  charging
+                    ? `stroke-dashoffset ${SIGNAL_DUR_MS}ms linear, stroke-opacity 200ms ease`
+                    : hovering
+                      ? "stroke-dashoffset 380ms ease-out, stroke-opacity 200ms ease"
+                      : "stroke-dashoffset 600ms ease-in, stroke-opacity 300ms ease",
+                filter: "drop-shadow(0 0 3px rgba(251,191,36,0.55))",
+                pointerEvents: "none",
+              }}
             />
             {/* small inline parts along the routed path */}
             <g className="hero-part-in" style={{ animationDelay: "2s" }}>
               <InlineComponent kind="resistor" x={920} y={690} rot={0} />
-              <InlineComponent kind="capacitor" x={700} y={580} rot={90} />
-              <InlineComponent kind="diode" x={500} y={470} rot={180} />
+              <InlineComponent kind="capacitor" x={740} y={580} rot={90} />
+              <InlineComponent kind="diode" x={430} y={470} rot={180} />
+              <InlineComponent kind="resistor" x={600} y={470} rot={0} />
               {/* via at corners */}
               <circle cx={700} cy={690} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
               <circle cx={700} cy={470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
               <circle cx={340} cy={470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
             </g>
-            {pulseId > 0 && (
-              <SignalDot key={pulseId} d={SIGNAL_PATH_D} dur={SIGNAL_DUR_MS} />
+            {/* leading dot that travels with the fill on click */}
+            {charging && pulseId > 0 && (
+              <g key={`click-${pulseId}`} style={{ pointerEvents: "none" }}>
+                <circle r={3.4} fill="#fff4d6">
+                  <animateMotion dur={`${SIGNAL_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={SIGNAL_PATH_D} />
+                </circle>
+                <circle r={8} fill="rgba(251,191,36,0.45)">
+                  <animateMotion dur={`${SIGNAL_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={SIGNAL_PATH_D} />
+                </circle>
+              </g>
+            )}
+            {/* hover preview: a tiny pulse that nudges into the route then fades */}
+            {hovering && hoverPulseId > 0 && (
+              <g key={`hov-${hoverPulseId}`} style={{ pointerEvents: "none" }}>
+                <circle r={2.6} fill="rgba(251,191,36,0.85)">
+                  <animateMotion dur="0.9s" repeatCount="indefinite" path={SIGNAL_PATH_D} keyPoints="0;0.1" keyTimes="0;1" calcMode="linear" />
+                </circle>
+              </g>
             )}
             <g className="hero-part-in" style={{ animationDelay: "1.6s" }}>
               <Lamp on={lampOn} />
@@ -1032,6 +1092,19 @@ function CircuitHero() {
               strokeWidth={1.2}
             />
             <circle cx={BUTTON_PAD.x} cy={BUTTON_PAD.y} r={3.5} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.9} />
+            {/* hover echo rings around the button pad */}
+            {hovering && (
+              <g style={{ pointerEvents: "none" }}>
+                <circle cx={BUTTON_PAD.x} cy={BUTTON_PAD.y} r={6} fill="none" stroke="#fbbf24" strokeWidth={0.8}>
+                  <animate attributeName="r" values="6;26" dur="1.6s" repeatCount="indefinite" />
+                  <animate attributeName="opacity" values="0.55;0" dur="1.6s" repeatCount="indefinite" />
+                </circle>
+                <circle cx={BUTTON_PAD.x} cy={BUTTON_PAD.y} r={6} fill="none" stroke="#fbbf24" strokeWidth={0.6}>
+                  <animate attributeName="r" values="6;22" dur="1.6s" begin="0.55s" repeatCount="indefinite" />
+                  <animate attributeName="opacity" values="0.4;0" dur="1.6s" begin="0.55s" repeatCount="indefinite" />
+                </circle>
+              </g>
+            )}
             <foreignObject
               x={BUTTON_PAD.x - 90}
               y={595}
@@ -1045,6 +1118,10 @@ function CircuitHero() {
                 <button
                   type="button"
                   onClick={triggerSignal}
+                  onMouseEnter={onButtonEnter}
+                  onMouseLeave={onButtonLeave}
+                  onFocus={onButtonEnter}
+                  onBlur={onButtonLeave}
                   aria-pressed={lampOn}
                   style={{
                     fontFamily:
@@ -1052,18 +1129,26 @@ function CircuitHero() {
                     fontSize: 10,
                     letterSpacing: "0.22em",
                     textTransform: "uppercase",
-                    color: lampOn ? "#fbbf24" : "#bdbdbd",
+                    color: lampOn || charging ? "#fbbf24" : hovering ? "#e8d28a" : "#bdbdbd",
                     background: pressed ? "#070707" : "#0d0d0d",
-                    border: `1px solid ${lampOn ? "#7a5a1a" : "#2c2c2c"}`,
-                    borderTopColor: pressed ? "#1c1c1c" : (lampOn ? "#a07720" : "#3a3a3a"),
+                    border: `1px solid ${lampOn || charging ? "#7a5a1a" : hovering ? "#4a4030" : "#2c2c2c"}`,
+                    borderTopColor: pressed
+                      ? "#1c1c1c"
+                      : lampOn || charging
+                        ? "#a07720"
+                        : hovering
+                          ? "#6a5a30"
+                          : "#3a3a3a",
                     padding: "8px 14px",
                     borderRadius: 2,
                     cursor: "pointer",
                     boxShadow: pressed
                       ? "inset 0 1px 0 rgba(0,0,0,0.6)"
-                      : lampOn
-                      ? "0 0 12px rgba(251,191,36,0.25), inset 0 1px 0 rgba(255,255,255,0.04)"
-                      : "inset 0 1px 0 rgba(255,255,255,0.04)",
+                      : lampOn || charging
+                        ? "0 0 14px rgba(251,191,36,0.3), inset 0 1px 0 rgba(255,255,255,0.04)"
+                        : hovering
+                          ? "0 0 10px rgba(251,191,36,0.15), inset 0 1px 0 rgba(255,255,255,0.04)"
+                          : "inset 0 1px 0 rgba(255,255,255,0.04)",
                     transform: pressed ? "translateY(1px)" : "none",
                     transition:
                       "background 120ms ease, color 200ms ease, border-color 200ms ease, box-shadow 200ms ease, transform 80ms ease",
@@ -1078,8 +1163,8 @@ function CircuitHero() {
                       width: 6,
                       height: 6,
                       borderRadius: 999,
-                      background: lampOn ? "#fbbf24" : "#3a3a3a",
-                      boxShadow: lampOn ? "0 0 6px #fbbf24" : "none",
+                      background: lampOn || charging ? "#fbbf24" : hovering ? "#7a5a1a" : "#3a3a3a",
+                      boxShadow: lampOn || charging ? "0 0 6px #fbbf24" : "none",
                       transition: "background 200ms ease, box-shadow 200ms ease",
                     }}
                   />
