@@ -266,249 +266,491 @@ function Hero() {
 }
 
 // ============================================================
-// CircuitHero — curated CPU-architecture-style SVG hero
-// All coordinates are fixed (SSR-safe, no RNG).
+// CircuitHero — engineered electronics architecture scene
+// Single SVG (viewBox 1600x900). Every chip, pad, trace, via,
+// component, lamp, button, and robot lives in this coordinate
+// system. All routing snaps to a 20px invisible grid.
 // ============================================================
 const VB_W = 1600;
 const VB_H = 900;
 
-// Portrait module — central component
-const PORT = { x: 1060, y: 270, w: 260, h: 320 };
-const PORT_INSET = 14;
-// Mobile circuit layout: a deliberate phone-first composition. The portrait is
-// slightly smaller and lower-left, with the button close enough to read and a
-// continuous routed bus tying the button, portrait pads, and lamp together.
-const MOBILE_PORT = { x: 120, y: 535, w: 540, h: 520 };
-const MOBILE_PORT_INSET = 16;
-const MOBILE_BUTTON_PAD = { x: 835, y: 835 };
-const MOBILE_LAMP = { cx: 220, cy: 315 };
-const MOBILE_LAMP_SCALE = 1.45;
-const MOBILE_TRACE_TOP_Y = 490;
-const MOBILE_SIGNAL_BUS_X = MOBILE_PORT.x + MOBILE_PORT.w + 20;
-
-// Pin pad layout helpers
-const yPads = [296, 332, 368, 404, 440, 476, 512, 548];     // 8 vertical pad rows (left/right)
-const xPads = [1103, 1147, 1190, 1233, 1277];               // 5 horizontal pad cols (top/bottom)
-
+// ── Module catalog ──────────────────────────────────────────
 type Pad = { x: number; y: number; w: number; h: number };
-const leftPads:   Pad[] = yPads.map((y) => ({ x: PORT.x - 8,        y: y - 5,  w: 8,  h: 10 }));
-const rightPads:  Pad[] = yPads.map((y) => ({ x: PORT.x + PORT.w,   y: y - 5,  w: 8,  h: 10 }));
-const topPads:    Pad[] = xPads.map((x) => ({ x: x - 5, y: PORT.y - 8,         w: 10, h: 8  }));
-const bottomPads: Pad[] = xPads.map((x) => ({ x: x - 5, y: PORT.y + PORT.h,    w: 10, h: 8  }));
-
-// Trace data: d = SVG path, w = stroke width, o = opacity (0..1), pulse?: ms duration
-type Trace = { id: string; d: string; w: number; o: number; pulse?: number };
-
-// ─── Secondary chip / connector geometry (pin tips computed to integers) ───
-// CHIP_A — upper-mid. xs(5): x + (i+1)*144/6 = 704,728,752,776,800 ✓
-//                    ys(2): y + (i+1)*72/3  = 134,158 ✓
-const CHIP_A = { x: 680, y: 110, w: 144, h: 72 };
-// CHIP_C — upper-left. xs(3): 404,428,452. ys(2): 240 + 22*(i+1) = 262,284
-// Shifted right by 48px to clear lamp (D1) on the left.
-// New pins — tops: 452,476,500 (y=236) · bots: 452,476,500 (y=310) · lefts x=424 · rights x=528
-const CHIP_C = { x: 428, y: 240, w: 96, h: 66 };
-// CHIP_B — center-left support chip. xs(2): 520 + 40*(i+1) = 560,600. ys(2): 380+20*(i+1) = 400,420
-const CHIP_B = { x: 520, y: 380, w: 120, h: 60 };
-// CHIP_D — mid-canvas SOIC, fills the empty space between CHIP_B and portrait.
-// Pads (w=160, pins=4): top/bot xs = 776 + 32*(i+1) = 808,840,872,904
-const CHIP_D = { x: 776, y: 488, w: 160, h: 60 };
-// Edge connector right (partially off-canvas)
-const EDGE_R = { x: 1540, y: 360, w: 60, h: 220 };
-const EDGE_R_PINS = [380, 410, 440, 470, 500, 530, 560]; // y tips, x tip = 1536
-// Top edge header — 6 pins, tip y = -10 + 26 + 4 = 20, pin xs are pin centers
-const HEADER_T = { x: 880, y: -10, w: 100, h: 26, pins: [890, 906, 922, 938, 954, 970] };
-
-// Inline component types
-type Inline =
-  | { kind: "resistor";  x: number; y: number; rot?: 0 | 90 | 180 | 270 }
-  | { kind: "inductor";  x: number; y: number; rot?: 0 | 90 | 180 | 270 }
-  | { kind: "diode";     x: number; y: number; rot?: 0 | 90 | 180 | 270 }
-  | { kind: "testpad";   x: number; y: number };
-
-type Pt = { x: number; y: number };
-type Built = {
-  traces: Trace[];
-  vias: Pt[];
-  parts: Inline[];
+type ModuleSpec = {
+  id: string;
+  label: string;
+  x: number; y: number; w: number; h: number;
+  topX: number[];
+  botX: number[];
+  leftY: number[];
+  rightY: number[];
+  marker?: string;
 };
 
-function ptsToD(pts: Pt[]): string {
-  return pts
-    .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`)
-    .join(" ");
+// Pad coordinates are all grid-aligned (multiples of 20).
+const MODULES: ModuleSpec[] = [
+  {
+    id: "CPU", label: "CPU", marker: "U1",
+    x: 760, y: 150, w: 220, h: 90,
+    topX:   [800, 840, 900, 940],
+    botX:   [800, 840, 900, 940],
+    leftY:  [180, 220],
+    rightY: [180, 220],
+  },
+  {
+    id: "CTRL", label: "CTRL", marker: "U2",
+    x: 300, y: 250, w: 170, h: 75,
+    topX:   [340, 420],
+    botX:   [340, 420],
+    leftY:  [280],
+    rightY: [280, 300],
+  },
+  {
+    id: "NET", label: "NET", marker: "U3",
+    x: 540, y: 390, w: 220, h: 80,
+    topX:   [580, 620, 680, 720],
+    botX:   [580, 680, 720],
+    leftY:  [420, 450],
+    rightY: [420, 450],
+  },
+  {
+    id: "IO", label: "I/O", marker: "U4",
+    x: 1120, y: 180, w: 220, h: 80,
+    topX:   [1160, 1220, 1300],
+    botX:   [1160, 1220, 1300],
+    leftY:  [200, 240],
+    rightY: [200, 240],
+  },
+  {
+    id: "DRV", label: "DRV", marker: "U5",
+    x: 1040, y: 470, w: 260, h: 90,
+    topX:   [1080, 1160, 1240],
+    botX:   [],
+    leftY:  [500, 540],
+    rightY: [500, 540],
+  },
+  {
+    id: "DSP", label: "DSP", marker: "U6",
+    x: 300, y: 540, w: 180, h: 80,
+    topX:   [340, 400, 460],
+    botX:   [],
+    leftY:  [580],
+    rightY: [580],
+  },
+];
+
+const EDGE_R = { x: 1430, y: 300, w: 40, h: 260, pinsY: [320, 360, 400, 440, 480, 520, 540] };
+const HEADER_T = { x: 880, y: -10, w: 120, h: 26, pinsX: [900, 920, 940, 960, 980] };
+
+const moduleById = (id: string) => MODULES.find((m) => m.id === id)!;
+
+// Build pad arrays per module (rendered as little SMD pads on each side).
+function modulePads(m: ModuleSpec): { pads: Pad[] } {
+  const pads: Pad[] = [];
+  for (const px of m.topX) pads.push({ x: px - 4, y: m.y - 6, w: 8, h: 6 });
+  for (const px of m.botX) pads.push({ x: px - 4, y: m.y + m.h, w: 8, h: 6 });
+  for (const py of m.leftY) pads.push({ x: m.x - 6, y: py - 4, w: 6, h: 8 });
+  for (const py of m.rightY) pads.push({ x: m.x + m.w, y: py - 4, w: 6, h: 8 });
+  return { pads };
 }
 
-// Deterministic, declarative routed-graph circuit. No randomness.
-// All bend points are multiples of 24 (the invisible routing grid).
-// Endpoints land exactly on real pad/pin tips, chip pins, header pins,
-// connector pins, or the canvas edge. Paths are strictly orthogonal.
-// Keepout zones (component bodies) are enforced manually per trace.
-function buildCircuit(_seed: number): Built {
+// ── Trace data ──────────────────────────────────────────────
+type Pt = { x: number; y: number };
+type Trace = { id: string; d: string; w: number; o: number; pulse?: number };
+type Inline =
+  | { kind: "resistor";  x: number; y: number; rot?: 0 | 90 }
+  | { kind: "capacitor"; x: number; y: number; rot?: 0 | 90 }
+  | { kind: "diode";     x: number; y: number; rot?: 0 | 90 }
+  | { kind: "inductor";  x: number; y: number; rot?: 0 | 90 };
+type Via = { x: number; y: number };
+type Built = { traces: Trace[]; vias: Via[]; parts: Inline[] };
+
+function ptsToD(pts: Pt[]): string {
+  return pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
+}
+
+// Curated grid-routed traces. Backbone lanes y=130, 250, 370, 510, 660.
+// Vertical trunks x=420, 700, 980, 1260.
+function buildCircuit(): Built {
   const traces: Trace[] = [];
-  const add = (id: string, pts: Pt[], w: number, o: number, pulse?: number) => {
+  const add = (id: string, pts: Pt[], w: number, o: number, pulse?: number) =>
     traces.push({ id, d: ptsToD(pts), w, o, pulse });
-  };
 
-  // ── Routing lane plan (24px invisible grid) ───────────────────────
-  // Horizontal backbone lanes (y):  72, 216, 360, 576, 672, 792
-  // Vertical trunk lanes      (x): 264, 504, 688, 984, 1416
-  // Every trace lives on one of these lanes (or a single-lane jog at a
-  // chip-adjacent column) and lands on a real pad/pin tip or board edge.
-  //
-  // Keepouts respected:
-  //   PORT  x 1060..1320, y 270..590     (portrait body)
-  //   CTRL  x 1080..1300, y 585..725     (button/control module)
-  //   CHIP_A x 680..824, y 110..182
-  //   CHIP_B x 520..640, y 380..440
-  //   CHIP_C x 380..476, y 240..306
-  //   CHIP_D x 776..936, y 488..548
-  //   EDGE_R x 1540..1600, y 360..580
-  //   HEADER_T x 880..980, y -10..16
+  const cpu = moduleById("CPU");
+  const ctrl = moduleById("CTRL");
+  const net = moduleById("NET");
+  const io = moduleById("IO");
+  const drv = moduleById("DRV");
+  const dsp = moduleById("DSP");
 
-  // ── Portrait LEFT pads → buses (8) ──
-  // L1 → header pin (922,20) via north backbone (y=72)
-  add("L1", [{x:1052,y:296},{x:984,y:296},{x:984,y:72},{x:922,y:72},{x:922,y:20}], 1.5, 0.55, 6200);
-  // L2 → CHIP_A right pin (828,134)
-  add("L2", [{x:1052,y:332},{x:984,y:332},{x:984,y:134},{x:828,y:134}], 1.25, 0.5);
-  // L3 → CHIP_A right pin (828,158)
-  add("L3", [{x:1052,y:368},{x:960,y:368},{x:960,y:158},{x:828,y:158}], 1.25, 0.5, 7400);
-  // L4 → CHIP_B right pin (644,400). Trunk at x=688, no chip-body crossing.
-  add("L4", [{x:1052,y:404},{x:688,y:404},{x:688,y:400},{x:644,y:400}], 1.25, 0.5);
-  // L5 → CHIP_B right pin (644,420)
-  add("L5", [{x:1052,y:440},{x:688,y:440},{x:688,y:420},{x:644,y:420}], 1.0, 0.45);
-  // L6 → CHIP_D top pin (808,484). Lane y=476 sits above chip body (y=488+).
-  add("L6", [{x:1052,y:476},{x:808,y:476},{x:808,y:484}], 1.25, 0.5);
-  // L7 → CHIP_D top pin (872,484). Jogs around chip body via y=476.
-  add("L7", [{x:1052,y:512},{x:984,y:512},{x:984,y:476},{x:872,y:476},{x:872,y:484}], 1.0, 0.45);
-  // L8 → CHIP_D top pin (904,484). Same lane discipline.
-  add("L8", [{x:1052,y:548},{x:984,y:548},{x:984,y:476},{x:904,y:476},{x:904,y:484}], 1.25, 0.5);
+  // ── CPU → I/O bus (top backbone y=130) ──
+  add("CPU_IO_1",
+    [{x: cpu.x + cpu.w, y: 180}, {x: 980, y: 180}, {x: 980, y: 130}, {x: 1260, y: 130}, {x: 1260, y: 200}, {x: io.x, y: 200}],
+    1.4, 0.7, 5200);
+  add("CPU_IO_2",
+    [{x: cpu.x + cpu.w, y: 220}, {x: 1000, y: 220}, {x: 1000, y: 240}, {x: io.x, y: 240}],
+    1.1, 0.55);
 
-  // ── Portrait TOP pads (5) ──
-  add("T1", [{x:1103,y:262},{x:1103,y:0}], 1.0, 0.4);
-  add("T2", [{x:1147,y:262},{x:1147,y:72},{x:954,y:72},{x:954,y:20}], 1.25, 0.5, 5600);
-  add("T3", [{x:1190,y:262},{x:1190,y:0}], 1.5, 0.55, 4800);
-  add("T4", [{x:1233,y:262},{x:1233,y:96},{x:1416,y:96},{x:1416,y:0}], 1.0, 0.45);
-  add("T5", [{x:1277,y:262},{x:1277,y:120},{x:1488,y:120},{x:1488,y:0}], 1.0, 0.4);
+  // ── CPU top → top header pins ──
+  add("CPU_H1", [{x: 900, y: cpu.y}, {x: 900, y: 36}], 1.0, 0.5);
+  add("CPU_H2", [{x: 940, y: cpu.y}, {x: 940, y: 36}], 1.0, 0.45);
+  add("CPU_H3", [{x: 840, y: cpu.y}, {x: 840, y: 80}, {x: 920, y: 80}, {x: 920, y: 36}], 1.0, 0.45);
+  add("CPU_H4", [{x: 800, y: cpu.y}, {x: 800, y: 60}, {x: 980, y: 60}, {x: 980, y: 36}], 1.0, 0.42);
+  add("CPU_H5", [{x: 880, y: cpu.y}, {x: 880, y: 50}, {x: 960, y: 50}, {x: 960, y: 36}], 1.0, 0.4);
 
-  // ── Portrait RIGHT pads → EDGE_R / canvas right (4) ──
-  add("R1", [{x:1328,y:296},{x:1600,y:296}], 1.25, 0.5, 6800);
-  add("R2", [{x:1328,y:404},{x:1416,y:404},{x:1416,y:410},{x:1536,y:410}], 1.25, 0.5);
-  add("R3", [{x:1328,y:476},{x:1416,y:476},{x:1416,y:470},{x:1536,y:470}], 1.25, 0.5);
-  add("R4", [{x:1328,y:548},{x:1416,y:548},{x:1416,y:560},{x:1536,y:560}], 1.0, 0.45);
+  // ── CPU left → CTRL right (mid backbone y=250) ──
+  add("CPU_CTRL_1",
+    [{x: cpu.x, y: 180}, {x: 700, y: 180}, {x: 700, y: 250}, {x: ctrl.x + ctrl.w, y: 280}],
+    1.2, 0.6, 4400);
+  add("CPU_CTRL_2",
+    [{x: cpu.x, y: 220}, {x: 720, y: 220}, {x: 720, y: 300}, {x: ctrl.x + ctrl.w, y: 300}],
+    1.0, 0.5);
 
-  // ── CHIP_A north / south (2) ──
-  // header pin (938,20) → CHIP_A top pin (752,106)
-  add("FA1", [{x:938,y:20},{x:938,y:72},{x:752,y:72},{x:752,y:106}], 1.0, 0.4);
-  // CHIP_A bot pin (728,186) → CHIP_D top pin (840,484) via y=216 bus then x=840 trunk
-  add("FA2", [{x:728,y:186},{x:728,y:216},{x:840,y:216},{x:840,y:484}], 1.0, 0.42);
+  // ── CPU bot → NET top (vertical trunk x=700/720) ──
+  add("CPU_NET_1",
+    [{x: 800, y: cpu.y + cpu.h}, {x: 800, y: 360}, {x: 700, y: 360}, {x: 700, y: 370}, {x: 720, y: 370}, {x: 720, y: net.y}],
+    1.2, 0.6, 5800);
+  add("CPU_NET_2",
+    [{x: 840, y: cpu.y + cpu.h}, {x: 840, y: 340}, {x: 680, y: 340}, {x: 680, y: net.y}],
+    1.0, 0.5);
+  add("CPU_NET_3",
+    [{x: 900, y: cpu.y + cpu.h}, {x: 900, y: 360}, {x: 620, y: 360}, {x: 620, y: net.y}],
+    1.0, 0.45);
+  add("CPU_NET_4",
+    [{x: 940, y: cpu.y + cpu.h}, {x: 940, y: 380}, {x: 580, y: 380}, {x: 580, y: net.y}],
+    1.0, 0.42);
 
-  // ── CHIP_C (upper-left connector) fanout (4) ──
-  add("CHIP_C_TOP", [{x:452,y:236},{x:452,y:72},{x:312,y:72},{x:312,y:0}], 1.0, 0.4);
-  add("C2", [{x:424,y:262},{x:264,y:262},{x:264,y:168},{x:0,y:168}], 1.0, 0.4);
-  // CHIP_C top pin (452,236) → CHIP_A left pin (676,134)
-  add("C3", [{x:500,y:236},{x:500,y:134},{x:676,y:134}], 1.0, 0.42);
-  // CHIP_C bot pin (404,310) → CHIP_B left pin (516,400) via y=360 bus and x=516 trunk
-  add("C4", [{x:452,y:310},{x:452,y:360},{x:516,y:360},{x:516,y:400}], 1.0, 0.4);
+  // ── NET → DRV bus (backbone y=510) ──
+  add("NET_DRV_1",
+    [{x: net.x + net.w, y: 420}, {x: 980, y: 420}, {x: 980, y: 510}, {x: drv.x, y: 510}],
+    1.3, 0.65, 4800);
+  add("NET_DRV_2",
+    [{x: net.x + net.w, y: 450}, {x: 980, y: 450}, {x: 980, y: 540}, {x: drv.x, y: 540}],
+    1.0, 0.55);
 
-  // ── Inter-chip pad-to-pad routes ──
-  // CHIP_A bot pin (704,186) → CHIP_B top pin (560,376) via y=360 bus
-  add("AB1", [{x:704,y:186},{x:704,y:360},{x:560,y:360},{x:560,y:376}], 1.0, 0.42);
-  // CHIP_B bot pin (600,444) → CHIP_D top pin (808,484) via y=460 lane (24px clearance above chip)
-  add("BD1", [{x:600,y:444},{x:600,y:460},{x:808,y:460},{x:808,y:484}], 1.0, 0.4);
+  // ── NET ↔ CTRL (left side) ──
+  add("NET_CTRL",
+    [{x: net.x, y: 420}, {x: 500, y: 420}, {x: 500, y: 250}, {x: ctrl.x + ctrl.w, y: 280}],
+    1.0, 0.48);
 
-  // ── Header → CHIP_A top fanout (2 more, all on y=72 backbone) ──
-  add("HA1", [{x:890,y:20},{x:890,y:72},{x:704,y:72},{x:704,y:106}], 1.0, 0.4);
-  add("HA2", [{x:906,y:20},{x:906,y:72},{x:728,y:72},{x:728,y:106}], 1.0, 0.38);
+  // ── NET bot → DSP top ──
+  add("NET_DSP_1",
+    [{x: 580, y: net.y + net.h}, {x: 580, y: 660}, {x: 460, y: 660}, {x: 460, y: dsp.y}],
+    1.0, 0.5);
+  add("NET_DSP_2",
+    [{x: 680, y: net.y + net.h}, {x: 680, y: 640}, {x: 400, y: 640}, {x: 400, y: dsp.y}],
+    1.0, 0.45);
+  add("NET_DSP_3",
+    [{x: 720, y: net.y + net.h}, {x: 720, y: 680}, {x: 340, y: 680}, {x: 340, y: dsp.y}],
+    1.0, 0.42);
 
-  // ── EDGE_R ↔ portrait right fanout (3 more, all share x=1416 trunk) ──
-  add("EP1", [{x:1536,y:380},{x:1416,y:380},{x:1416,y:368},{x:1328,y:368}], 1.0, 0.42);
-  add("EP2", [{x:1536,y:500},{x:1416,y:500},{x:1416,y:440},{x:1328,y:440}], 1.0, 0.4);
-  add("EP3", [{x:1536,y:530},{x:1416,y:530},{x:1416,y:512},{x:1328,y:512}], 1.0, 0.4);
+  // ── CTRL → DSP (left trunk x=300/280) ──
+  add("CTRL_DSP_1",
+    [{x: 340, y: ctrl.y + ctrl.h}, {x: 340, y: 380}, {x: 280, y: 380}, {x: 280, y: 660}, {x: 340, y: 660}, {x: 340, y: dsp.y}],
+    1.0, 0.45);
+  add("CTRL_DSP_2",
+    [{x: 420, y: ctrl.y + ctrl.h}, {x: 420, y: 510}, {x: 400, y: 510}, {x: 400, y: dsp.y}],
+    1.0, 0.42);
 
-  // ── Extra pad-to-pad routes across the visible center board ──
-  // CHIP_C right (480,262) → CHIP_A left (676,132) via y=200 lane
-  add("CA1", [{x:528,y:262},{x:548,y:262},{x:548,y:200},{x:660,y:200},{x:660,y:132},{x:676,y:132}], 1.0, 0.4);
-  // CHIP_C right (528,284) → CHIP_B right (644,420) — route around CHIP_B from the right
-  add("CB1", [{x:528,y:284},{x:680,y:284},{x:680,y:420},{x:644,y:420}], 1.0, 0.4);
-  // CHIP_C bot (452,310) → CHIP_B top (560,376) via y=328 lane (spaced apart from CB3/C4)
-  add("CB2", [{x:452,y:310},{x:452,y:328},{x:560,y:328},{x:560,y:376}], 1.0, 0.38);
-  // CHIP_C bot (500,310) → CHIP_B top (600,376) via y=352 lane
-  add("CB3", [{x:500,y:310},{x:500,y:352},{x:600,y:352},{x:600,y:376}], 1.0, 0.38);
-  // CHIP_A bot (776,186) → CHIP_D top pin3 (872,484). Long vertical drops only; shared y=228 lane sits far above CHIP_D.
-  add("AD1", [{x:776,y:186},{x:776,y:228},{x:872,y:228},{x:872,y:484}], 1.0, 0.4);
-  // CHIP_A bot (800,186) → CHIP_D top pin4 (904,484) via y=240 lane (well above chip)
-  add("AD2", [{x:800,y:186},{x:800,y:240},{x:904,y:240},{x:904,y:484}], 1.0, 0.38);
+  // ── CTRL left → board edge ──
+  add("CTRL_L1", [{x: ctrl.x, y: 280}, {x: 0, y: 280}], 1.0, 0.4);
+  add("CTRL_T1", [{x: 340, y: ctrl.y}, {x: 340, y: 130}, {x: 420, y: 130}, {x: 420, y: 60}, {x: 420, y: 0}], 1.0, 0.4);
+  add("CTRL_T2", [{x: 420, y: ctrl.y}, {x: 420, y: 130}, {x: 660, y: 130}, {x: 660, y: 60}], 1.0, 0.42);
 
-  // ── CHIP_D bot pins → bottom board edge (2 outputs) ──
-  add("DB1", [{x:840,y:552},{x:840,y:792},{x:760,y:792},{x:760,y:900}], 1.0, 0.4);
-  add("DB2", [{x:872,y:552},{x:872,y:720},{x:1100,y:720},{x:1100,y:900}], 1.0, 0.38);
+  // ── I/O → EDGE_R (right backbone y=370 not crossing chips) ──
+  add("IO_E1",
+    [{x: io.x + io.w, y: 200}, {x: 1380, y: 200}, {x: 1380, y: 320}, {x: EDGE_R.x, y: 320}],
+    1.2, 0.6, 5400);
+  add("IO_E2",
+    [{x: io.x + io.w, y: 240}, {x: 1400, y: 240}, {x: 1400, y: 360}, {x: EDGE_R.x, y: 360}],
+    1.0, 0.5);
 
-  // ── CHIP_C extra left-edge fanout ──
-  add("CL1", [{x:424,y:284},{x:200,y:284},{x:200,y:216},{x:0,y:216}], 1.0, 0.38);
+  // ── DRV → EDGE_R ──
+  add("DRV_E1",
+    [{x: drv.x + drv.w, y: 500}, {x: 1360, y: 500}, {x: 1360, y: 480}, {x: EDGE_R.x, y: 480}],
+    1.2, 0.6);
+  add("DRV_E2",
+    [{x: drv.x + drv.w, y: 540}, {x: 1380, y: 540}, {x: 1380, y: 520}, {x: EDGE_R.x, y: 520}],
+    1.0, 0.55);
+  add("DRV_E3",
+    [{x: drv.x + drv.w, y: 540}, {x: 1340, y: 540}, {x: EDGE_R.x, y: 540}],
+    1.0, 0.45);
 
-  // ── Header → CHIP_A more pins (use y=72 backbone) ──
-  add("HA3", [{x:922,y:20},{x:922,y:88},{x:776,y:88},{x:776,y:106}], 1.0, 0.36);
-  add("HA4", [{x:970,y:20},{x:970,y:88},{x:800,y:88},{x:800,y:106}], 1.0, 0.36);
+  // ── I/O bot → DRV top (vertical trunk x=1160/1240) ──
+  add("IO_DRV_1",
+    [{x: 1160, y: io.y + io.h}, {x: 1160, y: drv.y}],
+    1.2, 0.6, 6200);
+  add("IO_DRV_2",
+    [{x: 1220, y: io.y + io.h}, {x: 1220, y: 340}, {x: 1240, y: 340}, {x: 1240, y: drv.y}],
+    1.0, 0.5);
+  add("IO_DRV_3",
+    [{x: 1300, y: io.y + io.h}, {x: 1300, y: 360}, {x: 1320, y: 360}, {x: 1320, y: 440}, {x: 1300, y: 440}, {x: 1300, y: drv.y}],
+    1.0, 0.42);
 
-  // ── Portrait BOTTOM pads (5) → escape routes. Center pin (1190,590) drops into
-  //    the button (1190,700). Other 4 fan out to bottom/edges, avoiding the button. ──
-  add("PB_CTR", [{x:1190,y:590},{x:1190,y:700}], 1.25, 0.5);
-  add("PB1", [{x:1103,y:590},{x:1103,y:628},{x:980,y:628},{x:980,y:900}], 1.0, 0.4);
-  add("PB2", [{x:1147,y:590},{x:1147,y:652},{x:1040,y:652},{x:1040,y:900}], 1.0, 0.38);
-  add("PB3", [{x:1233,y:590},{x:1233,y:628},{x:1360,y:628},{x:1360,y:900}], 1.0, 0.4);
-  add("PB4", [{x:1277,y:590},{x:1277,y:652},{x:1420,y:652},{x:1420,y:900}], 1.0, 0.38);
+  // ── CPU → DRV diagonal (via y=370 and x=1260) ──
+  add("CPU_DRV",
+    [{x: cpu.x + cpu.w, y: cpu.y + 60}, {x: 1020, y: 220}, {x: 1020, y: 370}, {x: 1260, y: 370}, {x: 1260, y: drv.y}],
+    1.0, 0.45);
 
-  // ── Fill right-side blank area (between CHIP_A right and portrait top) ──
-  // EDGE_R extra pin → portrait right pad row at y=332
-  add("ER1", [{x:1536,y:320},{x:1416,y:320},{x:1416,y:332},{x:1328,y:332}], 1.0, 0.38);
-  // CHIP_A right pin (828,158) extension already exists via L3. Add header→CHIP_A top (824)
-  add("HA5", [{x:954,y:20},{x:954,y:96},{x:824,y:96},{x:824,y:106}], 1.0, 0.36);
+  // ── I/O top → top header ──
+  add("IO_H1", [{x: 1160, y: io.y}, {x: 1160, y: 130}, {x: 1260, y: 130}, {x: 1260, y: 60}], 1.0, 0.4);
+  add("IO_H2", [{x: 1220, y: io.y}, {x: 1220, y: 100}, {x: 1340, y: 100}, {x: 1340, y: 0}], 1.0, 0.38);
 
-  // ── Inline parts — each centered exactly on a real straight segment.
-  //    No part overlaps a chip body, the portrait, or the control module. ──
+  // ── Bottom edge fanouts from DSP and NET ──
+  add("DSP_B1", [{x: 340, y: dsp.y + dsp.h}, {x: 340, y: 760}, {x: 220, y: 760}, {x: 220, y: 900}], 1.0, 0.42);
+  add("DSP_B2", [{x: 400, y: dsp.y + dsp.h}, {x: 400, y: 800}, {x: 540, y: 800}, {x: 540, y: 900}], 1.0, 0.4);
+  add("DRV_B1", [{x: 1080, y: drv.y + drv.h}, {x: 1080, y: 760}, {x: 980, y: 760}, {x: 980, y: 900}], 1.0, 0.4);
+  add("DRV_B2", [{x: 1240, y: drv.y + drv.h}, {x: 1240, y: 780}, {x: 1340, y: 780}, {x: 1340, y: 900}], 1.0, 0.42);
+
+  // ── Inline components — every one sits on a real straight trace segment ──
   const parts: Inline[] = [
-    // Resistors (4) — SMD 0805 on horizontal runs
-    { kind: "resistor",  x: 900,  y: 134, rot: 0 },   // on L2 segment y=134 x 828..984
-    { kind: "resistor",  x: 876,  y: 158, rot: 0 },   // on L3 segment y=158 x 828..960
-    { kind: "resistor",  x: 1464, y: 296, rot: 0 },   // on R1 segment y=296 x 1328..1600
-    { kind: "resistor",  x: 576,  y: 134, rot: 0 },   // on C3 segment y=134 x 452..676
-    // Diodes (2) — horizontal, both anode-left/cathode-right
-    { kind: "diode",     x: 912,  y: 476, rot: 0 },   // on L6/L7/L8 shared y=476 lane (x 808..984)
-    { kind: "diode",     x: 840,  y: 72,  rot: 0 },   // on FA1 segment y=72 x 752..938
-    // Inductor (1)
-    { kind: "inductor",  x: 792,  y: 216, rot: 0 },   // on FA2 segment y=216 x 728..840
+    // Resistors (7) on horizontal runs
+    { kind: "resistor", x: 880,  y: 180 },   // CPU_IO_1 segment y=180 (right of CPU)
+    { kind: "resistor", x: 1100, y: 240 },   // CPU_IO_2 segment y=240
+    { kind: "resistor", x: 600,  y: 180 },   // CPU_CTRL_1 y=180 between ctrl and cpu
+    { kind: "resistor", x: 860,  y: 420 },   // NET_DRV_1 y=420
+    { kind: "resistor", x: 1260, y: 200 },   // IO_E1 y=200
+    { kind: "resistor", x: 1360, y: 480 },   // DRV_E1 y=480
+    { kind: "resistor", x: 380,  y: 660 },   // NET_DSP_1 y=660
+    // Capacitors (4)
+    { kind: "capacitor", x: 800, y: 320, rot: 90 }, // CPU_NET_1 segment x=800 y 240..360
+    { kind: "capacitor", x: 980, y: 460, rot: 90 }, // NET_DRV_1 x=980
+    { kind: "capacitor", x: 1160, y: 320, rot: 90 }, // IO_DRV_1
+    { kind: "capacitor", x: 540, y: 800, rot: 90 }, // DSP_B2
+    // Diodes (3) inline on straight runs
+    { kind: "diode", x: 1020, y: 240 },     // CPU_IO_2
+    { kind: "diode", x: 460,  y: 420 },     // NET_CTRL y=420 segment
+    { kind: "diode", x: 1380, y: 360 },     // IO_E2 y=360 around 1400..1430
+    // Inductor (2) on open horizontal runs
+    { kind: "inductor", x: 760,  y: 420 },  // NET_DRV_1 y=420 left of resistor
+    { kind: "inductor", x: 280,  y: 520, rot: 90 }, // CTRL_DSP_1 vertical x=280 y=380..660
   ];
 
-  // ── Vias: no electrical junctions in the graph, so render none.
-  //    (Spec: remove all isolated dots and floating markers.) ──
-  return { traces, vias: [], parts };
+  // ── Vias only at real branch points / endpoints ──
+  const vias: Via[] = [
+    {x: 980, y: 180}, {x: 980, y: 130},  // CPU_IO_1 corner
+    {x: 700, y: 250},                    // CPU_CTRL_1 corner
+    {x: 720, y: 370},                    // CPU_NET_1 junction
+    {x: 980, y: 510},                    // NET_DRV_1 corner
+    {x: 500, y: 250},                    // NET_CTRL corner
+    {x: 1380, y: 320},                   // IO_E1 corner
+    {x: 1260, y: 130},                   // header trunk
+    {x: 280, y: 380}, {x: 280, y: 660},  // CTRL_DSP_1 corners
+    {x: 1240, y: 440},                   // IO_DRV_3
+    {x: 700, y: 180},                    // CPU left corner
+  ];
+
+  return { traces, vias, parts };
+}
+
+// ── Module body renderer (CpuArchitecture-inspired) ─────────
+function CircuitModule({ m, delay = 0 }: { m: ModuleSpec; delay?: number }) {
+  const { pads } = modulePads(m);
+  return (
+    <g className="hero-part-in" style={{ animationDelay: `${delay}s` }}>
+      {/* shadow under chip body */}
+      <rect x={m.x + 1} y={m.y + 2} width={m.w} height={m.h} fill="#000" opacity={0.6} rx={4} />
+      {/* body */}
+      <rect
+        x={m.x} y={m.y} width={m.w} height={m.h}
+        fill="#0e0e0e" stroke="#3a3a3a" strokeWidth={1} rx={4}
+      />
+      {/* inner bevel */}
+      <rect
+        x={m.x + 3} y={m.y + 3} width={m.w - 6} height={m.h - 6}
+        fill="none" stroke="#1f1f1f" strokeWidth={1} rx={3}
+      />
+      {/* orientation notch */}
+      <circle cx={m.x + 10} cy={m.y + 10} r={2} fill="#2a2a2a" stroke="#4a4a4a" strokeWidth={0.5} />
+      {/* pads */}
+      <g fill="#262626" stroke="#4a4a4a" strokeWidth={0.6}>
+        {pads.map((p, i) => (
+          <rect key={i} x={p.x} y={p.y} width={p.w} height={p.h} rx={1} />
+        ))}
+      </g>
+      {/* label */}
+      <text
+        x={m.x + m.w / 2} y={m.y + m.h / 2 + 6}
+        textAnchor="middle"
+        fontFamily="JetBrains Mono, ui-monospace, monospace"
+        fontSize={m.w >= 220 ? 22 : 18}
+        fontWeight={700}
+        fill="#7a7a7a"
+        letterSpacing="0.18em"
+      >
+        {m.label}
+      </text>
+      {/* part marker silkscreen */}
+      {m.marker && (
+        <text
+          x={m.x + m.w - 6} y={m.y + 12}
+          textAnchor="end"
+          fontFamily="ui-monospace, monospace"
+          fontSize={7}
+          fill="#555"
+        >
+          {m.marker}
+        </text>
+      )}
+    </g>
+  );
+}
+
+function EdgeConnector() {
+  return (
+    <g className="hero-part-in" style={{ animationDelay: "0.4s" }}>
+      <rect x={EDGE_R.x} y={EDGE_R.y} width={EDGE_R.w} height={EDGE_R.h} fill="#0e0e0e" stroke="#3a3a3a" strokeWidth={1} rx={2} />
+      {EDGE_R.pinsY.map((py, i) => (
+        <rect key={i} x={EDGE_R.x - 6} y={py - 4} width={6} height={8} fill="#262626" stroke="#4a4a4a" strokeWidth={0.5} />
+      ))}
+      <text
+        x={EDGE_R.x + EDGE_R.w / 2}
+        y={EDGE_R.y + EDGE_R.h + 14}
+        textAnchor="middle"
+        fontFamily="ui-monospace, monospace"
+        fontSize={9}
+        fill="#555"
+        letterSpacing="0.2em"
+      >
+        J1
+      </text>
+    </g>
+  );
+}
+
+function TopHeader() {
+  return (
+    <g className="hero-part-in" style={{ animationDelay: "0.4s" }}>
+      <rect x={HEADER_T.x} y={HEADER_T.y} width={HEADER_T.w} height={HEADER_T.h} fill="#0e0e0e" stroke="#3a3a3a" strokeWidth={1} />
+      {HEADER_T.pinsX.map((px, i) => (
+        <rect key={i} x={px - 4} y={HEADER_T.y + HEADER_T.h} width={8} height={6} fill="#262626" stroke="#4a4a4a" strokeWidth={0.5} />
+      ))}
+    </g>
+  );
+}
+
+function InlineComponent(c: Inline) {
+  const rot = c.rot ?? 0;
+  return (
+    <g transform={`translate(${c.x} ${c.y}) rotate(${rot})`}>
+      {c.kind === "resistor" && (
+        <g>
+          <rect x={-9} y={-3.5} width={18} height={7} fill="#060606" />
+          <rect x={-7} y={-3} width={14} height={6} fill="#1a1a1a" stroke="#6a6a6a" strokeWidth={0.6} />
+          <rect x={-9} y={-2} width={2} height={4} fill="#3a3a3a" />
+          <rect x={7}  y={-2} width={2} height={4} fill="#3a3a3a" />
+        </g>
+      )}
+      {c.kind === "capacitor" && (
+        <g>
+          <rect x={-7} y={-3} width={14} height={6} fill="#060606" />
+          <rect x={-6} y={-2.5} width={5} height={5} fill="#1a1a1a" stroke="#6a6a6a" strokeWidth={0.6} />
+          <rect x={1}  y={-2.5} width={5} height={5} fill="#1a1a1a" stroke="#6a6a6a" strokeWidth={0.6} />
+        </g>
+      )}
+      {c.kind === "diode" && (
+        <g>
+          <rect x={-8} y={-5} width={16} height={10} fill="#060606" />
+          <rect x={-7} y={-4} width={12} height={8} fill="#1a1a1a" stroke="#6a6a6a" strokeWidth={0.6} />
+          <rect x={3}  y={-4} width={2} height={8} fill="#cfcfcf" opacity={0.7} />
+        </g>
+      )}
+      {c.kind === "inductor" && (
+        <g>
+          <rect x={-14} y={-5} width={28} height={9} fill="#060606" />
+          <path d="M -12 0 q 4 -8 8 0 q 4 -8 8 0 q 4 -8 8 0" fill="none" stroke="#7a7a7a" strokeWidth={1.1} />
+        </g>
+      )}
+    </g>
+  );
+}
+
+// ── Lamp positioned above the headline (lower-left area of SVG) ──
+// Lamp sits above the "ANI" headline (lower-left in viewport, but above
+// the text baseline). With viewBox 1600x900 sliced at 1440x900 the
+// headline starts around SVG y≈380 — so the lamp lives at y=330.
+const LAMP = { cx: 260, cy: 330, w: 84, h: 44 };
+const LAMP_PIN = { x: LAMP.cx, y: LAMP.cy + LAMP.h / 2 + 14 };
+
+function StatusLamp({ on }: { on: boolean }) {
+  return (
+    <g transform={`translate(${LAMP.cx} ${LAMP.cy})`}>
+      {on && (
+        <ellipse cx={0} cy={120} rx={160} ry={100} fill="url(#lampHalo)" opacity={0.55} style={{ pointerEvents: "none" }} />
+      )}
+      <rect x={-20} y={LAMP.h / 2} width={7} height={5} fill="#262626" stroke="#3d3d3d" strokeWidth={0.5} />
+      <rect x={13}  y={LAMP.h / 2} width={7} height={5} fill="#262626" stroke="#3d3d3d" strokeWidth={0.5} />
+      <line x1={0} y1={LAMP.h / 2} x2={0} y2={LAMP.h / 2 + 14} stroke="#3d3d3d" strokeWidth={1} />
+      <rect x={-LAMP.w / 2} y={-LAMP.h / 2} width={LAMP.w} height={LAMP.h} rx={9} fill="#0e0e0e" stroke="#5a5a5a" strokeWidth={1.2} />
+      <text x={LAMP.w / 2 - 6} y={-LAMP.h / 2 - 4} fill="#7a7a7a" fontFamily="ui-monospace, monospace" fontSize={9} textAnchor="end" letterSpacing="0.2em">D1</text>
+      <circle r={15} fill={on ? "#fbbf24" : "#1f1a14"} stroke={on ? "#fde68a" : "#7a6a3a"} strokeWidth={1.4} style={{ transition: "fill 250ms ease, stroke 250ms ease" }} />
+      {on && (
+        <g style={{ pointerEvents: "none" }}>
+          <circle r={16} fill="#fbbf24" opacity={0.45} />
+          <circle r={28} fill="#fbbf24" opacity={0.22} />
+          <circle r={48} fill="#fbbf24" opacity={0.1} />
+        </g>
+      )}
+    </g>
+  );
+}
+
+// ── Signal path: button → bus down → left → up to lamp ──
+const BUTTON_PAD = { x: 1200, y: 720 };
+const SIGNAL_D = `M ${BUTTON_PAD.x} ${BUTTON_PAD.y} V 800 H ${LAMP_PIN.x} V ${LAMP_PIN.y}`;
+const SIGNAL_DUR_MS = 1300;
+
+// ── Inspection robot (upper-right) — moves on a short rail, probes a chip pad ──
+function InspectionRobot({ hide }: { hide: boolean }) {
+  if (hide) return null;
+  const railY = 110;
+  const railX1 = 1360;
+  const railX2 = 1500;
+  return (
+    <g className="hero-part-in" style={{ animationDelay: "1.0s" }}>
+      {/* rail */}
+      <line x1={railX1} y1={railY} x2={railX2} y2={railY} stroke="#3a3a3a" strokeWidth={2} />
+      <circle cx={railX1} cy={railY} r={3} fill="#262626" stroke="#4a4a4a" strokeWidth={0.6} />
+      <circle cx={railX2} cy={railY} r={3} fill="#262626" stroke="#4a4a4a" strokeWidth={0.6} />
+      <text x={railX1} y={railY - 8} fontFamily="ui-monospace, monospace" fontSize={7} fill="#555" letterSpacing="0.2em">PROBE</text>
+      {/* moving carriage */}
+      <g>
+        <animateTransform attributeName="transform" type="translate" values="0 0; 18 0; 0 0" dur="6s" repeatCount="indefinite" />
+        <g transform={`translate(${railX1 + 20} ${railY})`}>
+          {/* carriage body */}
+          <rect x={-12} y={-8} width={24} height={10} fill="#161616" stroke="#4a4a4a" strokeWidth={0.8} rx={1.5} />
+          <rect x={-9} y={-6} width={18} height={4} fill="#222" />
+          {/* probe arm going down */}
+          <line x1={0} y1={2} x2={0} y2={28} stroke="#4a4a4a" strokeWidth={1.2} />
+          <rect x={-2} y={28} width={4} height={6} fill="#262626" stroke="#5a5a5a" strokeWidth={0.5} />
+          {/* probe light */}
+          <circle cx={0} cy={36} r={2.5} fill="#7dd3fc">
+            <animate attributeName="opacity" values="0.3;1;0.3" dur="1.8s" repeatCount="indefinite" />
+          </circle>
+          <circle cx={0} cy={36} r={6} fill="#7dd3fc" opacity={0.2}>
+            <animate attributeName="r" values="4;10;4" dur="1.8s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.05;0.3;0.05" dur="1.8s" repeatCount="indefinite" />
+          </circle>
+        </g>
+      </g>
+    </g>
+  );
 }
 
 function HeroText({ bp }: { bp?: "mobile" | "tablet" | "desktop" } = {}) {
   const breakpoint = bp ?? "desktop";
-
   const headline = (size: string) => (
     <h1
       className="font-display font-black uppercase text-white"
-      style={{
-        fontSize: size,
-        letterSpacing: "-0.05em",
-        lineHeight: 0.86,
-      }}
+      style={{ fontSize: size, letterSpacing: "-0.05em", lineHeight: 0.86 }}
     >
-      Ani
-      <br />
-      Velaga
+      Ani<br />Velaga
     </h1>
   );
-
   const paragraph = (extra: string = "") => (
     <p
       className={`font-mono leading-relaxed text-neutral-400 ${extra}`}
-      style={{
-        fontSize: "clamp(0.85rem, 1.4vw, 1rem)",
-        maxWidth: "38ch",
-      }}
+      style={{ fontSize: "clamp(0.85rem, 1.4vw, 1rem)", maxWidth: "38ch" }}
     >
       <span className="text-neutral-100">Electrical &amp; computer engineer</span> — I design
       hardware at the board level, then push it through the networking stack into LLM
@@ -527,7 +769,6 @@ function HeroText({ bp }: { bp?: "mobile" | "tablet" | "desktop" } = {}) {
       </div>
     );
   }
-
   if (breakpoint === "tablet") {
     return (
       <div className="pointer-events-none absolute inset-0 z-[3] mx-auto flex max-w-5xl items-end px-8 pb-20">
@@ -538,7 +779,6 @@ function HeroText({ bp }: { bp?: "mobile" | "tablet" | "desktop" } = {}) {
       </div>
     );
   }
-
   return (
     <div className="pointer-events-none absolute inset-0 z-[3] mx-auto flex max-w-6xl items-end px-6 pb-24 sm:px-10 sm:pb-28">
       <div className="pointer-events-auto max-w-xl">
@@ -549,317 +789,20 @@ function HeroText({ bp }: { bp?: "mobile" | "tablet" | "desktop" } = {}) {
   );
 }
 
-function PortraitModule({ mobile = false }: { mobile?: boolean }) {
-  const frame = mobile ? MOBILE_PORT : PORT;
-  const inset = mobile ? MOBILE_PORT_INSET : PORT_INSET;
-  const ix = frame.x + inset;
-  const iy = frame.y + inset;
-  const iw = frame.w - inset * 2;
-  const ih = frame.h - inset * 2;
-  return (
-    <g>
-      {/* outer dark package */}
-      <rect
-        x={frame.x}
-        y={frame.y}
-        width={frame.w}
-        height={frame.h}
-        fill="#141414"
-        stroke="#2a2a2a"
-        strokeWidth="1"
-        rx="2"
-      />
-      {/* inner image border */}
-      <rect
-        x={ix - 2}
-        y={iy - 2}
-        width={iw + 4}
-        height={ih + 4}
-        fill="none"
-        stroke="#3a3a3a"
-        strokeWidth="1"
-      />
-      <image
-        href={headshotAsset.url}
-        x={ix}
-        y={iy}
-        width={iw}
-        height={ih}
-        preserveAspectRatio="xMidYMid slice"
-        style={{ filter: "grayscale(15%) brightness(0.92) contrast(1.03)" }}
-      />
-      {/* orientation notch */}
-      <circle cx={frame.x + 10} cy={frame.y + 10} r="2" fill="#3a3a3a" />
-
-      {/* pads on all four sides */}
-      {!mobile && <g fill="#2b2b2b" stroke="#454545" strokeWidth="0.6">
-        {[...leftPads, ...rightPads, ...topPads, ...bottomPads].map((p, i) => (
-          <rect key={i} x={p.x} y={p.y} width={p.w} height={p.h} rx="1" />
-        ))}
-      </g>}
-    </g>
-  );
-}
-
-function SecondaryChip({ x, y, w, h, pinsTop = 0, pinsBot = 0, pinsLeft = 0, pinsRight = 0 }: {
-  x: number; y: number; w: number; h: number;
-  pinsTop?: number; pinsBot?: number; pinsLeft?: number; pinsRight?: number;
-}) {
-  const xs = (n: number) => Array.from({ length: n }, (_, i) => x + ((i + 1) * w) / (n + 1));
-  const ys = (n: number) => Array.from({ length: n }, (_, i) => y + ((i + 1) * h) / (n + 1));
-  return (
-    <g>
-      <rect x={x} y={y} width={w} height={h} fill="#111" stroke="#333" strokeWidth="1" />
-      <circle cx={x + 6} cy={y + 6} r="1.5" fill="#444" />
-      <g fill="#262626" stroke="#3d3d3d" strokeWidth="0.5">
-        {xs(pinsTop).map((cx, i) => (
-          <rect key={`t${i}`} x={cx - 3} y={y - 4} width={6} height={4} />
-        ))}
-        {xs(pinsBot).map((cx, i) => (
-          <rect key={`b${i}`} x={cx - 3} y={y + h} width={6} height={4} />
-        ))}
-        {ys(pinsLeft).map((cy, i) => (
-          <rect key={`l${i}`} x={x - 4} y={cy - 3} width={4} height={6} />
-        ))}
-        {ys(pinsRight).map((cy, i) => (
-          <rect key={`r${i}`} x={x + w} y={cy - 3} width={4} height={6} />
-        ))}
-      </g>
-    </g>
-  );
-}
-
-function SignalPulse({ d, dur, accent }: { d: string; dur: number; accent?: "blue" | "amber" | "white" }) {
-  const fill =
-    accent === "blue" ? "rgba(140,180,255,0.95)" :
-    accent === "amber" ? "rgba(255,210,140,0.9)" :
-    "rgba(255,255,255,0.95)";
-  return (
-    <g>
-      <circle r="2.2" fill={fill} opacity="0.95">
-        <animateMotion dur={`${dur / 1000}s`} repeatCount="indefinite" rotate="auto" path={d} />
-      </circle>
-      <circle r="5" fill={fill} opacity="0.18">
-        <animateMotion dur={`${dur / 1000}s`} repeatCount="indefinite" rotate="auto" path={d} />
-      </circle>
-    </g>
-  );
-}
-
-// ── Interactive lamp + button signal path ───────────────────────────────────
-// Button sits below the portrait module; trace routes around the portrait,
-// across the lower board, up past CHIP_B, and into the lamp above the name.
-const BUTTON_PAD = { x: 1190, y: 700 };
-const LAMP = { cx: 340, cy: 320, w: 56, h: 32 };
-const LAMP_PIN = { x: LAMP.cx, y: LAMP.cy + LAMP.h / 2 + 14 }; // 340, 350
-// Single grid-aligned signal trace from the red button (S1) up to the lamp
-// (D1) above the name. Routes through y=740 (well below the text) and up the
-// left side, avoiding the headline letters.
-const SIGNAL_D =
-  `M ${BUTTON_PAD.x} ${BUTTON_PAD.y} V 740 H 700 V 470 H ${LAMP_PIN.x} V ${LAMP_PIN.y}`;
-const SIGNAL_DUR_MS = 1150;
-
-function Lamp({ on, scale = 1 }: { on: boolean; scale?: number }) {
-  return (
-    <g transform={`translate(${LAMP.cx} ${LAMP.cy}) scale(${scale})`}>
-      {/* downward halo cone over the name */}
-      {on && (
-        <ellipse
-          cx={0}
-          cy={120}
-          rx={140}
-          ry={90}
-          fill="url(#lampHalo)"
-          opacity={0.55}
-          style={{ pointerEvents: "none" }}
-        />
-      )}
-      {/* solder pads */}
-      <rect x={-20} y={LAMP.h / 2} width={7} height={5} fill="#262626" stroke="#3d3d3d" strokeWidth={0.5} />
-      <rect x={13} y={LAMP.h / 2} width={7} height={5} fill="#262626" stroke="#3d3d3d" strokeWidth={0.5} />
-      {/* leg trace down to LAMP_PIN */}
-      <line x1={0} y1={LAMP.h / 2} x2={0} y2={LAMP.h / 2 + 14} stroke="#3d3d3d" strokeWidth={1} />
-      {/* body capsule */}
-      <rect
-        x={-LAMP.w / 2}
-        y={-LAMP.h / 2}
-        width={LAMP.w}
-        height={LAMP.h}
-        rx={7}
-        fill="#0e0e0e"
-        stroke="#3d3d3d"
-        strokeWidth={1}
-      />
-      {/* silkscreen label */}
-      <text
-        x={LAMP.w / 2 - 5}
-        y={-LAMP.h / 2 - 4}
-        fill="#555"
-        fontFamily="ui-monospace, monospace"
-        fontSize={6}
-        textAnchor="end"
-      >
-        D1
-      </text>
-      {/* lens */}
-      <circle
-        r={11}
-        fill={on ? "#fbbf24" : "#181818"}
-        stroke={on ? "#fde68a" : "#5a5a5a"}
-        strokeWidth={1}
-        style={{ transition: "fill 250ms ease, stroke 250ms ease" }}
-      />
-      {/* glow layers when on */}
-      {on && (
-        <g style={{ pointerEvents: "none" }}>
-          <circle r={16} fill="#fbbf24" opacity={0.45} />
-          <circle r={28} fill="#fbbf24" opacity={0.22} />
-          <circle r={48} fill="#fbbf24" opacity={0.1} />
-        </g>
-      )}
-    </g>
-  );
-}
-
-function SignalDot({ d, dur }: { d: string; dur: number }) {
-  const s = `${dur / 1000}s`;
-  return (
-    <g style={{ pointerEvents: "none" }}>
-      <circle r={3} fill="rgba(255,210,140,1)">
-        <animateMotion dur={s} repeatCount="1" fill="freeze" path={d} />
-      </circle>
-      <circle r={7} fill="rgba(255,210,140,0.55)">
-        <animateMotion dur={s} repeatCount="1" fill="freeze" path={d} />
-      </circle>
-      <circle r={14} fill="rgba(255,210,140,0.2)">
-        <animateMotion dur={s} repeatCount="1" fill="freeze" path={d} />
-      </circle>
-    </g>
-  );
-}
-
-function InlineComponent(c: Inline) {
-  const rot = (c as { rot?: number }).rot ?? 0;
-  return (
-    <g transform={`translate(${c.x} ${c.y}) rotate(${rot})`}>
-      {c.kind === "resistor" && (
-        <g>
-          {/* clear the trace behind the body */}
-          <rect x={-9} y={-3.5} width={18} height={7} fill="#060606" />
-          <rect x={-7} y={-3} width={14} height={6} fill="#1a1a1a" stroke="#5c5c5c" strokeWidth="0.6" />
-          <rect x={-9} y={-2} width={2} height={4} fill="#3a3a3a" />
-          <rect x={7}  y={-2} width={2} height={4} fill="#3a3a3a" />
-        </g>
-      )}
-      {c.kind === "inductor" && (
-        <g>
-          <rect x={-14} y={-7} width={28} height={9} fill="#060606" />
-          <path d="M -12 0 q 4 -8 8 0 q 4 -8 8 0 q 4 -8 8 0" fill="none" stroke="#6a6a6a" strokeWidth="1.1" />
-        </g>
-      )}
-      {c.kind === "diode" && (
-        <g>
-          <rect x={-8} y={-6} width={14} height={12} fill="#060606" />
-          <polygon points="-6,-5 -6,5 2,0" fill="#262626" stroke="#6a6a6a" strokeWidth="0.7" />
-          <line x1={2} y1={-5} x2={2} y2={5} stroke="#7a7a7a" strokeWidth="1.4" />
-        </g>
-      )}
-      {c.kind === "testpad" && (
-        <g>
-          <circle r={4.5} fill="#060606" stroke="#3a3a3a" strokeWidth="0.8" />
-          <circle r={2.2} fill="#1a1a1a" stroke="#6a6a6a" strokeWidth="0.6" />
-        </g>
-      )}
-    </g>
-  );
-}
-
-function CircuitTraceLayer({ built }: { built: Built }) {
-  return (
-    <g>
-      {/* secondary chips (rendered before traces so trace endpoints sit on them) */}
-      <g opacity="0.85">
-        <SecondaryChip {...CHIP_A} pinsTop={5} pinsBot={5} pinsLeft={2} pinsRight={2} />
-        <SecondaryChip {...CHIP_C} pinsTop={3} pinsBot={3} pinsLeft={2} pinsRight={2} />
-        <SecondaryChip {...CHIP_B} pinsTop={2} pinsBot={2} pinsLeft={2} pinsRight={2} />
-        <SecondaryChip {...CHIP_D} pinsTop={4} pinsBot={4} pinsLeft={0} pinsRight={0} />
-        {/* right-edge connector — partially off-screen */}
-        <g>
-          <rect x={EDGE_R.x} y={EDGE_R.y} width={EDGE_R.w} height={EDGE_R.h} fill="#111" stroke="#333" strokeWidth="1" />
-          {EDGE_R_PINS.map((cy, i) => (
-            <rect key={i} x={EDGE_R.x - 4} y={cy - 3} width={4} height={6} fill="#262626" stroke="#3d3d3d" strokeWidth="0.5" />
-          ))}
-        </g>
-        {/* top edge header (6-pin) */}
-        <g>
-          <rect x={HEADER_T.x} y={HEADER_T.y} width={HEADER_T.w} height={HEADER_T.h} fill="#111" stroke="#333" strokeWidth="1" />
-          {HEADER_T.pins.map((px, i) => (
-            <rect key={i} x={px - 3} y={HEADER_T.y + HEADER_T.h} width={6} height={4} fill="#262626" stroke="#3d3d3d" strokeWidth="0.5" />
-          ))}
-        </g>
-      </g>
-
-      {/* traces — drawn in with stroke-dashoffset, staggered */}
-      <g fill="none" strokeLinecap="square" strokeLinejoin="round">
-        {built.traces.map((t, i) => (
-          <path
-            key={t.id}
-            id={`trace-${t.id}`}
-            d={t.d}
-            pathLength={1}
-            stroke={t.w >= 1.5 ? "#4a4a4a" : "#333"}
-            strokeOpacity={t.o}
-            strokeWidth={t.w}
-            className="hero-trace-draw"
-            style={{ animationDelay: `${0.2 + i * 0.05}s` }}
-          />
-        ))}
-      </g>
-
-      {/* inline components — fade in after traces finish */}
-      <g className="hero-part-in" style={{ animationDelay: "2s" }}>
-        {built.parts.map((p, i) => (
-          <InlineComponent key={i} {...p} />
-        ))}
-      </g>
-
-      {/* endpoint vias — also fade in after traces */}
-      <g className="hero-part-in" style={{ animationDelay: "1.8s" }}>
-        {built.vias.map((e, i) => (
-          <g key={i}>
-            <circle cx={e.x} cy={e.y} r={4} fill="none" stroke="#3a3a3a" strokeWidth="0.8" />
-            <circle cx={e.x} cy={e.y} r={2.5} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth="0.8" />
-          </g>
-        ))}
-      </g>
-    </g>
-  );
-}
-
 function CircuitHero() {
-  // Deterministic seed: same intentional layout every reload, but still
-  // visibly "generates" via staggered trace-draw + pulses.
-  const seed = 0x5a17c0de;
-  const built = useMemo(() => buildCircuit(seed), [seed]);
+  const built = useMemo(() => buildCircuit(), []);
   const pulses = built.traces.filter((t) => t.pulse);
   const [lampOn, setLampOn] = useState(false);
   const [signaling, setSignaling] = useState(false);
   const [hovering, setHovering] = useState(false);
   const [pulseId, setPulseId] = useState(0);
-  const [hoverPulseId, setHoverPulseId] = useState(0);
   const [pressed, setPressed] = useState(false);
   const bp = useBreakpoint();
   const isMobile = bp === "mobile";
   const isTablet = bp === "tablet";
-  // On mobile, compose a tighter hero board so the portrait, lamp, and button
-  // are intentionally placed instead of relying on the wide desktop crop.
-  // One composition across all breakpoints — text-first hero. Mobile/tablet
-  // scale the desktop circuit board down with `meet` and anchor to the top so
-  // the headline sits in a clean band below.
-  const viewBox = `0 0 ${VB_W} ${VB_H}`;
-  const preserve = isMobile || isTablet ? "xMidYMin meet" : "xMidYMid slice";
-  const buttonPad = BUTTON_PAD;
-  const signalD = SIGNAL_D;
+  // Use slice across all breakpoints so the circuit fills the hero on every
+  // device — `meet` leaves a tall empty band under the SVG on mobile.
+  const preserve = "xMidYMid slice";
   const timers = useRef<number[]>([]);
   const clearAllTimers = () => {
     timers.current.forEach((t) => window.clearTimeout(t));
@@ -876,30 +819,11 @@ function CircuitHero() {
       return;
     }
     setPulseId((n) => n + 1);
-    // signal travels along SIGNAL_D from button to lamp
     setSignaling(true);
-    // lamp lights when signal front reaches it
-    timers.current.push(
-      window.setTimeout(() => setLampOn(true), SIGNAL_DUR_MS),
-    );
-    // settle: lamp off
-    timers.current.push(
-      window.setTimeout(
-        () => {
-          setLampOn(false);
-          setSignaling(false);
-        },
-        SIGNAL_DUR_MS + 4000,
-      ),
-    );
+    timers.current.push(window.setTimeout(() => setLampOn(true), SIGNAL_DUR_MS));
+    timers.current.push(window.setTimeout(() => { setLampOn(false); setSignaling(false); }, SIGNAL_DUR_MS + 4000));
   };
 
-  const onButtonEnter = () => {
-    if (signaling || lampOn) return;
-    setHovering(true);
-    setHoverPulseId((n) => n + 1);
-  };
-  const onButtonLeave = () => setHovering(false);
   return (
     <section
       id="top"
@@ -908,19 +832,14 @@ function CircuitHero() {
       className="hero-shell"
       style={{ background: "#060606" }}
     >
-      {/* layer 2: circuit SVG */}
-      <div
-        className="pointer-events-none absolute left-0 right-0 z-[1]"
-        style={{ top: 0, bottom: 0 }}
-      >
+      <div className="pointer-events-none absolute left-0 right-0 z-[1]" style={{ top: 0, bottom: 0 }}>
         <svg
-          viewBox={viewBox}
+          viewBox={`0 0 ${VB_W} ${VB_H}`}
           preserveAspectRatio={preserve}
           className="hero-circuit-fade absolute inset-0 h-full w-full"
           aria-hidden
         >
           <defs>
-            {/* soft fade mask — protects the lower-left text region */}
             <radialGradient id="heroTextFade" cx="22%" cy="86%" r="38%">
               <stop offset="0%" stopColor="#000" />
               <stop offset="55%" stopColor="#1a1a1a" />
@@ -936,32 +855,71 @@ function CircuitHero() {
             </mask>
           </defs>
 
-          {/* circuit layer (under the mask) */}
+          {/* circuit layer (masked behind text zone) */}
           <g mask="url(#heroTraceMask)">
-            <CircuitTraceLayer built={built} />
-          </g>
+            {/* traces first, then modules render on top so endpoints sit cleanly under chip edges */}
+            <g fill="none" strokeLinecap="square" strokeLinejoin="round">
+              {built.traces.map((t, i) => (
+                <path
+                  key={t.id}
+                  d={t.d}
+                  pathLength={1}
+                  stroke={t.w >= 1.3 ? "#525252" : "#3a3a3a"}
+                  strokeOpacity={t.o}
+                  strokeWidth={t.w}
+                  className="hero-trace-draw"
+                  style={{ animationDelay: `${0.15 + i * 0.04}s` }}
+                />
+              ))}
+            </g>
 
-          {/* pulses — above traces, also masked so they don't pop into the text zone */}
-          <g mask="url(#heroTraceMask)">
-            {pulses.map((t, i) => (
-              <SignalPulse
-                key={t.id}
-                d={t.d}
-                dur={t.pulse!}
-                accent={i === 0 ? "blue" : i === 3 ? "amber" : "white"}
-              />
+            {/* modules */}
+            {MODULES.map((m, i) => (
+              <CircuitModule key={m.id} m={m} delay={0.3 + i * 0.08} />
             ))}
+            <EdgeConnector />
+            <TopHeader />
+
+            {/* inline parts */}
+            <g className="hero-part-in" style={{ animationDelay: "1.6s" }}>
+              {built.parts.map((p, i) => (
+                <InlineComponent key={i} {...p} />
+              ))}
+            </g>
+
+            {/* vias */}
+            <g className="hero-part-in" style={{ animationDelay: "1.5s" }}>
+              {built.vias.map((v, i) => (
+                <g key={i}>
+                  <circle cx={v.x} cy={v.y} r={4} fill="none" stroke="#3a3a3a" strokeWidth={0.8} />
+                  <circle cx={v.x} cy={v.y} r={2.5} fill="#0a0a0a" stroke="#5a5a5a" strokeWidth={0.8} />
+                </g>
+              ))}
+            </g>
+
+            {/* subtle signal pulses on selected traces */}
+            {pulses.map((t, i) => (
+              <g key={t.id}>
+                <circle r={2.2} fill={i % 2 === 0 ? "rgba(140,180,255,0.9)" : "rgba(255,255,255,0.85)"}>
+                  <animateMotion dur={`${t.pulse! / 1000}s`} repeatCount="indefinite" path={t.d} />
+                </circle>
+                <circle r={5} fill={i % 2 === 0 ? "rgba(140,180,255,0.25)" : "rgba(255,255,255,0.2)"}>
+                  <animateMotion dur={`${t.pulse! / 1000}s`} repeatCount="indefinite" path={t.d} />
+                </circle>
+              </g>
+            ))}
+
+            {/* inspection robot — hidden on mobile */}
+            <InspectionRobot hide={isMobile} />
           </g>
 
-          {/* Interactive switch → lamp signal path. Drawn ABOVE the text
-              mask so it stays fully visible. */}
+          {/* signal trace + lamp (above text mask so always visible) */}
           <g>
-            {/* Base signal trace: button (S1) → lamp (D1) */}
             <path
-              d={signalD}
+              d={SIGNAL_D}
               fill="none"
               stroke="#3a3a3a"
-              strokeOpacity={0.55}
+              strokeOpacity={0.5}
               strokeWidth={1.4}
               strokeLinecap="square"
               strokeLinejoin="round"
@@ -969,11 +927,8 @@ function CircuitHero() {
               className="hero-trace-draw"
               style={{ animationDelay: "1.5s" }}
             />
-
-            {/* Progressive signal fill: button → lamp, one continuous line
-                that fills via stroke-dashoffset. */}
             <path
-              d={signalD}
+              d={SIGNAL_D}
               fill="none"
               stroke="#fbbf24"
               strokeOpacity={signaling || lampOn ? 1 : 0}
@@ -991,354 +946,131 @@ function CircuitHero() {
                 pointerEvents: "none",
               }}
             />
-
-            {/* Vias at every real bend in the signal path */}
-          <g className="hero-part-in" style={{ animationDelay: "1.7s" }}>
-              <circle cx={BUTTON_PAD.x} cy={740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-              <circle cx={700} cy={740} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-              <circle cx={700} cy={470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-              <circle cx={340} cy={470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-              <circle cx={340} cy={470} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+            <g className="hero-part-in" style={{ animationDelay: "1.7s" }}>
+              <circle cx={BUTTON_PAD.x} cy={800} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
+              <circle cx={LAMP_PIN.x} cy={800} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
             </g>
-
-            {/* Leading dot — travels along SIGNAL with the fill */}
             {signaling && pulseId > 0 && (
               <g key={`dis-${pulseId}`} style={{ pointerEvents: "none" }}>
                 <circle r={3.4} fill="#fff4d6">
-                  <animateMotion dur={`${SIGNAL_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={signalD} />
+                  <animateMotion dur={`${SIGNAL_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={SIGNAL_D} />
                 </circle>
                 <circle r={8} fill="rgba(251,191,36,0.45)">
-                  <animateMotion dur={`${SIGNAL_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={signalD} />
+                  <animateMotion dur={`${SIGNAL_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={SIGNAL_D} />
                 </circle>
               </g>
             )}
-
             <g className="hero-part-in" style={{ animationDelay: "1.6s" }}>
-              <Lamp on={lampOn} scale={1} />
+              <StatusLamp on={lampOn} />
             </g>
           </g>
 
-          {/* hardware-style trigger button under the portrait */}
+          {/* hardware switch module */}
           <g className="hero-part-in" style={{ animationDelay: "1.8s" }}>
-            {/* button pad + leg into the routed trace */}
-            <line
-              x1={buttonPad.x}
-              y1={620}
-              x2={buttonPad.x}
-              y2={buttonPad.y}
-              stroke="#3a3a3a"
-              strokeWidth={1.2}
-            />
-            <circle cx={buttonPad.x} cy={buttonPad.y} r={3.5} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.9} />
-            {/* idle invite-pulse around the button pad (always on, restrained).
-                Intensifies on hover. */}
-            {!signaling && !lampOn && (
-              <g style={{ pointerEvents: "none" }}>
-                <circle
-                  cx={buttonPad.x}
-                  cy={buttonPad.y}
-                  r={6}
-                  fill="none"
-                  stroke={hovering ? "#fbbf24" : "#6a6a6a"}
-                  strokeWidth={hovering ? 0.8 : 0.5}
-                  style={{ transition: "stroke 200ms ease, stroke-width 200ms ease" }}
-                >
-                  <animate
-                    attributeName="r"
-                    values={hovering ? "6;28" : "6;20"}
-                    dur={hovering ? "1.6s" : "2.4s"}
-                    repeatCount="indefinite"
-                  />
-                  <animate
-                    attributeName="opacity"
-                    values={hovering ? "0.6;0" : "0.35;0"}
-                    dur={hovering ? "1.6s" : "2.4s"}
-                    repeatCount="indefinite"
-                  />
-                </circle>
-                <circle
-                  cx={buttonPad.x}
-                  cy={buttonPad.y}
-                  r={6}
-                  fill="none"
-                  stroke={hovering ? "#fbbf24" : "#6a6a6a"}
-                  strokeWidth={hovering ? 0.6 : 0.4}
-                  style={{ transition: "stroke 200ms ease" }}
-                >
-                  <animate
-                    attributeName="r"
-                    values={hovering ? "6;24" : "6;17"}
-                    dur={hovering ? "1.6s" : "2.4s"}
-                    begin={hovering ? "0.55s" : "1.0s"}
-                    repeatCount="indefinite"
-                  />
-                  <animate
-                    attributeName="opacity"
-                    values={hovering ? "0.45;0" : "0.22;0"}
-                    dur={hovering ? "1.6s" : "2.4s"}
-                    begin={hovering ? "0.55s" : "1.0s"}
-                    repeatCount="indefinite"
-                  />
-                </circle>
-              </g>
-            )}
+            <line x1={BUTTON_PAD.x} y1={650} x2={BUTTON_PAD.x} y2={BUTTON_PAD.y} stroke="#3a3a3a" strokeWidth={1.2} />
+            <circle cx={BUTTON_PAD.x} cy={BUTTON_PAD.y} r={3.5} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.9} />
             <foreignObject
-              x={buttonPad.x - 110}
-              y={585}
+              x={BUTTON_PAD.x - 110}
+              y={555}
               width={220}
               height={140}
               style={{ overflow: "visible", pointerEvents: "auto" }}
             >
               <div
-                className={`hw-assembly${hovering || signaling || lampOn ? " is-hot" : ""}`}
                 role="button"
                 tabIndex={0}
                 aria-label="Click me"
                 aria-pressed={lampOn}
                 onClick={triggerSignal}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    triggerSignal();
-                  }
-                }}
-                onMouseEnter={onButtonEnter}
-                onMouseLeave={onButtonLeave}
-                onFocus={onButtonEnter}
-                onBlur={onButtonLeave}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); triggerSignal(); } }}
+                onMouseEnter={() => setHovering(true)}
+                onMouseLeave={() => setHovering(false)}
+                onFocus={() => setHovering(true)}
+                onBlur={() => setHovering(false)}
                 style={{
-                  position: "relative",
-                  width: "100%",
-                  height: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "flex-end",
-                  paddingBottom: 18,
-                  boxSizing: "border-box",
-                  cursor: "pointer",
-                  outline: "none",
+                  position: "relative", width: "100%", height: "100%",
+                  display: "flex", flexDirection: "column",
+                  alignItems: "center", justifyContent: "flex-end",
+                  paddingBottom: 18, boxSizing: "border-box",
+                  cursor: "pointer", outline: "none",
                 }}
               >
-                <style>{`
-                  @keyframes hwBoxPulse {
-                    0%, 100% {
-                      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04),
-                                  0 0 0 1px rgba(251,191,36,0.10),
-                                  0 0 10px rgba(251,191,36,0.10);
-                      border-color: #3a3a3a;
-                    }
-                    50% {
-                      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06),
-                                  0 0 0 1px rgba(251,191,36,0.45),
-                                  0 0 18px rgba(251,191,36,0.35);
-                      border-color: #a07720;
-                    }
-                  }
-                  @keyframes hwBtnBob {
-                    0%, 100% { transform: translateX(-50%) translateY(0); }
-                    50%      { transform: translateX(-50%) translateY(-5px); }
-                  }
-                  @keyframes hwSilhouettePulse {
-                    0%, 100% { opacity: 0.35; }
-                    50%      { opacity: 1; }
-                  }
-                  @keyframes hwAssemblyBob {
-                    0%, 100% { transform: translateY(0); }
-                    50%      { transform: translateY(-4px); }
-                  }
-                  .hw-assembly { animation: hwAssemblyBob 2.0s ease-in-out infinite; }
-                  .hw-assembly.is-hot { animation-duration: 1.2s; }
-                  .hw-silhouette { animation: hwSilhouettePulse 2.0s ease-in-out infinite; }
-                  .hw-silhouette.is-hot { animation-duration: 1.2s; }
-                `}</style>
-
-                {/* Unified glowing outline around button + box silhouette */}
-                <svg
-                  aria-hidden
-                  className={`hw-silhouette${hovering || signaling || lampOn ? " is-hot" : ""}`}
-                  width="220"
-                  height="140"
-                  viewBox="0 0 220 140"
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    pointerEvents: "none",
-                    overflow: "visible",
-                  }}
-                >
-                  <path
-                    d="M 84 62 H 136 Q 140 62 140 66 V 77 H 142 V 86 H 174 Q 178 86 178 90 V 118 Q 178 122 174 122 H 46 Q 42 122 42 118 V 90 Q 42 86 46 86 H 78 V 77 H 80 V 66 Q 80 62 84 62 Z"
-                    fill="none"
-                    stroke={hovering || signaling || lampOn ? "#fbbf24" : "#c89832"}
-                    strokeWidth="1.2"
-                    strokeLinejoin="round"
-                    style={{
-                      filter:
-                        "drop-shadow(0 0 4px rgba(251,191,36,0.55)) drop-shadow(0 0 10px rgba(251,191,36,0.35))",
-                      transition: "stroke 200ms ease",
-                    }}
-                  />
-                </svg>
-
-                {/* rectangular control housing */}
                 <div
-                  className={`hw-module${hovering || signaling || lampOn ? " is-hot" : ""}`}
                   style={{
-                    width: 132,
-                    height: 36,
-                    background:
-                      "linear-gradient(180deg, #131313 0%, #0a0a0a 100%)",
-                    border: "1px solid #2c2c2c",
-                    borderRadius: 3,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    width: 140, height: 40,
+                    background: "linear-gradient(180deg, #131313 0%, #0a0a0a 100%)",
+                    border: "1px solid #2c2c2c", borderRadius: 3,
+                    display: "flex", alignItems: "center", justifyContent: "center",
                     position: "relative",
+                    boxShadow: hovering || signaling || lampOn
+                      ? "0 0 0 1px rgba(251,191,36,0.4), 0 0 16px rgba(251,191,36,0.3)"
+                      : undefined,
+                    transition: "box-shadow 200ms ease",
                   }}
                 >
-                  {/* tiny corner screws */}
-                  {[
-                    { top: 4, left: 4 },
-                    { top: 4, right: 4 },
-                    { bottom: 4, left: 4 },
-                    { bottom: 4, right: 4 },
-                  ].map((p, i) => (
-                    <span
-                      key={i}
-                      style={{
-                        position: "absolute",
-                        width: 3,
-                        height: 3,
-                        borderRadius: 999,
-                        background: "#1a1a1a",
-                        border: "0.5px solid #333",
-                        ...p,
-                      }}
-                    />
+                  {[{top:4,left:4},{top:4,right:4},{bottom:4,left:4},{bottom:4,right:4}].map((p,i)=>(
+                    <span key={i} style={{ position:"absolute", width:3, height:3, borderRadius:999, background:"#1a1a1a", border:"0.5px solid #333", ...p}} />
                   ))}
                   <span
                     style={{
-                      display: "block",
-                      textAlign: "center",
-                      lineHeight: 1,
-                      fontFamily:
-                        "JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, monospace",
-                      fontSize: 11,
-                      letterSpacing: "0.24em",
-                      paddingLeft: "0.24em",
+                      fontFamily: "JetBrains Mono, ui-monospace, monospace",
+                      fontSize: 11, letterSpacing: "0.24em", paddingLeft: "0.24em",
                       textTransform: "uppercase",
-                      color:
-                        lampOn || signaling
-                          ? "#fbbf24"
-                          : hovering
-                            ? "#e8d28a"
-                            : "#9a9a9a",
+                      color: lampOn || signaling ? "#fbbf24" : hovering ? "#e8d28a" : "#9a9a9a",
                       transition: "color 200ms ease",
                     }}
                   >
                     Click me :)
                   </span>
                 </div>
-
-                {/* red push button mounted on top of housing */}
                 <div
-                  className={`hw-btn-wrap${pressed ? " is-pressed" : ""}`}
                   style={{
-                    position: "absolute",
-                    top: 38,
-                    left: "50%",
+                    position: "absolute", top: 36, left: "50%",
                     transform: "translateX(-50%)",
-                    width: 72,
-                    height: 48,
-                    display: "flex",
-                    alignItems: "flex-end",
-                    justifyContent: "center",
+                    width: 76, height: 50,
+                    display: "flex", alignItems: "flex-end", justifyContent: "center",
                     pointerEvents: "none",
                   }}
                 >
-                  {/* dark mount/base — connects the button into the housing */}
                   <span
-                    aria-hidden
                     style={{
-                      position: "absolute",
-                      left: "50%",
-                      bottom: 0,
-                      transform: "translateX(-50%)",
-                      width: 60,
-                      height: 9,
+                      position: "absolute", left: "50%", bottom: 0,
+                      transform: "translateX(-50%)", width: 64, height: 9,
                       borderRadius: "2px 2px 1px 1px",
-                      background:
-                        "linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%)",
-                      border: "1px solid #2c2c2c",
-                      borderBottom: "none",
-                      boxShadow:
-                        "inset 0 1px 0 rgba(255,255,255,0.04), 0 1px 0 rgba(0,0,0,0.6)",
+                      background: "linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%)",
+                      border: "1px solid #2c2c2c", borderBottom: "none",
                     }}
                   />
                   <div
-                    aria-hidden
-                    className="hw-button-top"
                     style={{
-                      position: "relative",
-                      width: 44,
-                      height: 13,
-                      marginBottom: 6,
-                      borderRadius: 3,
-                      border: "none",
-                      padding: 0,
-                      pointerEvents: "none",
-                      // darker red base / sides of the button
-                      background:
-                        "linear-gradient(180deg, #5a0e0e 0%, #3a0707 60%, #1c0303 100%)",
+                      position: "relative", width: 48, height: 14,
+                      marginBottom: 6, borderRadius: 3,
+                      background: "linear-gradient(180deg, #5a0e0e 0%, #3a0707 60%, #1c0303 100%)",
                       boxShadow: pressed
                         ? "0 1px 0 rgba(0,0,0,0.85), inset 0 2px 3px rgba(0,0,0,0.55)"
                         : hovering
-                          ? "0 4px 6px rgba(0,0,0,0.6), 0 0 0 1px rgba(251,191,36,0.55), 0 0 18px rgba(251,191,36,0.45), inset 0 -2px 3px rgba(0,0,0,0.5)"
-                          : undefined,
-                      transform: hovering && !pressed ? "scale(1.04)" : "scale(1)",
-                      transition:
-                        "transform 120ms ease, box-shadow 200ms ease",
+                          ? "0 4px 6px rgba(0,0,0,0.6), 0 0 0 1px rgba(251,191,36,0.55), 0 0 18px rgba(251,191,36,0.45)"
+                          : "0 2px 3px rgba(0,0,0,0.6)",
+                      transform: (hovering && !pressed) ? "translateY(-2px)" : pressed ? "translateY(1px)" : "translateY(0)",
+                      transition: "transform 120ms ease, box-shadow 200ms ease",
                       overflow: "hidden",
+                      animation: !hovering && !pressed ? "hwBtnIdle 2.4s ease-in-out infinite" : undefined,
                     }}
                   >
-                    {/* red top surface */}
+                    <style>{`
+                      @keyframes hwBtnIdle {
+                        0%, 100% { transform: translateY(0); }
+                        50%      { transform: translateY(-2px); }
+                      }
+                    `}</style>
                     <span
-                      aria-hidden
                       style={{
-                        position: "absolute",
-                        left: 2,
-                        right: 2,
-                        top: 2,
-                        bottom: 3,
+                        position: "absolute", left: 2, right: 2, top: 2, bottom: 3,
                         borderRadius: 2,
-                        background:
-                          "linear-gradient(180deg, #ff5a5a 0%, #e02a2a 45%, #a51414 100%)",
+                        background: "linear-gradient(180deg, #ff5a5a 0%, #e02a2a 45%, #a51414 100%)",
                         boxShadow: pressed
-                          ? "inset 0 2px 3px rgba(0,0,0,0.5), inset 0 -1px 1px rgba(255,255,255,0.04)"
+                          ? "inset 0 2px 3px rgba(0,0,0,0.5)"
                           : "inset 0 -2px 3px rgba(0,0,0,0.45), inset 0 1px 1px rgba(255,255,255,0.22)",
-                        transform: pressed
-                          ? "translateY(1.5px)"
-                          : "translateY(0)",
-                        transition:
-                          "transform 100ms ease, box-shadow 200ms ease",
-                      }}
-                    />
-                    {/* horizontal specular highlight */}
-                    <span
-                      aria-hidden
-                      style={{
-                        position: "absolute",
-                        top: 3,
-                        left: 6,
-                        right: 6,
-                        height: 2,
-                        borderRadius: 2,
-                        background:
-                          "linear-gradient(180deg, rgba(255,255,255,0.55), rgba(255,255,255,0))",
-                        opacity: pressed ? 0.2 : 0.55,
-                        pointerEvents: "none",
-                        transition: "opacity 150ms ease",
                       }}
                     />
                   </div>
@@ -1349,10 +1081,8 @@ function CircuitHero() {
         </svg>
       </div>
 
-      {/* layer 4: text */}
       <HeroText bp={bp} />
 
-      {/* small status pill */}
       <div className="pointer-events-none absolute inset-x-0 bottom-5 z-[3] flex items-center justify-center gap-3 px-6 font-mono text-[10px] uppercase tracking-[0.28em] text-neutral-500 sm:px-10">
         <span className="size-1.5 rounded-full bg-neutral-300" />
         Available for new work — 2026
@@ -1360,6 +1090,7 @@ function CircuitHero() {
     </section>
   );
 }
+
 
 
 const SERIAL_INLINE_GLB = "https://files.catbox.moe/tgly0l.glb";
