@@ -2045,13 +2045,11 @@ function CategoryBlock({ category: c }: { category: Category }) {
                       style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", height: 450 }}
                     >
                       {!p.comingSoon ? (
-                        <a
+                        <ProjectDetailsCta
                           href={projectPath(p)}
-                          className="absolute left-4 top-4 z-10 inline-flex items-center gap-2 rounded-sm border-2 border-rule bg-background/80 px-4 py-2 font-mono text-xs uppercase tracking-[0.25em] text-foreground backdrop-blur transition-all hover:border-mark hover:bg-mark/10 hover:text-mark"
-                        >
-                          <span>View details</span>
-                          <span>→</span>
-                        </a>
+                          className="absolute left-4 top-4 z-10 w-[min(280px,calc(100%-2rem))] backdrop-blur"
+                          compact
+                        />
                       ) : null}
                       <InlineSerialModel embedded src={SERIAL_INLINE_GLB} cameraOrbit="35deg 70deg 105%" />
                     </div>
@@ -2089,13 +2087,11 @@ function CategoryBlock({ category: c }: { category: Category }) {
                       style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", height: 450 }}
                     >
                       {!p.comingSoon ? (
-                        <a
+                        <ProjectDetailsCta
                           href={projectPath(p)}
-                          className="absolute left-4 top-4 z-10 inline-flex items-center gap-2 rounded-sm border-2 border-rule bg-background/80 px-4 py-2 font-mono text-xs uppercase tracking-[0.25em] text-foreground backdrop-blur transition-all hover:border-mark hover:bg-mark/10 hover:text-mark"
-                        >
-                          <span>View details</span>
-                          <span>→</span>
-                        </a>
+                          className="absolute left-4 top-4 z-10 w-[min(280px,calc(100%-2rem))] backdrop-blur"
+                          compact
+                        />
                       ) : null}
                       <InlineSerialModel embedded src={THRUSTER_INLINE_GLB} idleElevation={15} cameraOrbit="-120deg 80deg 105%" />
                     </div>
@@ -2123,6 +2119,28 @@ function CategoryBlock({ category: c }: { category: Category }) {
       </ul>
       )}
     </div>
+  );
+}
+
+function ProjectDetailsCta({
+  href,
+  className = "",
+  compact = false,
+}: {
+  href: string;
+  className?: string;
+  compact?: boolean;
+}) {
+  return (
+    <a
+      href={href}
+      className={`work-card-cta group/details relative inline-flex items-center justify-between overflow-hidden rounded-sm border border-border bg-background/55 font-mono uppercase text-foreground transition-all duration-300 hover:-translate-y-1 hover:border-mark/80 hover:bg-mark/10 hover:text-mark ${compact ? "px-3 py-2 text-[10px] tracking-[0.24em]" : "px-5 py-3 text-xs tracking-[0.28em]"} ${className}`}
+    >
+      <span className="relative z-10">View details</span>
+      <span className={`relative z-10 flex items-center justify-center border border-border bg-secondary/40 leading-none transition-all duration-300 group-hover:translate-x-1 group-hover:border-mark/70 group-hover:bg-mark/15 group-hover/details:translate-x-1 group-hover/details:border-mark/70 group-hover/details:bg-mark/15 ${compact ? "h-6 w-6 text-sm" : "h-7 w-7 text-base"}`}>
+        →
+      </span>
+    </a>
   );
 }
 
@@ -2179,13 +2197,7 @@ function ProjectRow({
               </div>
             ) : null}
             {detailsHref ? (
-              <a
-                href={detailsHref}
-                className="mt-6 inline-flex items-center gap-2.5 rounded-sm border-2 border-rule bg-secondary/40 px-6 py-3 font-mono text-sm uppercase tracking-[0.25em] text-foreground transition-all hover:border-mark hover:bg-mark/10 hover:text-mark"
-              >
-                <span>View details</span>
-                <span className="transition-transform group-hover:translate-x-0.5">→</span>
-              </a>
+              <ProjectDetailsCta href={detailsHref} className="mt-6 w-full max-w-sm" />
             ) : null}
           </div>
 
@@ -2252,13 +2264,11 @@ function ProjectRow({
           </div>
         ) : null}
         {detailsHref && !hideViewDetails ? (
-          <a
+          <ProjectDetailsCta
             href={detailsHref}
-            className={`inline-flex items-center rounded-sm border-2 border-rule bg-secondary/40 font-mono uppercase tracking-[0.25em] text-foreground transition-all hover:border-mark hover:bg-mark/10 hover:text-mark ${bare ? "mt-2 gap-1.5 px-3 py-1.5 text-[10px]" : "mt-6 gap-2.5 px-6 py-3 text-sm"}`}
-          >
-            <span>View details</span>
-            <span className="transition-transform group-hover:translate-x-0.5">→</span>
-          </a>
+            compact={bare}
+            className={bare ? "mt-2 w-full max-w-[220px]" : "mt-6 w-full max-w-sm"}
+          />
         ) : null}
       </div>
       <div
@@ -2349,13 +2359,11 @@ function SubProjectRow({
         onClick={(e) => e.stopPropagation()}
       >
         {detailsHref ? (
-          <a
+          <ProjectDetailsCta
             href={detailsHref}
-            className="absolute left-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-sm border-2 border-rule bg-background/80 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-foreground backdrop-blur transition-all hover:border-mark hover:bg-mark/10 hover:text-mark"
-          >
-            <span>View details</span>
-            <span>→</span>
-          </a>
+            className="absolute left-3 top-3 z-10 w-[min(240px,calc(100%-1.5rem))] backdrop-blur"
+            compact
+          />
         ) : null}
         <div style={{ width: "100%", height: "100%" }} className="overflow-hidden">
           <ModelPreview
