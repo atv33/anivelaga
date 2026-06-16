@@ -1918,10 +1918,12 @@ function Work() {
                       {card.title}
                     </h3>
                     <p className="text-sm leading-relaxed text-ink-dim">{card.desc}</p>
-                    <div className="mt-auto pt-3">
-                      <span className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.25em] text-foreground transition-colors group-hover:text-mark">
-                        Explore
-                        <span className="transition-transform group-hover:translate-x-1">→</span>
+                    <div className="mt-auto pt-5">
+                      <span className="work-card-cta relative inline-flex w-full items-center justify-between overflow-hidden border border-border bg-background/45 px-4 py-3 font-mono text-[11px] uppercase tracking-[0.28em] text-foreground transition-all duration-300 group-hover:-translate-y-1 group-hover:border-mark/80 group-hover:bg-mark/10 group-hover:text-mark">
+                        <span className="relative z-10">Explore</span>
+                        <span className="relative z-10 flex h-7 w-7 items-center justify-center border border-border bg-secondary/40 text-base leading-none transition-all duration-300 group-hover:border-mark/70 group-hover:bg-mark/15 group-hover:translate-x-1">
+                          →
+                        </span>
                       </span>
                     </div>
                   </div>

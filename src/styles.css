@@ -284,6 +284,41 @@
   transform-origin: left;
 }
 
+@keyframes work-cta-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--mark) 0%, transparent);
+    border-color: var(--border);
+  }
+  50% {
+    box-shadow: 0 0 18px 0 color-mix(in srgb, var(--mark) 18%, transparent);
+    border-color: color-mix(in srgb, var(--mark) 48%, var(--border));
+  }
+}
+
+@keyframes work-cta-scan {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(220%); }
+}
+
+.work-card-cta {
+  animation: work-cta-pulse 2.8s ease-in-out infinite;
+}
+
+.work-card-cta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 45%;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--mark) 18%, transparent), transparent);
+  opacity: 0;
+  transform: translateX(-120%);
+}
+
+.group:hover .work-card-cta::before {
+  opacity: 1;
+  animation: work-cta-scan 1.1s ease-out infinite;
+}
+
 /* Hero PCB trace fall */
 @keyframes hero-trace-fall {
   0% { transform: translateY(-10%); opacity: 0; }
