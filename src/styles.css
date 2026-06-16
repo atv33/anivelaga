@@ -288,10 +288,21 @@
   0%, 100% {
     box-shadow: 0 0 0 0 color-mix(in srgb, var(--mark) 0%, transparent);
     border-color: var(--border);
+    transform: translateY(0) scale(1);
   }
-  50% {
-    box-shadow: 0 0 18px 0 color-mix(in srgb, var(--mark) 18%, transparent);
-    border-color: color-mix(in srgb, var(--mark) 48%, var(--border));
+  38% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--mark) 42%, transparent),
+      0 0 24px 1px color-mix(in srgb, var(--mark) 26%, transparent);
+    border-color: color-mix(in srgb, var(--mark) 72%, var(--border));
+    transform: translateY(-2px) scale(1.015);
+  }
+  58% {
+    box-shadow:
+      0 0 0 5px color-mix(in srgb, var(--mark) 8%, transparent),
+      0 0 18px 0 color-mix(in srgb, var(--mark) 18%, transparent);
+    border-color: color-mix(in srgb, var(--mark) 52%, var(--border));
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -301,7 +312,8 @@
 }
 
 .work-card-cta {
-  animation: work-cta-pulse 2.8s ease-in-out infinite;
+  animation: work-cta-pulse 1.9s ease-in-out infinite;
+  transform-origin: center;
 }
 
 .work-card-cta::before {
