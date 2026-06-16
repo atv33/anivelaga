@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Ani Velaga AV chip icon</title>
+  <desc id="desc">A dark integrated circuit package with the letters AV and subtle circuit traces.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#151515"/>
+      <stop offset="1" stop-color="#050505"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffe3a1"/>
+      <stop offset="0.45" stop-color="#b89444"/>
+      <stop offset="1" stop-color="#6f5b28"/>
+    </linearGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="7" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0.95 0 1 0 0 0.62 0 0 1 0 0.18 0 0 0 0.45 0"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="88" fill="#070707"/>
+  <path d="M98 256H36M476 256h-62M256 98V36M256 476v-62" stroke="#2c2c2c" stroke-width="10" stroke-linecap="round"/>
+  <g stroke="#343434" stroke-width="10" stroke-linecap="round">
+    <path d="M149 88v42M190 88v42M231 88v42M272 88v42M313 88v42M354 88v42"/>
+    <path d="M149 424v-42M190 424v-42M231 424v-42M272 424v-42M313 424v-42M354 424v-42"/>
+    <path d="M88 149h42M88 190h42M88 231h42M88 272h42M88 313h42M88 354h42"/>
+    <path d="M424 149h-42M424 190h-42M424 231h-42M424 272h-42M424 313h-42M424 354h-42"/>
+  </g>
+  <rect x="122" y="122" width="268" height="268" rx="36" fill="url(#bg)" stroke="#3b3b3b" stroke-width="12"/>
+  <rect x="145" y="145" width="222" height="222" rx="24" fill="#0b0b0b" stroke="#1f1f1f" stroke-width="4"/>
+  <path d="M176 325l64-142 64 142M199 274h82" fill="none" stroke="url(#gold)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+  <path d="M303 184l42 141 43-141" fill="none" stroke="#f4f4f4" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  <g fill="#252525">
+    <circle cx="171" cy="171" r="8"/>
+    <circle cx="341" cy="171" r="8"/>
+    <circle cx="171" cy="341" r="8"/>
+    <circle cx="341" cy="341" r="8"/>
+  </g>
+</svg>

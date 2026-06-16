@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Ani Velaga portfolio preview</title>
+  <desc id="desc">Dark PCB-style portfolio card for Ani Velaga with an AV chip mark and routed traces.</desc>
+  <defs>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#151515"/>
+      <stop offset="1" stop-color="#050505"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffe3a1"/>
+      <stop offset="0.5" stop-color="#b89444"/>
+      <stop offset="1" stop-color="#6d5825"/>
+    </linearGradient>
+    <filter id="softGlow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="9" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0.95 0 1 0 0 0.62 0 0 1 0 0.18 0 0 0 0.42 0"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#151515" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="630" fill="#050505"/>
+  <rect width="1200" height="630" fill="url(#grid)" opacity="0.5"/>
+  <g fill="none" stroke="#242424" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M0 112h210v76h94"/>
+    <path d="M0 458h172v-72h126"/>
+    <path d="M862 90h118v74h220"/>
+    <path d="M834 506h146v-82h220"/>
+    <path d="M780 216h132v54h166"/>
+    <path d="M768 346h158v-48h274"/>
+  </g>
+  <g fill="none" stroke="#333333" stroke-width="3">
+    <path d="M806 140h138M806 158h138M806 176h138M806 194h138M806 212h138"/>
+    <path d="M854 462h118M854 480h118M854 498h118M854 516h118"/>
+  </g>
+  <g fill="#0b0b0b" stroke="#333333" stroke-width="4">
+    <circle cx="304" cy="188" r="10"/>
+    <circle cx="298" cy="386" r="10"/>
+    <circle cx="780" cy="216" r="10"/>
+    <circle cx="768" cy="346" r="10"/>
+    <circle cx="862" cy="90" r="8"/>
+    <circle cx="834" cy="506" r="8"/>
+  </g>
+  <g transform="translate(428 108)">
+    <g stroke="#333333" stroke-width="8" stroke-linecap="round">
+      <path d="M50 0v38M94 0v38M138 0v38M182 0v38M226 0v38M270 0v38"/>
+      <path d="M50 376v-38M94 376v-38M138 376v-38M182 376v-38M226 376v-38M270 376v-38"/>
+      <path d="M0 50h38M0 94h38M0 138h38M0 182h38M0 226h38M0 270h38"/>
+      <path d="M376 50h-38M376 94h-38M376 138h-38M376 182h-38M376 226h-38M376 270h-38"/>
+    </g>
+    <rect x="34" y="34" width="308" height="308" rx="38" fill="url(#panel)" stroke="#3d3d3d" stroke-width="10"/>
+    <rect x="60" y="60" width="256" height="256" rx="24" fill="#090909" stroke="#1e1e1e" stroke-width="4"/>
+    <path d="M92 250l74-166 74 166M119 191h96" fill="none" stroke="url(#gold)" stroke-width="26" stroke-linecap="round" stroke-linejoin="round" filter="url(#softGlow)"/>
+    <path d="M240 84l51 166 51-166" fill="none" stroke="#f5f5f5" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="84" y="204" fill="#f5f5f5" font-family="Inter, Arial, sans-serif" font-size="76" font-weight="800" letter-spacing="-2">Ani Velaga</text>
+  <text x="88" y="262" fill="#a8a8a8" font-family="JetBrains Mono, SFMono-Regular, Menlo, monospace" font-size="24" letter-spacing="5">ELECTRICAL + COMPUTER ENGINEERING</text>
+  <text x="88" y="342" fill="#cfcfcf" font-family="JetBrains Mono, SFMono-Regular, Menlo, monospace" font-size="30">PCBs · Embedded Systems · Networking</text>
+  <text x="88" y="388" fill="#8f8f8f" font-family="JetBrains Mono, SFMono-Regular, Menlo, monospace" font-size="30">LLM Inference Systems</text>
+  <path d="M88 438h266" stroke="url(#gold)" stroke-width="4" stroke-linecap="round"/>
+  <text x="88" y="492" fill="#f2f2f2" font-family="JetBrains Mono, SFMono-Regular, Menlo, monospace" font-size="24" letter-spacing="6">ANIVELAGA.COM</text>
+  <g fill="#1c1c1c" stroke="#383838" stroke-width="3">
+    <rect x="920" y="152" width="142" height="88" rx="12"/>
+    <rect x="932" y="446" width="152" height="74" rx="10"/>
+  </g>
+  <g fill="#2c2c2c">
+    <rect x="946" y="174" width="20" height="10" rx="2"/>
+    <rect x="984" y="174" width="20" height="10" rx="2"/>
+    <rect x="1022" y="174" width="20" height="10" rx="2"/>
+    <rect x="956" y="472" width="20" height="8" rx="2"/>
+    <rect x="996" y="472" width="20" height="8" rx="2"/>
+    <rect x="1036" y="472" width="20" height="8" rx="2"/>
+  </g>
+</svg>
