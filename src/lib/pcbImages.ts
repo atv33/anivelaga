@@ -1,7 +1,10 @@
-export const serialBoard3d = "";
+import { withBase } from "./siteBase";
+
+export const serialBoard3d = withBase("/models/serial-board.glb");
 export const serialBoardFront = "";
 export const serialBoardLayout = "";
 export const serialBoardDiff = "";
 
-export const thrusterGlbSrc = "https://files.catbox.moe/03r1s1.glb";
-export const serialGlbSrc = "https://files.catbox.moe/3fa8rl.glb";
+export const thrusterGlbSrc = withBase("/models/thruster-board.glb");
+export const serialGlbSrc = withBase("/models/serial-board.glb");
+export const serialTestGlbSrc = withBase("/models/serial-test-board.glb");

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { MouseEvent, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -15,10 +15,12 @@ export function NavBar({
   className?: string;
 }) {
   const [active, setActive] = useState(items[0]?.name ?? "");
+  const clickedActiveRef = useRef<string | null>(null);
+  const releaseClickRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const ids = items.map((i) => i.href.replace("#", ""));
     const onScroll = () => {
+      if (clickedActiveRef.current) return;
       const y = window.scrollY + window.innerHeight * 0.35;
       let current = items[0]?.name ?? "";
       for (const item of items) {
@@ -32,6 +34,35 @@ export function NavBar({
     return () => window.removeEventListener("scroll", onScroll);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items.map((i) => i.href).join("|")]);
+
+  useEffect(() => {
+    return () => {
+      if (releaseClickRef.current) window.clearTimeout(releaseClickRef.current);
+    };
+  }, []);
+
+  const handleNavClick = (event: MouseEvent<HTMLAnchorElement>, item: NavItem) => {
+    const id = item.href.replace("#", "");
+    const target = document.getElementById(id);
+
+    if (!target) {
+      setActive(item.name);
+      return;
+    }
+
+    event.preventDefault();
+    clickedActiveRef.current = item.name;
+    setActive(item.name);
+    window.history.pushState(null, "", item.href);
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    if (releaseClickRef.current) window.clearTimeout(releaseClickRef.current);
+    releaseClickRef.current = window.setTimeout(() => {
+      clickedActiveRef.current = null;
+      const scrollEvent = new Event("scroll");
+      window.dispatchEvent(scrollEvent);
+    }, 850);
+  };
 
   return (
     <div
@@ -47,7 +78,7 @@ export function NavBar({
             <a
               key={item.name}
               href={item.href}
-              onClick={() => setActive(item.name)}
+              onClick={(event) => handleNavClick(event, item)}
               className={cn(
                 "relative cursor-pointer rounded-full px-4 py-2 font-mono text-[11px] uppercase tracking-[0.22em] transition-colors sm:text-xs",
                 "text-ink-dim hover:text-foreground",

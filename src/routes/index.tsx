@@ -1,35 +1,74 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Cpu, Terminal, BrainCircuit } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { BrainCircuit, ExternalLink, Github, Linkedin, Mail } from "lucide-react";
 import { NavBar } from "@/components/ui/tubelight-navbar";
-import { useIsMobile, useBreakpoint } from "@/hooks/use-mobile";
+import { useBreakpoint } from "@/hooks/use-mobile";
 import {
-  Sheet,
-  SheetContent,
   SheetHeader,
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
-  serialBoardFront,
-  serialBoardLayout,
-  serialBoardDiff,
   thrusterGlbSrc,
   serialGlbSrc,
+  serialTestGlbSrc,
 } from "@/lib/pcbImages";
-import headshotAsset from "@/assets/headshot.jpg.asset.json";
-import serialLayoutAsset from "@/assets/serial-layout.png.asset.json";
-import serialFrontAsset from "@/assets/serial-front.png.asset.json";
-import serialBackAsset from "@/assets/serial-back.png.asset.json";
-import thrusterLayoutAsset from "@/assets/thruster-layout.png.asset.json";
-import thrusterFrontAsset from "@/assets/thruster-front.png.asset.json";
-import thrusterBackAsset from "@/assets/thruster-back.png.asset.json";
-import serialFabFrontAsset from "@/assets/thruster-fab-1.png.asset.json";
-import thrusterFabFrontAsset from "@/assets/thruster-fab-2.png.asset.json";
-import thrusterFabBackAsset from "@/assets/thruster-fab-back.png.asset.json";
-import serialFabBackAsset from "@/assets/serial-fab-back.png.asset.json";
+import {
+  CATEGORIES,
+  FPGA_DEMO_URL,
+  FPGA_HARDWARE_VIDEO_SRC,
+  FPGA_PROJECT_NOTES,
+  projectPath,
+  type Category,
+  type Project,
+} from "@/lib/projectData";
+import { withBase } from "@/lib/siteBase";
+
+const localImageAssets = import.meta.glob<string>("../assets/*.{png,jpg,jpeg,webp,avif}", {
+  eager: true,
+  import: "default",
+});
+
+const assetImage = (filename: string) => localImageAssets[`../assets/${filename}`];
+
+const IMAGE_ASSETS = {
+  headshot: assetImage("headshot.png"),
+  broadcomLogo: assetImage("broadcom-logo.png"),
+  cuauvLogo: assetImage("cuauv-logo.png"),
+  bytedanceLogo: assetImage("bytedance-logo.png"),
+  fpgaMusicPlayerDemo: assetImage("fpga-music-player-demo.png"),
+  fpgaMusicPlayerPreview: assetImage("fpga-music-player-preview.jpg"),
+  pepperGhostPreview: assetImage("pepper-ghost-preview.png"),
+  pepperGhostPrototype: assetImage("pepper-ghost-prototype.jpg"),
+  serialLayout: assetImage("serial-layout.png"),
+  serialFront: assetImage("serial-front.png"),
+  serialBack: assetImage("serial-back.png"),
+  serialFabFront: assetImage("thruster-fab-1.png"),
+  serialFabBack: assetImage("serial-fab-back.png"),
+  thrusterLayout: assetImage("thruster-layout.png"),
+  thrusterFront: assetImage("thruster-front.png"),
+  thrusterBack: assetImage("thruster-back.png"),
+  thrusterFabFront: assetImage("thruster-fab-2.png"),
+  thrusterFabBack: assetImage("thruster-fab-back.png"),
+};
+
+const PROJECT_PREVIEWS: Record<string, { src?: string; label: string; alt: string }> = {
+  "fpga-music-player": {
+    src: IMAGE_ASSETS.fpgaMusicPlayerPreview,
+    label: "Hardware Preview",
+    alt: "DE0-CV FPGA music player hardware preview",
+  },
+  "peppers-ghost-planetarium-display": {
+    src: IMAGE_ASSETS.pepperGhostPrototype,
+    label: "Working Prototype",
+    alt: "Working Pepper's Ghost planetarium display with floating star map",
+  },
+};
+
+const localModelSrc = (src?: string) =>
+  src && !/^https?:\/\//i.test(src) ? src : undefined;
 
 // Allow <model-viewer> custom element in JSX (React 19 uses React.JSX)
 declare module "react" {
@@ -69,118 +108,40 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-type Project = {
-  id: string;
-  name: string;
-  tagline: string;
-  bullets?: string[];
-  stack: string[];
-  year?: string;
-  links?: { label: string; href: string }[];
-  placeholderCaption?: string;
-  embedUrl?: string;
-  comingSoon?: boolean;
-};
-
-
-type Category = {
-  id: string;
-  label: string;
-  intro: string;
-  projects: Project[];
-};
-
-const CATEGORIES: Category[] = [
+const ABOUT_SKILL_GROUPS = [
   {
-    id: "01",
-    label: "PCB Design Projects",
-    intro:
-      "Through my work on Cornell's autonomous submarine team, I designed and brought up multiple PCBs for different systems on the vehicle. I identified signal and power requirements, structured schematics, referenced datasheets for layout decisions, and designed boards from schematic through assembly. I also soldered, debugged, and wrote firmware to bring each board to a reliable operating state.",
-    projects: [
-      {
-        id: "A",
-        name: "Serial Communication Board",
-        tagline:
-          "Central communication hub for the submarine. Aggregates 16 RS-232 RX/TX channels from sensors and peripherals into a single USB-C connection to the Jetson AI computer. Uses FTDI USB-to-UART ICs with RS-232 level shifting. Spring 2026 added SMF05CT1G TVS diode arrays for ESD protection on all 32 signal lines, DVL direct-connect header, and hot-swap EEPROM footprint. 4-layer PCB, 3.701\" x 4.291\".",
-        bullets: [
-          "16 RS-232 sensor channels multiplexed to USB-C using FTDI USB-to-UART ICs with RS-232 level shifting",
-          "TVS diode ESD protection on all 32 signal lines; hot-swap EEPROM footprint and DVL direct-connect header",
-        ],
-        stack: ["Altium Designer", "4-Layer PCB", "RS-232", "USB-C", "FTDI", "ESD Protection"],
-        placeholderCaption: "Serial Board 3D Render",
-      },
-      {
-        id: "B",
-        name: "Serial Test Board",
-        tagline:
-          "Breakout and validation board for the Serial Board. Exposes all 16 RS-232 channels as labeled headers for bench testing without the full submarine harness. Used during bring-up to verify level-shifter voltages, FTDI enumeration, and loopback integrity on each channel pair.",
-        bullets: [
-          "Companion breakout board that fans all 16 RS-232 channels out to labeled headers for bench validation without the full submarine harness",
-          "Used during Serial Board bring-up to verify level-shifter voltages, FTDI enumeration, and per-channel loopback integrity",
-        ],
-        stack: ["Altium Designer", "Test & Validation", "RS-232", "Breakout Board"],
-      },
-      {
-        id: "C",
-        name: "High-Power Thruster Control Board",
-        tagline:
-          "Motor driver PCB for the Orion vehicle's thruster array. Receives PWM/CAN commands from the Jetson via backplane connector and drives 8 brushless DC thrusters. Handles power distribution, overcurrent protection, and ESC signal conditioning.",
-        bullets: [
-          "8-channel PWM signal generation driving BlueRobotics ESCs for independent thruster actuation",
-          "Multi-rail power design: 16V, 7.4V, and 3.3V lines managed via LDOs with optimized dropout voltages",
-        ],
-        stack: ["Altium Designer", "Motor Control", "CAN Bus", "PWM", "Power Distribution"],
-      },
+    label: "SYSTEMS",
+    skills: [
+      "Computer Architecture",
+      "AI Inference Systems",
+      "Network Modeling",
     ],
   },
   {
-    id: "02",
-    label: "Personal Projects",
-    intro: "Side projects in hardware and infrastructure.",
-    projects: [
-      {
-        id: "A",
-        name: "Custom PCB Mechanical Keyboard",
-        year: "Summer 2025",
-        tagline:
-          "Designed a 65% layout mechanical keyboard PCB from scratch in KiCad. Implemented hot-swap socket footprints for MX-compatible switches, per-key RGB via WS2812B LED daisy chain, and USB-C HID with an RP2040 microcontroller running QMK firmware. 2-layer board, manufactured through JLCPCB.",
-        bullets: [
-          "65% hot-swap PCB in KiCad with RP2040 + QMK firmware",
-          "Per-key WS2812B RGB, USB-C HID, manufactured via JLCPCB",
-        ],
-        stack: ["KiCad", "RP2040", "QMK", "USB-C", "RGB"],
-      },
-      {
-        id: "B",
-        name: "Home Lab Networking Setup",
-        year: "Ongoing",
-        tagline:
-          "Built a home networking lab for low-latency experimentation. Flashed OpenWrt on a TP-Link router, set up VLANs for traffic isolation, configured WireGuard VPN, and wired a 2.5GbE switch for inter-node throughput testing. Used for running local LLM inference and testing distributed computing setups.",
-        bullets: [
-          "OpenWrt router + VLANs + WireGuard VPN",
-          "2.5GbE switch for inter-node throughput testing",
-        ],
-        stack: ["OpenWrt", "WireGuard", "VLANs", "Networking", "Linux"],
-      },
+    label: "HARDWARE",
+    skills: [
+      "PCB Design",
+      "Embedded Systems",
+      "FPGA / ASIC Design",
+      "Lab Equipment",
     ],
   },
   {
-    id: "03",
-    label: "Networking / LLM Inference Research",
-    intro: "",
-    projects: [],
+    label: "BUILD + VALIDATE",
+    skills: ["Fusion 360", "3D Printing", "CAD", "Soldering", "Firmware Validation"],
   },
-];
-
-const SKILLS = [
-  "Altium Designer",
-  "KiCad",
-  "C++",
-  "Python",
-  "CUDA",
-  "PyTorch",
-  "Linux",
-  "Git",
+  {
+    label: "TOOLS",
+    skills: [
+      "Altium Designer",
+      "Verilog",
+      "Python",
+      "Linux",
+      "CUDA",
+      "PyTorch",
+      "Git",
+    ],
+  },
 ];
 
 const EXPERIENCE = [
@@ -194,16 +155,10 @@ const EXPERIENCE = [
     when: "Sep 2024 — Present",
     role: "Electrical Engineer",
     org: "CUAUV",
-    note: "Design and lay out production PCBs for Cornell's autonomous submarine. Responsible for the Serial Board (16-channel RS-232 aggregation to USB-C), Serial Test Board (bench-level validation harness), and Thruster Board (8-channel ESC driver with CAN bus). Own full board lifecycle: schematic capture, layout, DFM review, bring-up, and integration testing with the software team.",
+    note: "PCB design and hardware bring-up for Cornell's autonomous submarine.",
   },
   {
-    when: "Jan 2026 — Present",
-    role: "Undergraduate Researcher",
-    org: "Cornell ECE",
-    note: "Investigating distributed KV-cache networking for LLM inference. Focus on inter-GPU communication overhead during prefill and decode phases. Benchmarking NCCL collective operations vs. RDMA direct transfers on multi-GPU clusters.",
-  },
-  {
-    when: "Jun 2025 — Apr 2026",
+    when: "Jun 2025 — Aug 2025",
     role: "Network Software Engineer",
     org: "ByteDance",
     note: "NCCL simulation for large clusters.",
@@ -215,6 +170,12 @@ const EXPERIENCE = [
     note: "Verilog & FPGA validation.",
   },
 ];
+
+const EXPERIENCE_LOGOS: Record<string, string | undefined> = {
+  Broadcom: IMAGE_ASSETS.broadcomLogo,
+  CUAUV: IMAGE_ASSETS.cuauvLogo,
+  ByteDance: IMAGE_ASSETS.bytedanceLogo,
+};
 
 const NAV = [
   ["Work", "#work"],
@@ -251,6 +212,7 @@ function TopBar() {
     <NavBar
       items={[
         { name: "Home", href: "#hero" },
+        { name: "About Me", href: "#about" },
         { name: "Work", href: "#work" },
         { name: "Experience", href: "#experience" },
         { name: "Contact", href: "#contact" },
@@ -290,57 +252,50 @@ type ModuleSpec = {
 // Pad coordinates are all grid-aligned (multiples of 20).
 const MODULES: ModuleSpec[] = [
   {
-    id: "CPU", label: "CPU", marker: "U1",
-    x: 760, y: 150, w: 220, h: 90,
-    topX:   [800, 840, 900, 940],
-    botX:   [800, 840, 900, 940],
-    leftY:  [180, 220],
-    rightY: [180, 220],
+    id: "CORE", label: "CORE",
+    x: 680, y: 150, w: 260, h: 110,
+    topX:   [740, 800, 860, 920],
+    botX:   [740, 800, 860, 920],
+    leftY:  [190, 230],
+    rightY: [190, 230],
   },
   {
-    id: "CTRL", label: "CTRL", marker: "U2",
-    x: 300, y: 250, w: 170, h: 75,
-    topX:   [340, 420],
-    botX:   [340, 420],
-    leftY:  [280],
-    rightY: [280, 300],
+    id: "CTRL", label: "CTRL",
+    x: 160, y: 100, w: 190, h: 90,
+    topX:   [220, 280],
+    botX:   [220, 280],
+    leftY:  [130, 160],
+    rightY: [130, 160],
   },
   {
-    id: "NET", label: "NET", marker: "U3",
-    x: 540, y: 390, w: 220, h: 80,
-    topX:   [580, 620, 680, 720],
-    botX:   [580, 680, 720],
-    leftY:  [420, 450],
-    rightY: [420, 450],
+    id: "NET", label: "NET",
+    x: 560, y: 400, w: 250, h: 100,
+    topX:   [620, 680, 740],
+    botX:   [620, 680, 740],
+    leftY:  [430, 470],
+    rightY: [430, 470],
   },
   {
-    id: "IO", label: "I/O", marker: "U4",
-    x: 1120, y: 180, w: 220, h: 80,
-    topX:   [1160, 1220, 1300],
-    botX:   [1160, 1220, 1300],
-    leftY:  [200, 240],
-    rightY: [200, 240],
+    id: "IO", label: "I/O",
+    x: 1120, y: 200, w: 220, h: 100,
+    topX:   [1180, 1240],
+    botX:   [1180, 1240],
+    leftY:  [230, 270],
+    rightY: [230, 270],
   },
   {
-    id: "DRV", label: "DRV", marker: "U5",
-    x: 1040, y: 470, w: 260, h: 90,
-    topX:   [1080, 1160, 1240],
-    botX:   [],
-    leftY:  [500, 540],
-    rightY: [500, 540],
-  },
-  {
-    id: "DSP", label: "DSP", marker: "U6",
-    x: 300, y: 540, w: 180, h: 80,
-    topX:   [340, 400, 460],
-    botX:   [],
-    leftY:  [580],
-    rightY: [580],
+    id: "DRV", label: "DRV",
+    x: 1040, y: 520, w: 260, h: 110,
+    topX:   [1100, 1160, 1220],
+    botX:   [1100, 1160, 1220],
+    leftY:  [560, 600],
+    rightY: [560, 600],
   },
 ];
 
-const EDGE_R = { x: 1430, y: 300, w: 40, h: 260, pinsY: [320, 360, 400, 440, 480, 520, 540] };
-const HEADER_T = { x: 880, y: -10, w: 120, h: 26, pinsX: [900, 920, 940, 960, 980] };
+const EDGE_L = { x: 70, y: 100, w: 40, h: 90, pinsY: [130, 160] };
+const EDGE_R = { x: 1430, y: 330, w: 48, h: 270, pinsY: [340, 360, 380, 400, 420, 440, 500, 540, 580] };
+const HEADER_T = { x: 760, y: 86, w: 220, h: 34, pinsX: [800, 850, 900, 950] };
 
 const moduleById = (id: string) => MODULES.find((m) => m.id === id)!;
 
@@ -357,197 +312,243 @@ function modulePads(m: ModuleSpec): { pads: Pad[] } {
 // ── Trace data ──────────────────────────────────────────────
 type Pt = { x: number; y: number };
 type Trace = { id: string; d: string; w: number; o: number; pulse?: number };
-type Inline =
-  | { kind: "resistor";  x: number; y: number; rot?: 0 | 90 }
-  | { kind: "capacitor"; x: number; y: number; rot?: 0 | 90 }
-  | { kind: "diode";     x: number; y: number; rot?: 0 | 90 }
-  | { kind: "inductor";  x: number; y: number; rot?: 0 | 90 };
-type Via = { x: number; y: number };
-type Built = { traces: Trace[]; vias: Via[]; parts: Inline[] };
+type Built = { traces: Trace[] };
 
 function ptsToD(pts: Pt[]): string {
   return pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
 }
 
-// Curated grid-routed traces. Backbone lanes y=130, 250, 370, 510, 660.
-// Vertical trunks x=420, 700, 980, 1260.
+const detailTrace = (id: string, pts: Pt[], w = 0.8, o = 0.34): Trace => ({
+  id,
+  d: ptsToD(pts),
+  w,
+  o,
+});
+
+const DETAIL_ICS: ModuleSpec[] = [
+  {
+    id: "AUX_A", label: "AUX",
+    x: 1140, y: 86, w: 130, h: 72,
+    topX: [1180, 1220],
+    botX: [1180, 1220],
+    leftY: [110, 130, 150],
+    rightY: [110, 130, 150],
+  },
+  {
+    id: "AUX_B", label: "AUX",
+    x: 840, y: 640, w: 120, h: 64,
+    topX: [880, 920],
+    botX: [880, 920],
+    leftY: [660, 680],
+    rightY: [660, 680],
+  },
+  {
+    id: "AUX_C", label: "AUX",
+    x: 430, y: 80, w: 110, h: 70,
+    topX: [470, 510],
+    botX: [470, 510],
+    leftY: [105, 125],
+    rightY: [105, 125, 145],
+  },
+];
+
+const DETAIL_TRACES: Trace[] = [
+  detailTrace("PWR_RAIL", [{ x: 520, y: 80 }, { x: 1220, y: 80 }, { x: 1220, y: 86 }], 1.05, 0.42),
+  detailTrace("PWR_AUX_A", [{ x: 1180, y: 80 }, { x: 1180, y: 86 }], 0.8, 0.36),
+  detailTrace("PWR_AUX_C", [{ x: 510, y: 80 }, { x: 520, y: 80 }], 0.8, 0.34),
+  detailTrace("AUX_A_BUS_0", [{ x: 1270, y: 110 }, { x: 1350, y: 110 }, { x: 1350, y: 340 }, { x: 1424, y: 340 }], 0.85, 0.44),
+  detailTrace("AUX_A_BUS_1", [{ x: 1270, y: 130 }, { x: 1360, y: 130 }, { x: 1360, y: 360 }, { x: 1424, y: 360 }], 0.85, 0.43),
+  detailTrace("AUX_A_BUS_2", [{ x: 1270, y: 150 }, { x: 1370, y: 150 }, { x: 1370, y: 380 }, { x: 1424, y: 380 }], 0.85, 0.42),
+  detailTrace("AUX_A_BUS_3", [{ x: 1220, y: 158 }, { x: 1220, y: 180 }, { x: 1380, y: 180 }, { x: 1380, y: 400 }, { x: 1424, y: 400 }], 0.8, 0.38),
+  detailTrace("AUX_A_BUS_4", [{ x: 1180, y: 158 }, { x: 1180, y: 170 }, { x: 1390, y: 170 }, { x: 1390, y: 420 }, { x: 1424, y: 420 }], 0.8, 0.36),
+  detailTrace("AUX_A_CAP", [{ x: 1140, y: 130 }, { x: 1100, y: 130 }], 0.75, 0.36),
+  detailTrace("AUX_C_CTRL", [{ x: 430, y: 125 }, { x: 380, y: 125 }, { x: 380, y: 130 }, { x: 350, y: 130 }], 0.8, 0.34),
+  detailTrace("AUX_C_CORE", [{ x: 540, y: 125 }, { x: 620, y: 125 }, { x: 620, y: 190 }, { x: 680, y: 190 }], 0.8, 0.36),
+  detailTrace("AUX_B_DRV", [{ x: 960, y: 660 }, { x: 1000, y: 660 }, { x: 1000, y: 600 }, { x: 1040, y: 600 }], 0.85, 0.4),
+  detailTrace("AUX_B_NET", [{ x: 840, y: 660 }, { x: 780, y: 660 }, { x: 780, y: 500 }, { x: 740, y: 500 }], 0.8, 0.36),
+  detailTrace("AUX_B_TP_1", [{ x: 880, y: 704 }, { x: 880, y: 740 }, { x: 940, y: 740 }], 0.75, 0.34),
+  detailTrace("AUX_B_TP_2", [{ x: 920, y: 704 }, { x: 920, y: 720 }, { x: 1000, y: 720 }], 0.75, 0.34),
+  detailTrace("CORE_TP_1", [{ x: 740, y: 260 }, { x: 740, y: 320 }, { x: 700, y: 320 }], 0.75, 0.32),
+  detailTrace("CORE_TP_2", [{ x: 860, y: 260 }, { x: 860, y: 320 }, { x: 900, y: 320 }], 0.75, 0.32),
+  detailTrace("IO_TP_1", [{ x: 1180, y: 200 }, { x: 1180, y: 180 }, { x: 1120, y: 180 }], 0.75, 0.32),
+  detailTrace("IO_TP_2", [{ x: 1340, y: 270 }, { x: 1410, y: 270 }, { x: 1410, y: 300 }], 0.75, 0.32),
+  detailTrace("NET_TP_1", [{ x: 560, y: 470 }, { x: 500, y: 470 }, { x: 500, y: 520 }], 0.75, 0.32),
+  detailTrace("DRV_TP_1", [{ x: 1100, y: 630 }, { x: 1100, y: 670 }, { x: 1040, y: 670 }], 0.75, 0.32),
+  detailTrace("NET_CAP", [{ x: 620, y: 400 }, { x: 620, y: 360 }, { x: 600, y: 360 }], 0.75, 0.32),
+  detailTrace("HEADER_AUX_1", [{ x: 950, y: 120 }, { x: 950, y: 100 }, { x: 1040, y: 100 }, { x: 1040, y: 130 }, { x: 1100, y: 130 }], 0.72, 0.3),
+  detailTrace("CORE_RIGHT_TP", [{ x: 1040, y: 230 }, { x: 1080, y: 230 }, { x: 1080, y: 310 }], 0.72, 0.3),
+  detailTrace("IO_EDGE_C", [{ x: 1240, y: 300 }, { x: 1240, y: 320 }, { x: 1320, y: 320 }, { x: 1320, y: 440 }, { x: 1424, y: 440 }], 0.78, 0.36),
+  detailTrace("DRV_EDGE_C", [{ x: 1300, y: 600 }, { x: 1340, y: 600 }, { x: 1340, y: 500 }, { x: 1424, y: 500 }], 0.78, 0.34),
+  detailTrace("NET_BOTTOM_TP", [{ x: 680, y: 500 }, { x: 680, y: 560 }, { x: 760, y: 560 }], 0.72, 0.28),
+  detailTrace("LEFT_TEST_SPUR", [{ x: 116, y: 180 }, { x: 130, y: 180 }, { x: 130, y: 220 }], 0.72, 0.3),
+  detailTrace("AUX_C_HEADER", [{ x: 510, y: 80 }, { x: 510, y: 60 }, { x: 800, y: 60 }, { x: 800, y: 86 }], 0.72, 0.28),
+  detailTrace("GND_UPPER_FANOUT_STUB", [{ x: 1100, y: 130 }, { x: 1100, y: 144 }], 0.7, 0.34),
+  detailTrace("GND_RIGHT_EDGE_STUB", [{ x: 1340, y: 500 }, { x: 1340, y: 514 }], 0.7, 0.34),
+  detailTrace("GND_LOWER_MID_STUB", [{ x: 760, y: 560 }, { x: 760, y: 574 }], 0.7, 0.32),
+  detailTrace("GND_LEFT_STUB_DROP", [{ x: 130, y: 220 }, { x: 130, y: 234 }], 0.7, 0.32),
+  detailTrace("CTRL_TOP_TP", [{ x: 220, y: 100 }, { x: 220, y: 80 }, { x: 360, y: 80 }], 0.72, 0.32),
+  detailTrace("CORE_RETURN_TP", [{ x: 920, y: 260 }, { x: 920, y: 300 }, { x: 980, y: 300 }, { x: 980, y: 360 }], 0.72, 0.32),
+  detailTrace("NET_LEFT_TP_2", [{ x: 560, y: 430 }, { x: 480, y: 430 }, { x: 480, y: 400 }], 0.72, 0.3),
+  detailTrace("AUX_A_LEFT_TP", [{ x: 1140, y: 110 }, { x: 1080, y: 110 }, { x: 1080, y: 100 }], 0.72, 0.32),
+  detailTrace("RIGHT_BUS_SENSE", [{ x: 1360, y: 360 }, { x: 1320, y: 360 }, { x: 1320, y: 340 }], 0.72, 0.32),
+  detailTrace("DRV_BOTTOM_TP", [{ x: 1100, y: 630 }, { x: 1100, y: 690 }, { x: 1040, y: 690 }], 0.72, 0.3),
+  detailTrace("AUX_B_LEFT_TP", [{ x: 840, y: 680 }, { x: 800, y: 680 }, { x: 800, y: 620 }, { x: 760, y: 620 }], 0.72, 0.3),
+  detailTrace("EDGE_LOW_BRANCH", [{ x: 1424, y: 580 }, { x: 1360, y: 580 }, { x: 1360, y: 620 }, { x: 1320, y: 620 }], 0.72, 0.32),
+];
+
+const DETAIL_VIAS: Pt[] = [
+  { x: 520, y: 80 },
+  { x: 1180, y: 80 },
+  { x: 1220, y: 80 },
+  { x: 1350, y: 340 },
+  { x: 1360, y: 360 },
+  { x: 1370, y: 380 },
+  { x: 1380, y: 400 },
+  { x: 1390, y: 420 },
+  { x: 1100, y: 130 },
+  { x: 700, y: 320 },
+  { x: 900, y: 320 },
+  { x: 1120, y: 180 },
+  { x: 1410, y: 300 },
+  { x: 500, y: 520 },
+  { x: 1040, y: 670 },
+  { x: 940, y: 740 },
+  { x: 1000, y: 720 },
+  { x: 600, y: 360 },
+  { x: 1040, y: 100 },
+  { x: 1080, y: 310 },
+  { x: 1320, y: 320 },
+  { x: 1340, y: 500 },
+  { x: 760, y: 560 },
+  { x: 130, y: 220 },
+  { x: 800, y: 60 },
+  { x: 360, y: 80 },
+  { x: 980, y: 360 },
+  { x: 480, y: 400 },
+  { x: 1080, y: 100 },
+  { x: 1320, y: 340 },
+  { x: 1040, y: 690 },
+  { x: 760, y: 620 },
+  { x: 1320, y: 620 },
+];
+
+type PcbPart = {
+  id: string;
+  kind: "resistor" | "capacitor" | "diode" | "inductor";
+  x: number;
+  y: number;
+  rot?: 0 | 90;
+};
+
+const PCB_PARTS: PcbPart[] = [
+  { id: "R1", kind: "resistor", x: 970, y: 190 },
+  { id: "R2", kind: "resistor", x: 990, y: 230 },
+  { id: "R3", kind: "resistor", x: 680, y: 340 },
+  { id: "R4", kind: "resistor", x: 720, y: 360 },
+  { id: "R5", kind: "resistor", x: 870, y: 430 },
+  { id: "R6", kind: "resistor", x: 890, y: 470 },
+  { id: "R7", kind: "resistor", x: 1328, y: 560 },
+  { id: "R8", kind: "resistor", x: 1350, y: 600 },
+  { id: "C1", kind: "capacitor", x: 650, y: 190 },
+  { id: "C2", kind: "capacitor", x: 1122, y: 130 },
+  { id: "C3", kind: "capacitor", x: 620, y: 380, rot: 90 },
+  { id: "C4", kind: "capacitor", x: 1320, y: 600 },
+  { id: "D1", kind: "diode", x: 1080, y: 270 },
+  { id: "D2", kind: "diode", x: 1010, y: 560 },
+  { id: "L1", kind: "inductor", x: 650, y: 80 },
+];
+
+type SilkLabel = { text: string; x: number; y: number; size?: number; anchor?: "start" | "middle" | "end"; opacity?: number };
+type GroundSymbol = { id: string; x: number; y: number; opacity?: number; scale?: number };
+
+const SILK_LABELS: SilkLabel[] = [
+  { text: "J1", x: 70, y: 112, size: 12, opacity: 0.34 },
+  { text: "U2", x: 350, y: 96, size: 12, anchor: "end", opacity: 0.34 },
+  { text: "U8", x: 546, y: 74, size: 11, opacity: 0.3 },
+  { text: "J3", x: 760, y: 78, size: 12, opacity: 0.34 },
+  { text: "U1", x: 946, y: 145, size: 12, opacity: 0.34 },
+  { text: "U6", x: 1278, y: 80, size: 11, opacity: 0.3 },
+  { text: "U4", x: 1348, y: 190, size: 12, opacity: 0.32 },
+  { text: "J2", x: 1486, y: 322, size: 12, opacity: 0.34 },
+  { text: "U3", x: 816, y: 392, size: 12, opacity: 0.32 },
+  { text: "U5", x: 1306, y: 512, size: 12, opacity: 0.32 },
+  { text: "U7", x: 964, y: 636, size: 11, opacity: 0.3 },
+  { text: "S1", x: 1160, y: 682, size: 11, opacity: 0.3 },
+  { text: "D1", x: 300, y: 216, size: 11, opacity: 0.3 },
+  { text: "TP", x: 690, y: 314, size: 9, opacity: 0.22 },
+  { text: "TP", x: 890, y: 314, size: 9, opacity: 0.22 },
+];
+
+const GROUND_SYMBOLS: GroundSymbol[] = [
+  { id: "GND_UPPER_FANOUT", x: 1100, y: 144, opacity: 0.38 },
+  { id: "GND_RIGHT_EDGE", x: 1340, y: 514, opacity: 0.4 },
+  { id: "GND_LOWER_MID", x: 760, y: 574, opacity: 0.36 },
+  { id: "GND_LEFT_STUB", x: 130, y: 234, opacity: 0.34 },
+];
+
+// Curated grid-routed traces. Main lanes sit at y=130, 340, 360, 430,
+// 470, 560, and 600. Vertical trunks sit at x=520, 860, 980, 1000,
+// 1040, 1360, 1380, and 1400.
 function buildCircuit(): Built {
   const traces: Trace[] = [];
   const add = (id: string, pts: Pt[], w: number, o: number, pulse?: number) =>
     traces.push({ id, d: ptsToD(pts), w, o, pulse });
 
-  const cpu = moduleById("CPU");
+  const core = moduleById("CORE");
   const ctrl = moduleById("CTRL");
   const net = moduleById("NET");
   const io = moduleById("IO");
   const drv = moduleById("DRV");
-  const dsp = moduleById("DSP");
+  const leftPinX = EDGE_L.x + EDGE_L.w + 6;
+  const rightPinX = EDGE_R.x - 6;
+  const topPinY = HEADER_T.y + HEADER_T.h;
 
-  // ── CPU → I/O bus (top backbone y=130) ──
-  add("CPU_IO_1",
-    [{x: cpu.x + cpu.w, y: 180}, {x: 980, y: 180}, {x: 980, y: 130}, {x: 1260, y: 130}, {x: 1260, y: 200}, {x: io.x, y: 200}],
-    1.4, 0.7, 5200);
-  add("CPU_IO_2",
-    [{x: cpu.x + cpu.w, y: 220}, {x: 1000, y: 220}, {x: 1000, y: 240}, {x: io.x, y: 240}],
-    1.1, 0.55);
+  // Left connector into controller.
+  add("L_CTRL_A", [{ x: leftPinX, y: 130 }, { x: ctrl.x, y: 130 }], 1.1, 0.48);
+  add("L_CTRL_B", [{ x: leftPinX, y: 160 }, { x: ctrl.x, y: 160 }], 1.1, 0.44);
 
-  // ── CPU top → top header pins ──
-  add("CPU_H1", [{x: 900, y: cpu.y}, {x: 900, y: 36}], 1.0, 0.5);
-  add("CPU_H2", [{x: 940, y: cpu.y}, {x: 940, y: 36}], 1.0, 0.45);
-  add("CPU_H3", [{x: 840, y: cpu.y}, {x: 840, y: 80}, {x: 920, y: 80}, {x: 920, y: 36}], 1.0, 0.45);
-  add("CPU_H4", [{x: 800, y: cpu.y}, {x: 800, y: 60}, {x: 980, y: 60}, {x: 980, y: 36}], 1.0, 0.42);
-  add("CPU_H5", [{x: 880, y: cpu.y}, {x: 880, y: 50}, {x: 960, y: 50}, {x: 960, y: 36}], 1.0, 0.4);
+  // Controller into core and network, using a shared vertical trunk.
+  add("CTRL_CORE_A", [{ x: ctrl.x + ctrl.w, y: 130 }, { x: 520, y: 130 }, { x: 520, y: 190 }, { x: core.x, y: 190 }], 1.35, 0.66, 5200);
+  add("CTRL_CORE_B", [{ x: ctrl.x + ctrl.w, y: 160 }, { x: 540, y: 160 }, { x: 540, y: 230 }, { x: core.x, y: 230 }], 1.05, 0.52);
+  add("CTRL_NET_A", [{ x: 220, y: ctrl.y + ctrl.h }, { x: 220, y: 300 }, { x: 520, y: 300 }, { x: 520, y: 430 }, { x: net.x, y: 430 }], 1.0, 0.5);
+  add("CTRL_NET_B", [{ x: 280, y: ctrl.y + ctrl.h }, { x: 280, y: 360 }, { x: 540, y: 360 }, { x: 540, y: 470 }, { x: net.x, y: 470 }], 0.95, 0.42);
 
-  // ── CPU left → CTRL right (mid backbone y=250) ──
-  add("CPU_CTRL_1",
-    [{x: cpu.x, y: 180}, {x: 700, y: 180}, {x: 700, y: 250}, {x: ctrl.x + ctrl.w, y: 280}],
-    1.2, 0.6, 4400);
-  add("CPU_CTRL_2",
-    [{x: cpu.x, y: 220}, {x: 720, y: 220}, {x: 720, y: 300}, {x: ctrl.x + ctrl.w, y: 300}],
-    1.0, 0.5);
+  // Top connector into the core.
+  add("TOP_CORE_A", [{ x: 800, y: topPinY }, { x: 800, y: 134 }, { x: 740, y: 134 }, { x: 740, y: core.y }], 0.95, 0.42);
+  add("TOP_CORE_B", [{ x: 850, y: topPinY }, { x: 850, y: 128 }, { x: 800, y: 128 }, { x: 800, y: core.y }], 0.95, 0.45);
+  add("TOP_CORE_C", [{ x: 900, y: topPinY }, { x: 900, y: 128 }, { x: 860, y: 128 }, { x: 860, y: core.y }], 0.95, 0.45);
+  add("TOP_CORE_D", [{ x: 950, y: topPinY }, { x: 950, y: 134 }, { x: 920, y: 134 }, { x: 920, y: core.y }], 0.95, 0.42);
 
-  // ── CPU bot → NET top (vertical trunk x=700/720) ──
-  add("CPU_NET_1",
-    [{x: 800, y: cpu.y + cpu.h}, {x: 800, y: 360}, {x: 700, y: 360}, {x: 700, y: 370}, {x: 720, y: 370}, {x: 720, y: net.y}],
-    1.2, 0.6, 5800);
-  add("CPU_NET_2",
-    [{x: 840, y: cpu.y + cpu.h}, {x: 840, y: 340}, {x: 680, y: 340}, {x: 680, y: net.y}],
-    1.0, 0.5);
-  add("CPU_NET_3",
-    [{x: 900, y: cpu.y + cpu.h}, {x: 900, y: 360}, {x: 620, y: 360}, {x: 620, y: net.y}],
-    1.0, 0.45);
-  add("CPU_NET_4",
-    [{x: 940, y: cpu.y + cpu.h}, {x: 940, y: 380}, {x: 580, y: 380}, {x: 580, y: net.y}],
-    1.0, 0.42);
+  // Core into I/O and network.
+  add("CORE_IO_A", [{ x: core.x + core.w, y: 190 }, { x: 1000, y: 190 }, { x: 1000, y: 230 }, { x: io.x, y: 230 }], 1.3, 0.62, 5600);
+  add("CORE_IO_B", [{ x: core.x + core.w, y: 230 }, { x: 1040, y: 230 }, { x: 1040, y: 270 }, { x: io.x, y: 270 }], 1.0, 0.5);
+  add("CORE_NET_A", [{ x: 740, y: core.y + core.h }, { x: 740, y: 340 }, { x: 620, y: 340 }, { x: 620, y: net.y }], 1.05, 0.52);
+  add("CORE_NET_B", [{ x: 800, y: core.y + core.h }, { x: 800, y: 360 }, { x: 680, y: 360 }, { x: 680, y: net.y }], 1.05, 0.48);
+  add("CORE_NET_C", [{ x: 860, y: core.y + core.h }, { x: 860, y: 380 }, { x: 740, y: 380 }, { x: 740, y: net.y }], 0.95, 0.44);
 
-  // ── NET → DRV bus (backbone y=510) ──
-  add("NET_DRV_1",
-    [{x: net.x + net.w, y: 420}, {x: 980, y: 420}, {x: 980, y: 510}, {x: drv.x, y: 510}],
-    1.3, 0.65, 4800);
-  add("NET_DRV_2",
-    [{x: net.x + net.w, y: 450}, {x: 980, y: 450}, {x: 980, y: 540}, {x: drv.x, y: 540}],
-    1.0, 0.55);
+  // Network and core into driver.
+  add("CORE_DRV_A", [{ x: 920, y: core.y + core.h }, { x: 920, y: 360 }, { x: 980, y: 360 }, { x: 980, y: 560 }, { x: drv.x, y: 560 }], 1.05, 0.46, 6400);
+  add("NET_DRV_A", [{ x: net.x + net.w, y: 430 }, { x: 920, y: 430 }, { x: 920, y: 560 }, { x: drv.x, y: 560 }], 1.35, 0.64, 5000);
+  add("NET_DRV_B", [{ x: net.x + net.w, y: 470 }, { x: 960, y: 470 }, { x: 960, y: 600 }, { x: drv.x, y: 600 }], 1.0, 0.52);
 
-  // ── NET ↔ CTRL (left side) ──
-  add("NET_CTRL",
-    [{x: net.x, y: 420}, {x: 500, y: 420}, {x: 500, y: 250}, {x: ctrl.x + ctrl.w, y: 280}],
-    1.0, 0.48);
+  // I/O and driver out to the right connector.
+  add("IO_EDGE_A", [{ x: io.x + io.w, y: 230 }, { x: 1380, y: 230 }, { x: 1380, y: 360 }, { x: rightPinX, y: 360 }], 1.2, 0.58, 6000);
+  add("IO_EDGE_B", [{ x: io.x + io.w, y: 270 }, { x: 1400, y: 270 }, { x: 1400, y: 400 }, { x: rightPinX, y: 400 }], 1.0, 0.5);
+  add("DRV_EDGE_A", [{ x: drv.x + drv.w, y: 560 }, { x: 1360, y: 560 }, { x: 1360, y: 540 }, { x: rightPinX, y: 540 }], 1.2, 0.58);
+  add("DRV_EDGE_B", [{ x: drv.x + drv.w, y: 600 }, { x: 1390, y: 600 }, { x: 1390, y: 580 }, { x: rightPinX, y: 580 }], 1.0, 0.48);
 
-  // ── NET bot → DSP top ──
-  add("NET_DSP_1",
-    [{x: 580, y: net.y + net.h}, {x: 580, y: 660}, {x: 460, y: 660}, {x: 460, y: dsp.y}],
-    1.0, 0.5);
-  add("NET_DSP_2",
-    [{x: 680, y: net.y + net.h}, {x: 680, y: 640}, {x: 400, y: 640}, {x: 400, y: dsp.y}],
-    1.0, 0.45);
-  add("NET_DSP_3",
-    [{x: 720, y: net.y + net.h}, {x: 720, y: 680}, {x: 340, y: 680}, {x: 340, y: dsp.y}],
-    1.0, 0.42);
+  // I/O into driver through two clean vertical drops.
+  add("IO_DRV_A", [{ x: 1180, y: io.y + io.h }, { x: 1180, y: 420 }, { x: 1100, y: 420 }, { x: 1100, y: drv.y }], 1.05, 0.5);
+  add("IO_DRV_B", [{ x: 1240, y: io.y + io.h }, { x: 1240, y: 440 }, { x: 1220, y: 440 }, { x: 1220, y: drv.y }], 0.95, 0.44);
 
-  // ── CTRL → DSP (left trunk x=300/280) ──
-  add("CTRL_DSP_1",
-    [{x: 340, y: ctrl.y + ctrl.h}, {x: 340, y: 380}, {x: 280, y: 380}, {x: 280, y: 660}, {x: 340, y: 660}, {x: 340, y: dsp.y}],
-    1.0, 0.45);
-  add("CTRL_DSP_2",
-    [{x: 420, y: ctrl.y + ctrl.h}, {x: 420, y: 510}, {x: 400, y: 510}, {x: 400, y: dsp.y}],
-    1.0, 0.42);
-
-  // ── CTRL left → board edge ──
-  add("CTRL_L1", [{x: ctrl.x, y: 280}, {x: 0, y: 280}], 1.0, 0.4);
-  add("CTRL_T1", [{x: 340, y: ctrl.y}, {x: 340, y: 130}, {x: 420, y: 130}, {x: 420, y: 60}, {x: 420, y: 0}], 1.0, 0.4);
-  add("CTRL_T2", [{x: 420, y: ctrl.y}, {x: 420, y: 130}, {x: 660, y: 130}, {x: 660, y: 60}], 1.0, 0.42);
-
-  // ── I/O → EDGE_R (right backbone y=370 not crossing chips) ──
-  add("IO_E1",
-    [{x: io.x + io.w, y: 200}, {x: 1380, y: 200}, {x: 1380, y: 320}, {x: EDGE_R.x, y: 320}],
-    1.2, 0.6, 5400);
-  add("IO_E2",
-    [{x: io.x + io.w, y: 240}, {x: 1400, y: 240}, {x: 1400, y: 360}, {x: EDGE_R.x, y: 360}],
-    1.0, 0.5);
-
-  // ── DRV → EDGE_R ──
-  add("DRV_E1",
-    [{x: drv.x + drv.w, y: 500}, {x: 1360, y: 500}, {x: 1360, y: 480}, {x: EDGE_R.x, y: 480}],
-    1.2, 0.6);
-  add("DRV_E2",
-    [{x: drv.x + drv.w, y: 540}, {x: 1380, y: 540}, {x: 1380, y: 520}, {x: EDGE_R.x, y: 520}],
-    1.0, 0.55);
-  add("DRV_E3",
-    [{x: drv.x + drv.w, y: 540}, {x: 1340, y: 540}, {x: EDGE_R.x, y: 540}],
-    1.0, 0.45);
-
-  // ── I/O bot → DRV top (vertical trunk x=1160/1240) ──
-  add("IO_DRV_1",
-    [{x: 1160, y: io.y + io.h}, {x: 1160, y: drv.y}],
-    1.2, 0.6, 6200);
-  add("IO_DRV_2",
-    [{x: 1220, y: io.y + io.h}, {x: 1220, y: 340}, {x: 1240, y: 340}, {x: 1240, y: drv.y}],
-    1.0, 0.5);
-  add("IO_DRV_3",
-    [{x: 1300, y: io.y + io.h}, {x: 1300, y: 360}, {x: 1320, y: 360}, {x: 1320, y: 440}, {x: 1300, y: 440}, {x: 1300, y: drv.y}],
-    1.0, 0.42);
-
-  // ── CPU → DRV diagonal (via y=370 and x=1260) ──
-  add("CPU_DRV",
-    [{x: cpu.x + cpu.w, y: cpu.y + 60}, {x: 1020, y: 220}, {x: 1020, y: 370}, {x: 1260, y: 370}, {x: 1260, y: drv.y}],
-    1.0, 0.45);
-
-  // ── I/O top → top header ──
-  add("IO_H1", [{x: 1160, y: io.y}, {x: 1160, y: 130}, {x: 1260, y: 130}, {x: 1260, y: 60}], 1.0, 0.4);
-  add("IO_H2", [{x: 1220, y: io.y}, {x: 1220, y: 100}, {x: 1340, y: 100}, {x: 1340, y: 0}], 1.0, 0.38);
-
-  // ── Bottom edge fanouts from DSP and NET ──
-  add("DSP_B1", [{x: 340, y: dsp.y + dsp.h}, {x: 340, y: 760}, {x: 220, y: 760}, {x: 220, y: 900}], 1.0, 0.42);
-  add("DSP_B2", [{x: 400, y: dsp.y + dsp.h}, {x: 400, y: 800}, {x: 540, y: 800}, {x: 540, y: 900}], 1.0, 0.4);
-  add("DRV_B1", [{x: 1080, y: drv.y + drv.h}, {x: 1080, y: 760}, {x: 980, y: 760}, {x: 980, y: 900}], 1.0, 0.4);
-  add("DRV_B2", [{x: 1240, y: drv.y + drv.h}, {x: 1240, y: 780}, {x: 1340, y: 780}, {x: 1340, y: 900}], 1.0, 0.42);
-
-  // ── Inline components — every one sits on a real straight trace segment ──
-  const parts: Inline[] = [
-    // Resistors (7) on horizontal runs
-    { kind: "resistor", x: 880,  y: 180 },   // CPU_IO_1 segment y=180 (right of CPU)
-    { kind: "resistor", x: 1100, y: 240 },   // CPU_IO_2 segment y=240
-    { kind: "resistor", x: 600,  y: 180 },   // CPU_CTRL_1 y=180 between ctrl and cpu
-    { kind: "resistor", x: 860,  y: 420 },   // NET_DRV_1 y=420
-    { kind: "resistor", x: 1260, y: 200 },   // IO_E1 y=200
-    { kind: "resistor", x: 1360, y: 480 },   // DRV_E1 y=480
-    { kind: "resistor", x: 380,  y: 660 },   // NET_DSP_1 y=660
-    // Capacitors (4)
-    { kind: "capacitor", x: 800, y: 320, rot: 90 }, // CPU_NET_1 segment x=800 y 240..360
-    { kind: "capacitor", x: 980, y: 460, rot: 90 }, // NET_DRV_1 x=980
-    { kind: "capacitor", x: 1160, y: 320, rot: 90 }, // IO_DRV_1
-    { kind: "capacitor", x: 540, y: 800, rot: 90 }, // DSP_B2
-    // Diodes (3) inline on straight runs
-    { kind: "diode", x: 1020, y: 240 },     // CPU_IO_2
-    { kind: "diode", x: 460,  y: 420 },     // NET_CTRL y=420 segment
-    { kind: "diode", x: 1380, y: 360 },     // IO_E2 y=360 around 1400..1430
-    // Inductor (2) on open horizontal runs
-    { kind: "inductor", x: 760,  y: 420 },  // NET_DRV_1 y=420 left of resistor
-    { kind: "inductor", x: 280,  y: 520, rot: 90 }, // CTRL_DSP_1 vertical x=280 y=380..660
-  ];
-
-  // ── Vias only at real branch points / endpoints ──
-  const vias: Via[] = [
-    {x: 980, y: 180}, {x: 980, y: 130},  // CPU_IO_1 corner
-    {x: 700, y: 250},                    // CPU_CTRL_1 corner
-    {x: 720, y: 370},                    // CPU_NET_1 junction
-    {x: 980, y: 510},                    // NET_DRV_1 corner
-    {x: 500, y: 250},                    // NET_CTRL corner
-    {x: 1380, y: 320},                   // IO_E1 corner
-    {x: 1260, y: 130},                   // header trunk
-    {x: 280, y: 380}, {x: 280, y: 660},  // CTRL_DSP_1 corners
-    {x: 1240, y: 440},                   // IO_DRV_3
-    {x: 700, y: 180},                    // CPU left corner
-  ];
-
-  return { traces, vias, parts };
+  return { traces };
 }
 
 // ── Module body renderer (CpuArchitecture-inspired) ─────────
 function CircuitModule({ m, delay = 0 }: { m: ModuleSpec; delay?: number }) {
   const { pads } = modulePads(m);
   return (
-    <g className="hero-part-in" style={{ animationDelay: `${delay}s` }}>
+    <g className="hero-part-in" data-module-id={m.id} style={{ animationDelay: `${delay}s` }}>
       {/* shadow under chip body */}
       <rect x={m.x + 1} y={m.y + 2} width={m.w} height={m.h} fill="#000" opacity={0.6} rx={4} />
       {/* body */}
@@ -562,58 +563,213 @@ function CircuitModule({ m, delay = 0 }: { m: ModuleSpec; delay?: number }) {
       />
       {/* orientation notch */}
       <circle cx={m.x + 10} cy={m.y + 10} r={2} fill="#2a2a2a" stroke="#4a4a4a" strokeWidth={0.5} />
+      <g opacity={0.55}>
+        <rect
+          x={m.x + m.w / 2 - 22}
+          y={m.y + m.h / 2 - 16}
+          width={44}
+          height={32}
+          fill="#151515"
+          stroke="#2f2f2f"
+          strokeWidth={0.6}
+          rx={2}
+        />
+        {[0, 1, 2].map((row) =>
+          [0, 1, 2, 3].map((col) => (
+            <rect
+              key={`${row}-${col}`}
+              x={m.x + m.w / 2 - 16 + col * 10}
+              y={m.y + m.h / 2 - 10 + row * 8}
+              width={5}
+              height={3}
+              fill="#292929"
+            />
+          )),
+        )}
+      </g>
       {/* pads */}
       <g fill="#262626" stroke="#4a4a4a" strokeWidth={0.6}>
         {pads.map((p, i) => (
           <rect key={i} x={p.x} y={p.y} width={p.w} height={p.h} rx={1} />
         ))}
       </g>
-      {/* label */}
-      <text
-        x={m.x + m.w / 2} y={m.y + m.h / 2 + 6}
-        textAnchor="middle"
-        fontFamily="JetBrains Mono, ui-monospace, monospace"
-        fontSize={m.w >= 220 ? 22 : 18}
-        fontWeight={700}
-        fill="#7a7a7a"
-        letterSpacing="0.18em"
-      >
-        {m.label}
-      </text>
-      {/* part marker silkscreen */}
-      {m.marker && (
-        <text
-          x={m.x + m.w - 6} y={m.y + 12}
-          textAnchor="end"
-          fontFamily="ui-monospace, monospace"
-          fontSize={7}
-          fill="#555"
-        >
-          {m.marker}
-        </text>
+    </g>
+  );
+}
+
+function SmallIcModule({ m, delay = 0 }: { m: ModuleSpec; delay?: number }) {
+  const { pads } = modulePads(m);
+  return (
+    <g className="hero-part-in" data-module-id={m.id} style={{ animationDelay: `${delay}s` }}>
+      <rect x={m.x + 1} y={m.y + 1.5} width={m.w} height={m.h} fill="#000" opacity={0.48} rx={3} />
+      <rect x={m.x} y={m.y} width={m.w} height={m.h} fill="#0c0c0c" stroke="#343434" strokeWidth={0.9} rx={3} />
+      <rect x={m.x + 4} y={m.y + 4} width={m.w - 8} height={m.h - 8} fill="none" stroke="#202020" strokeWidth={0.7} rx={2} />
+      <circle cx={m.x + 9} cy={m.y + 9} r={2} fill="#242424" stroke="#464646" strokeWidth={0.5} />
+      <g opacity={0.38}>
+        {[0, 1].map((row) =>
+          [0, 1, 2].map((col) => (
+            <rect
+              key={`${m.id}-${row}-${col}`}
+              x={m.x + m.w / 2 - 14 + col * 10}
+              y={m.y + m.h / 2 - 7 + row * 9}
+              width={5}
+              height={3}
+              fill="#292929"
+            />
+          )),
+        )}
+      </g>
+      <g fill="#262626" stroke="#4a4a4a" strokeWidth={0.55}>
+        {pads.map((p, i) => (
+          <rect key={i} x={p.x} y={p.y} width={p.w} height={p.h} rx={1} />
+        ))}
+      </g>
+    </g>
+  );
+}
+
+function PcbPartFootprint({ part }: { part: PcbPart }) {
+  const rotation = part.rot ?? 0;
+  const common = {
+    stroke: "#4a4a4a",
+    strokeWidth: 0.7,
+  };
+
+  return (
+    <g transform={`translate(${part.x} ${part.y}) rotate(${rotation})`} data-part-id={part.id}>
+      {part.kind === "resistor" ? (
+        <>
+          <line x1={-19} y1={0} x2={-12} y2={0} {...common} />
+          <line x1={12} y1={0} x2={19} y2={0} {...common} />
+          <rect x={-12} y={-4.5} width={24} height={9} rx={2} fill="#151515" stroke="#4a4a4a" strokeWidth={0.75} />
+          <rect x={-3} y={-3} width={6} height={6} rx={1} fill="#262626" opacity={0.9} />
+        </>
+      ) : part.kind === "capacitor" ? (
+        <>
+          <line x1={-17} y1={0} x2={-8} y2={0} {...common} />
+          <line x1={8} y1={0} x2={17} y2={0} {...common} />
+          <rect x={-8} y={-5} width={6} height={10} rx={1} fill="#202020" stroke="#545454" strokeWidth={0.7} />
+          <rect x={2} y={-5} width={6} height={10} rx={1} fill="#202020" stroke="#545454" strokeWidth={0.7} />
+        </>
+      ) : part.kind === "diode" ? (
+        <>
+          <line x1={-19} y1={0} x2={-10} y2={0} {...common} />
+          <line x1={11} y1={0} x2={19} y2={0} {...common} />
+          <polygon points="-10,-6 -10,6 3,0" fill="#161616" stroke="#5a5a5a" strokeWidth={0.75} />
+          <line x1={7} y1={-6.5} x2={7} y2={6.5} stroke="#5a5a5a" strokeWidth={1.1} />
+        </>
+      ) : (
+        <>
+          <line x1={-25} y1={0} x2={-18} y2={0} {...common} />
+          <line x1={18} y1={0} x2={25} y2={0} {...common} />
+          <rect x={-18} y={-7} width={36} height={14} rx={3} fill="#151515" stroke="#4a4a4a" strokeWidth={0.75} />
+          {[-9, 0, 9].map((x) => (
+            <rect key={x} x={x - 1.5} y={-5} width={3} height={10} rx={1} fill="#2f2f2f" />
+          ))}
+        </>
       )}
     </g>
   );
 }
 
-function EdgeConnector() {
+function GroundSymbolGlyph({ x, y, opacity = 0.26, scale = 1 }: GroundSymbol) {
   return (
-    <g className="hero-part-in" style={{ animationDelay: "0.4s" }}>
-      <rect x={EDGE_R.x} y={EDGE_R.y} width={EDGE_R.w} height={EDGE_R.h} fill="#0e0e0e" stroke="#3a3a3a" strokeWidth={1} rx={2} />
+    <g
+      data-ground-symbol
+      transform={`translate(${x} ${y}) scale(${scale})`}
+      fill="none"
+      stroke="#828282"
+      strokeWidth={0.78}
+      strokeLinecap="square"
+      opacity={opacity}
+      style={{ pointerEvents: "none" }}
+    >
+      <line x1={0} y1={0} x2={0} y2={7} />
+      <line x1={-7} y1={7} x2={7} y2={7} />
+      <line x1={-5} y1={10.5} x2={5} y2={10.5} />
+      <line x1={-2.5} y1={14} x2={2.5} y2={14} />
+    </g>
+  );
+}
+
+function PcbDetailLayer() {
+  return (
+    <g className="hero-detail-layer" style={{ pointerEvents: "none" }}>
+      <g fill="none" strokeLinecap="square" strokeLinejoin="round">
+        {DETAIL_TRACES.map((t, i) => (
+          <path
+            key={t.id}
+            d={t.d}
+            pathLength={1}
+            stroke={t.w >= 1 ? "#494949" : "#363636"}
+            strokeOpacity={t.o}
+            strokeWidth={t.w}
+            className="hero-trace-draw"
+            style={{ animationDelay: `${0.45 + i * 0.025}s` }}
+          />
+        ))}
+      </g>
+      <g fill="#090909" stroke="#4a4a4a" strokeWidth={0.75}>
+        {DETAIL_VIAS.map((v, i) => (
+          <g key={`${v.x}-${v.y}-${i}`} data-via-pad>
+            <circle cx={v.x} cy={v.y} r={6} opacity={0.75} />
+            <circle cx={v.x} cy={v.y} r={2.3} fill="#141414" stroke="#5a5a5a" strokeWidth={0.55} />
+          </g>
+        ))}
+      </g>
+      <g className="hero-part-in" style={{ animationDelay: "0.9s" }}>
+        {GROUND_SYMBOLS.map((symbol) => (
+          <GroundSymbolGlyph key={symbol.id} {...symbol} />
+        ))}
+      </g>
+      <g className="hero-part-in" style={{ animationDelay: "0.85s" }}>
+        {PCB_PARTS.map((part) => (
+          <PcbPartFootprint key={part.id} part={part} />
+        ))}
+      </g>
+      {DETAIL_ICS.map((m, i) => (
+        <SmallIcModule key={m.id} m={m} delay={0.55 + i * 0.08} />
+      ))}
+    </g>
+  );
+}
+
+function SilkLabelLayer() {
+  return (
+    <g
+      data-silkscreen-labels
+      fontFamily="JetBrains Mono, ui-monospace, monospace"
+      fill="#777"
+      letterSpacing="0.16em"
+      style={{ pointerEvents: "none" }}
+    >
+      {SILK_LABELS.map((label) => (
+        <text
+          key={`${label.text}-${label.x}-${label.y}`}
+          x={label.x}
+          y={label.y}
+          textAnchor={label.anchor ?? "start"}
+          fontSize={label.size ?? 11}
+          opacity={label.opacity ?? 0.28}
+        >
+          {label.text}
+        </text>
+      ))}
+    </g>
+  );
+}
+
+function EdgeConnectors() {
+  return (
+    <g className="hero-part-in" style={{ animationDelay: "0.4s" }} fill="#0e0e0e" stroke="#3a3a3a" strokeWidth={1}>
+      <rect x={EDGE_L.x} y={EDGE_L.y} width={EDGE_L.w} height={EDGE_L.h} rx={2} />
+      {EDGE_L.pinsY.map((py, i) => (
+        <rect key={i} x={EDGE_L.x + EDGE_L.w} y={py - 4} width={6} height={8} fill="#262626" stroke="#4a4a4a" strokeWidth={0.5} />
+      ))}
+      <rect x={EDGE_R.x} y={EDGE_R.y} width={EDGE_R.w} height={EDGE_R.h} rx={2} />
       {EDGE_R.pinsY.map((py, i) => (
         <rect key={i} x={EDGE_R.x - 6} y={py - 4} width={6} height={8} fill="#262626" stroke="#4a4a4a" strokeWidth={0.5} />
       ))}
-      <text
-        x={EDGE_R.x + EDGE_R.w / 2}
-        y={EDGE_R.y + EDGE_R.h + 14}
-        textAnchor="middle"
-        fontFamily="ui-monospace, monospace"
-        fontSize={9}
-        fill="#555"
-        letterSpacing="0.2em"
-      >
-        J1
-      </text>
     </g>
   );
 }
@@ -629,109 +785,372 @@ function TopHeader() {
   );
 }
 
-function InlineComponent(c: Inline) {
-  const rot = c.rot ?? 0;
+// ── Lamp positioned in a dedicated keep-out area above the headline. ──
+const LAMP = { cx: 320, cy: 245, w: 84, h: 44 };
+type LampSpec = typeof LAMP;
+
+function StatusLamp({ lamp, on }: { lamp: LampSpec; on: boolean }) {
+  const padY = -lamp.h / 2 - 12;
+  const padCenterY = padY + 3;
+  const housingX = -lamp.w / 2;
+  const housingY = -lamp.h / 2;
   return (
-    <g transform={`translate(${c.x} ${c.y}) rotate(${rot})`}>
-      {c.kind === "resistor" && (
-        <g>
-          <rect x={-9} y={-3.5} width={18} height={7} fill="#060606" />
-          <rect x={-7} y={-3} width={14} height={6} fill="#1a1a1a" stroke="#6a6a6a" strokeWidth={0.6} />
-          <rect x={-9} y={-2} width={2} height={4} fill="#3a3a3a" />
-          <rect x={7}  y={-2} width={2} height={4} fill="#3a3a3a" />
+    <g transform={`translate(${lamp.cx} ${lamp.cy})`} data-lamp-state={on ? "on" : "off"}>
+      {on && (
+        <g data-lamp-glow style={{ pointerEvents: "none" }}>
+          <path d="M 0 0 C -42 64 -78 126 -104 178 H 104 C 78 126 42 64 0 0 Z" fill="url(#lampCone)" opacity={0.32} />
+          <ellipse cx={0} cy={104} rx={126} ry={82} fill="url(#lampHalo)" opacity={0.34} />
         </g>
       )}
-      {c.kind === "capacitor" && (
-        <g>
-          <rect x={-7} y={-3} width={14} height={6} fill="#060606" />
-          <rect x={-6} y={-2.5} width={5} height={5} fill="#1a1a1a" stroke="#6a6a6a" strokeWidth={0.6} />
-          <rect x={1}  y={-2.5} width={5} height={5} fill="#1a1a1a" stroke="#6a6a6a" strokeWidth={0.6} />
+      <rect x={-28} y={padY} width={12} height={6} rx={1} fill="#242424" stroke="#4a4a4a" strokeWidth={0.65} />
+      <rect x={16} y={padY} width={12} height={6} rx={1} fill="#242424" stroke="#4a4a4a" strokeWidth={0.65} />
+      <line x1={-22} y1={padCenterY + 3} x2={-22} y2={housingY} stroke="#3d3d3d" strokeWidth={0.95} />
+      <line x1={22} y1={padCenterY + 3} x2={22} y2={housingY} stroke="#3d3d3d" strokeWidth={0.95} />
+      <rect
+        data-lamp-housing
+        x={housingX}
+        y={housingY}
+        width={lamp.w}
+        height={lamp.h}
+        rx={7}
+        fill="#0d0d0d"
+        stroke={on ? "#b88a32" : "#4a4a4a"}
+        strokeWidth={on ? 1.35 : 1.15}
+        style={{
+          filter: on ? "drop-shadow(0 0 5px rgba(251,191,36,0.34))" : "none",
+          transition: "stroke 250ms ease, stroke-width 250ms ease, filter 250ms ease",
+        }}
+      />
+      <rect x={housingX + 6} y={housingY + 6} width={lamp.w - 12} height={lamp.h - 12} rx={4} fill="none" stroke={on ? "#4c3f1c" : "#242424"} strokeWidth={0.75} />
+      {on && (
+        <g data-lamp-lens-glow style={{ pointerEvents: "none" }}>
+          <circle r={23} fill="#fbbf24" opacity={0.18} />
+          <circle r={16} fill="#fbbf24" opacity={0.32} />
         </g>
       )}
-      {c.kind === "diode" && (
-        <g>
-          <rect x={-8} y={-5} width={16} height={10} fill="#060606" />
-          <rect x={-7} y={-4} width={12} height={8} fill="#1a1a1a" stroke="#6a6a6a" strokeWidth={0.6} />
-          <rect x={3}  y={-4} width={2} height={8} fill="#cfcfcf" opacity={0.7} />
-        </g>
-      )}
-      {c.kind === "inductor" && (
-        <g>
-          <rect x={-14} y={-5} width={28} height={9} fill="#060606" />
-          <path d="M -12 0 q 4 -8 8 0 q 4 -8 8 0 q 4 -8 8 0" fill="none" stroke="#7a7a7a" strokeWidth={1.1} />
-        </g>
-      )}
+      <circle r={16.5} fill="#100f0d" stroke={on ? "#5d4818" : "#29251a"} strokeWidth={1} />
+      <circle
+        data-lamp-lens
+        r={13.5}
+        fill={on ? "#fbbf24" : "#1f1a14"}
+        stroke={on ? "#fde68a" : "#7a6a3a"}
+        strokeWidth={1.35}
+        style={{
+          filter: on ? "drop-shadow(0 0 4px rgba(251,191,36,0.58))" : "none",
+          transition: "fill 250ms ease, stroke 250ms ease, filter 250ms ease",
+        }}
+      />
+      {on && <circle r={6.5} fill="#fff7c2" opacity={0.46} style={{ pointerEvents: "none" }} />}
     </g>
   );
 }
 
-// ── Lamp positioned above the headline (lower-left area of SVG) ──
-// Lamp sits above the "ANI" headline (lower-left in viewport, but above
-// the text baseline). With viewBox 1600x900 sliced at 1440x900 the
-// headline starts around SVG y≈380 — so the lamp lives at y=330.
-const LAMP = { cx: 260, cy: 330, w: 84, h: 44 };
-const LAMP_PIN = { x: LAMP.cx, y: LAMP.cy + LAMP.h / 2 + 14 };
-
-function StatusLamp({ on }: { on: boolean }) {
-  return (
-    <g transform={`translate(${LAMP.cx} ${LAMP.cy})`}>
-      {on && (
-        <ellipse cx={0} cy={120} rx={160} ry={100} fill="url(#lampHalo)" opacity={0.55} style={{ pointerEvents: "none" }} />
-      )}
-      <rect x={-20} y={LAMP.h / 2} width={7} height={5} fill="#262626" stroke="#3d3d3d" strokeWidth={0.5} />
-      <rect x={13}  y={LAMP.h / 2} width={7} height={5} fill="#262626" stroke="#3d3d3d" strokeWidth={0.5} />
-      <line x1={0} y1={LAMP.h / 2} x2={0} y2={LAMP.h / 2 + 14} stroke="#3d3d3d" strokeWidth={1} />
-      <rect x={-LAMP.w / 2} y={-LAMP.h / 2} width={LAMP.w} height={LAMP.h} rx={9} fill="#0e0e0e" stroke="#5a5a5a" strokeWidth={1.2} />
-      <text x={LAMP.w / 2 - 6} y={-LAMP.h / 2 - 4} fill="#7a7a7a" fontFamily="ui-monospace, monospace" fontSize={9} textAnchor="end" letterSpacing="0.2em">D1</text>
-      <circle r={15} fill={on ? "#fbbf24" : "#1f1a14"} stroke={on ? "#fde68a" : "#7a6a3a"} strokeWidth={1.4} style={{ transition: "fill 250ms ease, stroke 250ms ease" }} />
-      {on && (
-        <g style={{ pointerEvents: "none" }}>
-          <circle r={16} fill="#fbbf24" opacity={0.45} />
-          <circle r={28} fill="#fbbf24" opacity={0.22} />
-          <circle r={48} fill="#fbbf24" opacity={0.1} />
-        </g>
-      )}
-    </g>
-  );
-}
-
-// ── Signal path: button → bus down → left → up to lamp ──
-const BUTTON_PAD = { x: 1200, y: 720 };
-const SIGNAL_D = `M ${BUTTON_PAD.x} ${BUTTON_PAD.y} V 800 H ${LAMP_PIN.x} V ${LAMP_PIN.y}`;
+// ── Signal path: top switch terminal → clean upper route → lamp. ──
+const BUTTON_PAD = { x: 1230, y: 760 };
 const SIGNAL_DUR_MS = 1300;
 
-// ── Inspection robot (upper-right) — moves on a short rail, probes a chip pad ──
-function InspectionRobot({ hide }: { hide: boolean }) {
-  if (hide) return null;
-  const railY = 110;
-  const railX1 = 1360;
-  const railX2 = 1500;
+const SWITCH_GEOMETRY = {
+  anchor: { x: 62, y: 132 },
+  signalTerminal: { x: 62, y1: 36, y2: 45, padX: 56, padY: 28, padW: 12, padH: 8 },
+  ground: { x: 100, y1: 120, y2: 132 },
+  housing: { x: -4, y: 70, w: 132, h: 50, rx: 4 },
+  panel: { x: 5, y: 78, w: 114, h: 32, rx: 2 },
+  mount: { x: 30, y: 45, w: 64, h: 25, rx: 4 },
+  slot: { x: 37, y: 51, w: 50, h: 10, rx: 2 },
+  actuator: { x: 41, idleY: 51, hoverY: 47, pressedY: 56, raisedY: 46, w: 42, h: 14, rx: 2 },
+  hit: { x: -8, y: 40, w: 140, h: 124 },
+};
+
+function switchFootprintPath(pad = 0): string {
+  const h = SWITCH_GEOMETRY.housing;
+  const m = SWITCH_GEOMETRY.mount;
+  const xL = h.x - pad;
+  const xR = h.x + h.w + pad;
+  const yTop = h.y - pad;
+  const yBot = h.y + h.h + pad;
+  const tabL = m.x - pad;
+  const tabR = m.x + m.w + pad;
+  const tabTop = m.y - pad;
+  const rH = Math.min(8, h.rx + pad * 0.45);
+  const rT = Math.min(7, m.rx + pad * 0.45);
+
+  return [
+    `M ${tabL + rT} ${tabTop}`,
+    `H ${tabR - rT}`,
+    `Q ${tabR} ${tabTop} ${tabR} ${tabTop + rT}`,
+    `V ${yTop}`,
+    `H ${xR - rH}`,
+    `Q ${xR} ${yTop} ${xR} ${yTop + rH}`,
+    `V ${yBot - rH}`,
+    `Q ${xR} ${yBot} ${xR - rH} ${yBot}`,
+    `H ${xL + rH}`,
+    `Q ${xL} ${yBot} ${xL} ${yBot - rH}`,
+    `V ${yTop + rH}`,
+    `Q ${xL} ${yTop} ${xL + rH} ${yTop}`,
+    `H ${tabL}`,
+    `V ${tabTop + rT}`,
+    `Q ${tabL} ${tabTop} ${tabL + rT} ${tabTop}`,
+    "Z",
+  ].join(" ");
+}
+
+function SwitchModule({
+  pad,
+  hovering,
+  pressed,
+  signaling,
+  lampOn,
+  onTrigger,
+  onHoverChange,
+}: {
+  pad: Pt;
+  hovering: boolean;
+  pressed: boolean;
+  signaling: boolean;
+  lampOn: boolean;
+  onTrigger: () => void;
+  onHoverChange: (hovering: boolean) => void;
+}) {
+  const active = signaling || lampOn;
+  const calm = !hovering && !pressed && !active;
+  const showPulse = !pressed && (hovering || active);
+  const footprintPath = switchFootprintPath();
+  const actuatorY = pressed
+    ? SWITCH_GEOMETRY.actuator.pressedY
+    : hovering
+      ? SWITCH_GEOMETRY.actuator.hoverY
+      : SWITCH_GEOMETRY.actuator.idleY;
+
   return (
-    <g className="hero-part-in" style={{ animationDelay: "1.0s" }}>
-      {/* rail */}
-      <line x1={railX1} y1={railY} x2={railX2} y2={railY} stroke="#3a3a3a" strokeWidth={2} />
-      <circle cx={railX1} cy={railY} r={3} fill="#262626" stroke="#4a4a4a" strokeWidth={0.6} />
-      <circle cx={railX2} cy={railY} r={3} fill="#262626" stroke="#4a4a4a" strokeWidth={0.6} />
-      <text x={railX1} y={railY - 8} fontFamily="ui-monospace, monospace" fontSize={7} fill="#555" letterSpacing="0.2em">PROBE</text>
-      {/* moving carriage */}
-      <g>
-        <animateTransform attributeName="transform" type="translate" values="0 0; 18 0; 0 0" dur="6s" repeatCount="indefinite" />
-        <g transform={`translate(${railX1 + 20} ${railY})`}>
-          {/* carriage body */}
-          <rect x={-12} y={-8} width={24} height={10} fill="#161616" stroke="#4a4a4a" strokeWidth={0.8} rx={1.5} />
-          <rect x={-9} y={-6} width={18} height={4} fill="#222" />
-          {/* probe arm going down */}
-          <line x1={0} y1={2} x2={0} y2={28} stroke="#4a4a4a" strokeWidth={1.2} />
-          <rect x={-2} y={28} width={4} height={6} fill="#262626" stroke="#5a5a5a" strokeWidth={0.5} />
-          {/* probe light */}
-          <circle cx={0} cy={36} r={2.5} fill="#7dd3fc">
-            <animate attributeName="opacity" values="0.3;1;0.3" dur="1.8s" repeatCount="indefinite" />
-          </circle>
-          <circle cx={0} cy={36} r={6} fill="#7dd3fc" opacity={0.2}>
-            <animate attributeName="r" values="4;10;4" dur="1.8s" repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0.05;0.3;0.05" dur="1.8s" repeatCount="indefinite" />
-          </circle>
+    <g className="hero-part-in" style={{ animationDelay: "1.8s", pointerEvents: "all" }}>
+      <g
+        transform={`translate(${pad.x - SWITCH_GEOMETRY.anchor.x} ${pad.y - SWITCH_GEOMETRY.anchor.y})`}
+        data-switch-module
+        style={{ pointerEvents: "all" }}
+      >
+        <defs>
+          <linearGradient id="switchInnerWarm" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#e0b85a" stopOpacity="0.18" />
+            <stop offset="52%" stopColor="#b88d32" stopOpacity="0.1" />
+            <stop offset="100%" stopColor="#6d4b18" stopOpacity="0.04" />
+          </linearGradient>
+          <filter
+            id="switchGoldGlow"
+            x="-35%"
+            y="-35%"
+            width="170%"
+            height="170%"
+            colorInterpolationFilters="sRGB"
+          >
+            <feGaussianBlur in="SourceAlpha" stdDeviation="2.2" result="blur" />
+            <feFlood floodColor="#c3a047" floodOpacity="0.56" result="gold" />
+            <feComposite in="gold" in2="blur" operator="in" result="glow" />
+            <feMerge>
+              <feMergeNode in="glow" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <filter
+            id="switchActiveGlow"
+            x="-45%"
+            y="-45%"
+            width="190%"
+            height="190%"
+            colorInterpolationFilters="sRGB"
+          >
+            <feGaussianBlur in="SourceAlpha" stdDeviation="3.4" result="blur" />
+            <feFlood floodColor="#d0a546" floodOpacity="0.42" result="gold" />
+            <feComposite in="gold" in2="blur" operator="in" result="glow" />
+            <feMerge>
+              <feMergeNode in="glow" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+        <line x1={SWITCH_GEOMETRY.signalTerminal.x} y1={SWITCH_GEOMETRY.signalTerminal.y1} x2={SWITCH_GEOMETRY.signalTerminal.x} y2={SWITCH_GEOMETRY.signalTerminal.y2} stroke={active ? "#75622f" : "#3a3a3a"} strokeWidth={1.1} />
+        <rect
+          x={SWITCH_GEOMETRY.signalTerminal.padX}
+          y={SWITCH_GEOMETRY.signalTerminal.padY}
+          width={SWITCH_GEOMETRY.signalTerminal.padW}
+          height={SWITCH_GEOMETRY.signalTerminal.padH}
+          rx={1}
+          fill={active ? "#2a2212" : "#222"}
+          stroke={active ? "#9f8130" : "#4a4a4a"}
+          strokeWidth={0.65}
+        />
+        <line x1={SWITCH_GEOMETRY.ground.x} y1={SWITCH_GEOMETRY.ground.y1} x2={SWITCH_GEOMETRY.ground.x} y2={SWITCH_GEOMETRY.ground.y2} stroke="#5a5a5a" strokeWidth={0.7} opacity={0.52} />
+        <GroundSymbolGlyph id="GND_SWITCH" x={SWITCH_GEOMETRY.ground.x} y={SWITCH_GEOMETRY.ground.y2} opacity={0.36} scale={0.82} />
+        <rect
+          data-button-housing
+          x={SWITCH_GEOMETRY.housing.x}
+          y={SWITCH_GEOMETRY.housing.y}
+          width={SWITCH_GEOMETRY.housing.w}
+          height={SWITCH_GEOMETRY.housing.h}
+          rx={SWITCH_GEOMETRY.housing.rx}
+          fill={active ? "#221b10" : "#0a0a0a"}
+          stroke={active ? "#a28336" : hovering ? "#6d5d31" : "#313131"}
+          strokeWidth={1.12}
+          style={{
+            filter: active ? "drop-shadow(0 0 9px rgba(195,160,71,0.32))" : "none",
+            transition: "fill 180ms ease, stroke 180ms ease, filter 180ms ease",
+          }}
+        />
+        <path
+          data-switch-active-fill
+          d={footprintPath}
+          fill="url(#switchInnerWarm)"
+          opacity={active ? 0.42 : hovering ? 0.16 : 0}
+          vectorEffect="non-scaling-stroke"
+          style={{
+            transition: "opacity 180ms ease",
+            pointerEvents: "none",
+          }}
+        />
+        <rect
+          x={SWITCH_GEOMETRY.panel.x}
+          y={SWITCH_GEOMETRY.panel.y}
+          width={SWITCH_GEOMETRY.panel.w}
+          height={SWITCH_GEOMETRY.panel.h}
+          rx={SWITCH_GEOMETRY.panel.rx}
+          fill={active ? "#2b2112" : "#101010"}
+          stroke={active ? "#806628" : "#292929"}
+          strokeWidth={0.82}
+          style={{
+            transition: "fill 180ms ease, stroke 180ms ease",
+          }}
+        />
+        <rect
+          x={SWITCH_GEOMETRY.panel.x + 5}
+          y={SWITCH_GEOMETRY.panel.y + 5}
+          width={SWITCH_GEOMETRY.panel.w - 10}
+          height={SWITCH_GEOMETRY.panel.h - 10}
+          rx={2}
+          fill="#18120a"
+          opacity={active ? 0.28 : hovering ? 0.12 : 0}
+          style={{
+            transition: "opacity 180ms ease",
+            pointerEvents: "none",
+          }}
+        />
+        {[{ x: 8, y: 80 }, { x: 116, y: 80 }, { x: 8, y: 110 }, { x: 116, y: 110 }].map((s, i) => (
+          <circle key={i} cx={s.x} cy={s.y} r={2.3} fill={active ? "#201a10" : "#151515"} stroke={active ? "#5a4822" : "#3a3a3a"} strokeWidth={0.6} />
+        ))}
+        <text
+          x={SWITCH_GEOMETRY.anchor.x}
+          y={101}
+          textAnchor="middle"
+          fontFamily="JetBrains Mono, ui-monospace, monospace"
+          fontSize={9}
+          letterSpacing="0.18em"
+          fill={active ? "#f0d076" : hovering ? "#c9b277" : "#858585"}
+          style={{
+            filter: active ? "drop-shadow(0 0 3px rgba(240,208,118,0.28))" : "none",
+            transition: "fill 180ms ease, filter 180ms ease",
+          }}
+        >
+          Click me :)
+        </text>
+        <rect
+          x={SWITCH_GEOMETRY.mount.x}
+          y={SWITCH_GEOMETRY.mount.y}
+          width={SWITCH_GEOMETRY.mount.w}
+          height={SWITCH_GEOMETRY.mount.h}
+          rx={SWITCH_GEOMETRY.mount.rx}
+          fill={active ? "#21190e" : "#0e0e0e"}
+          stroke={active ? "#8c7131" : "#3a3a3a"}
+          strokeWidth={0.95}
+          style={{
+            filter: active ? "drop-shadow(0 0 6px rgba(195,160,71,0.26))" : "none",
+            transition: "fill 180ms ease, stroke 180ms ease, filter 180ms ease",
+          }}
+        />
+        <rect
+          x={SWITCH_GEOMETRY.slot.x}
+          y={SWITCH_GEOMETRY.slot.y}
+          width={SWITCH_GEOMETRY.slot.w}
+          height={SWITCH_GEOMETRY.slot.h}
+          rx={SWITCH_GEOMETRY.slot.rx}
+          fill={active ? "#20170d" : "#151515"}
+          stroke={active ? "#4e3b19" : "#272727"}
+          strokeWidth={0.65}
+        />
+        <g data-switch-footprint-highlight style={{ pointerEvents: "none" }}>
+          <path
+            data-switch-footprint-outline
+            d={footprintPath}
+            fill="none"
+            stroke={active ? "#c3a047" : hovering ? "#a98b42" : "#3b3b3b"}
+            strokeWidth={active ? 1.05 : hovering ? 0.9 : 0.62}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            opacity={active ? 0.76 : hovering ? 0.52 : 0.58}
+            vectorEffect="non-scaling-stroke"
+            filter={active ? "url(#switchActiveGlow)" : hovering ? "url(#switchGoldGlow)" : undefined}
+          />
+          {showPulse && (
+            <path
+              data-switch-hover-pulse
+              d={footprintPath}
+              fill="none"
+              stroke="#c3a047"
+              strokeWidth={active ? 1.12 : 0.92}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              opacity={active ? 0.24 : 0.14}
+              vectorEffect="non-scaling-stroke"
+              filter="url(#switchGoldGlow)"
+            >
+              <animate attributeName="opacity" values={active ? "0.18;0.46;0.18" : "0.1;0.3;0.1"} dur="2s" repeatCount="indefinite" />
+              <animate attributeName="stroke-width" values={active ? "0.95;1.45;0.95" : "0.78;1.18;0.78"} dur="2s" repeatCount="indefinite" />
+            </path>
+          )}
         </g>
+        <g transform={`translate(${SWITCH_GEOMETRY.actuator.x} ${actuatorY})`}>
+          {calm && (
+            <animateTransform
+              attributeName="transform"
+              type="translate"
+              values={`${SWITCH_GEOMETRY.actuator.x} ${SWITCH_GEOMETRY.actuator.idleY};${SWITCH_GEOMETRY.actuator.x} ${SWITCH_GEOMETRY.actuator.raisedY};${SWITCH_GEOMETRY.actuator.x} ${SWITCH_GEOMETRY.actuator.idleY}`}
+              dur="2s"
+              repeatCount="indefinite"
+            />
+          )}
+          <rect
+            x={0}
+            y={0}
+            width={SWITCH_GEOMETRY.actuator.w}
+            height={SWITCH_GEOMETRY.actuator.h}
+            rx={SWITCH_GEOMETRY.actuator.rx}
+            fill="url(#buttonRed)"
+            stroke={active || hovering ? "#c7a64a" : "#381010"}
+            strokeWidth={0.8}
+            style={{
+              filter: active ? "drop-shadow(0 0 6px rgba(220,85,70,0.5)) drop-shadow(0 0 7px rgba(195,160,71,0.18))" : "none",
+              transition: "filter 180ms ease, stroke 180ms ease",
+            }}
+          >
+          </rect>
+          <rect x={4} y={2} width={34} height={5} rx={1.5} fill="#e88383" opacity={active ? 0.72 : hovering ? 0.66 : pressed ? 0.34 : 0.58} />
+          <rect x={4} y={9} width={34} height={3.5} rx={1} fill="#320707" opacity={0.74} />
+        </g>
+        <rect
+          x={SWITCH_GEOMETRY.hit.x}
+          y={SWITCH_GEOMETRY.hit.y}
+          width={SWITCH_GEOMETRY.hit.w}
+          height={SWITCH_GEOMETRY.hit.h}
+          fill="transparent"
+          role="button"
+          tabIndex={0}
+          aria-label="Click me"
+          aria-pressed={lampOn}
+          style={{ cursor: "pointer", pointerEvents: "all", outline: "none" }}
+          onClick={onTrigger}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onTrigger(); } }}
+          onMouseEnter={() => onHoverChange(true)}
+          onMouseLeave={() => onHoverChange(false)}
+          onFocus={() => onHoverChange(true)}
+          onBlur={() => onHoverChange(false)}
+        />
       </g>
     </g>
   );
@@ -742,7 +1161,7 @@ function HeroText({ bp }: { bp?: "mobile" | "tablet" | "desktop" } = {}) {
   const headline = (size: string) => (
     <h1
       className="font-display font-black uppercase text-white"
-      style={{ fontSize: size, letterSpacing: "-0.05em", lineHeight: 0.86 }}
+      style={{ fontSize: size, letterSpacing: 0, lineHeight: 0.86 }}
     >
       Ani<br />Velaga
     </h1>
@@ -752,9 +1171,9 @@ function HeroText({ bp }: { bp?: "mobile" | "tablet" | "desktop" } = {}) {
       className={`font-mono leading-relaxed text-neutral-400 ${extra}`}
       style={{ fontSize: "clamp(0.85rem, 1.4vw, 1rem)", maxWidth: "38ch" }}
     >
-      <span className="text-neutral-100">Electrical &amp; computer engineer</span> — I design
-      hardware at the board level, then push it through the networking stack into LLM
-      inference systems. Currently on CUAUV building PCBs for an autonomous submarine.
+      <span className="text-neutral-100">Cornell ECE student</span> exploring computer
+      systems across layers — from PCBs, embedded firmware, FPGAs, and ASICs to the
+      networking infrastructure behind LLM inference.
       <span className="blink-cursor">_</span>
     </p>
   );
@@ -762,7 +1181,7 @@ function HeroText({ bp }: { bp?: "mobile" | "tablet" | "desktop" } = {}) {
   if (breakpoint === "mobile") {
     return (
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[3] flex flex-col items-center px-5 pb-10 text-center">
-        <div className="pointer-events-auto w-full max-w-md">
+        <div className="w-full max-w-md">
           {headline("clamp(3.8rem, 16vw, 6rem)")}
           <div className="mt-5 flex justify-center">{paragraph("text-center")}</div>
         </div>
@@ -772,7 +1191,7 @@ function HeroText({ bp }: { bp?: "mobile" | "tablet" | "desktop" } = {}) {
   if (breakpoint === "tablet") {
     return (
       <div className="pointer-events-none absolute inset-0 z-[3] mx-auto flex max-w-5xl items-end px-8 pb-20">
-        <div className="pointer-events-auto" style={{ maxWidth: "52%" }}>
+        <div style={{ maxWidth: "52%" }}>
           {headline("clamp(4rem, 9vw, 7rem)")}
           <div className="mt-5">{paragraph()}</div>
         </div>
@@ -781,7 +1200,7 @@ function HeroText({ bp }: { bp?: "mobile" | "tablet" | "desktop" } = {}) {
   }
   return (
     <div className="pointer-events-none absolute inset-0 z-[3] mx-auto flex max-w-6xl items-end px-6 pb-24 sm:px-10 sm:pb-28">
-      <div className="pointer-events-auto max-w-xl">
+      <div className="max-w-xl">
         {headline("clamp(5rem, 10vw, 12rem)")}
         <div className="mt-6">{paragraph()}</div>
       </div>
@@ -800,6 +1219,40 @@ function CircuitHero() {
   const bp = useBreakpoint();
   const isMobile = bp === "mobile";
   const isTablet = bp === "tablet";
+  const lamp = isMobile
+    ? { ...LAMP, cx: 900, cy: 520 }
+    : isTablet
+      ? { ...LAMP, cx: 630, cy: 543 }
+      : LAMP;
+  const lampPin = { x: lamp.cx + 22, y: lamp.cy - lamp.h / 2 - 9 };
+  const buttonPad = isMobile
+    ? { x: 920, y: 470 }
+    : isTablet
+      ? { x: 1060, y: 750 }
+      : BUTTON_PAD;
+  const switchSignalPad = {
+    x: buttonPad.x,
+    y: buttonPad.y - SWITCH_GEOMETRY.anchor.y + SWITCH_GEOMETRY.signalTerminal.padY + SWITCH_GEOMETRY.signalTerminal.padH / 2,
+  };
+  const signalLiftY = isMobile ? switchSignalPad.y - 28 : isTablet ? switchSignalPad.y - 28 : switchSignalPad.y - 20;
+  const signalSideX = isMobile ? buttonPad.x + 80 : isTablet ? buttonPad.x + 120 : 1360;
+  const signalUpperDropY = isMobile ? switchSignalPad.y - 48 : isTablet ? lampPin.y - 80 : 180;
+  const signalUpperLaneY = isMobile ? switchSignalPad.y - 60 : isTablet ? lampPin.y - 110 : 140;
+  const signalCornerX = isMobile ? signalSideX : isTablet ? signalSideX - 260 : 1040;
+  const signalBridgeX = isMobile ? lampPin.x + 68 : isTablet ? lampPin.x + 110 : 560;
+  const lampEntryY = lampPin.y - (isMobile || isTablet ? 24 : 14);
+  const signalD = ptsToD([
+    switchSignalPad,
+    { x: switchSignalPad.x, y: signalLiftY },
+    { x: signalSideX, y: signalLiftY },
+    { x: signalSideX, y: signalUpperDropY },
+    { x: signalCornerX, y: signalUpperDropY },
+    { x: signalCornerX, y: signalUpperLaneY },
+    { x: signalBridgeX, y: signalUpperLaneY },
+    { x: signalBridgeX, y: lampEntryY },
+    { x: lampPin.x, y: lampEntryY },
+    { x: lampPin.x, y: lampPin.y },
+  ]);
   // Use slice across all breakpoints so the circuit fills the hero on every
   // device — `meet` leaves a tall empty band under the SVG on mobile.
   const preserve = "xMidYMid slice";
@@ -832,7 +1285,7 @@ function CircuitHero() {
       className="hero-shell"
       style={{ background: "#060606" }}
     >
-      <div className="pointer-events-none absolute left-0 right-0 z-[1]" style={{ top: 0, bottom: 0 }}>
+      <div className="absolute left-0 right-0 z-[1]" style={{ top: 0, bottom: 0 }}>
         <svg
           viewBox={`0 0 ${VB_W} ${VB_H}`}
           preserveAspectRatio={preserve}
@@ -850,13 +1303,23 @@ function CircuitHero() {
               <stop offset="55%" stopColor="#fbbf24" stopOpacity="0.18" />
               <stop offset="100%" stopColor="#fbbf24" stopOpacity="0" />
             </radialGradient>
+            <linearGradient id="lampCone" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.45" />
+              <stop offset="58%" stopColor="#fbbf24" stopOpacity="0.13" />
+              <stop offset="100%" stopColor="#fbbf24" stopOpacity="0" />
+            </linearGradient>
+            <linearGradient id="buttonRed" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#dc5f5f" />
+              <stop offset="48%" stopColor="#b72a2a" />
+              <stop offset="100%" stopColor="#541010" />
+            </linearGradient>
             <mask id="heroTraceMask" maskUnits="userSpaceOnUse" x="0" y="0" width={VB_W} height={VB_H}>
               <rect x="0" y="0" width={VB_W} height={VB_H} fill="url(#heroTextFade)" />
             </mask>
           </defs>
 
           {/* circuit layer (masked behind text zone) */}
-          <g mask="url(#heroTraceMask)">
+          <g mask="url(#heroTraceMask)" style={{ pointerEvents: "none" }}>
             {/* traces first, then modules render on top so endpoints sit cleanly under chip edges */}
             <g fill="none" strokeLinecap="square" strokeLinejoin="round">
               {built.traces.map((t, i) => (
@@ -873,29 +1336,15 @@ function CircuitHero() {
               ))}
             </g>
 
+            <PcbDetailLayer />
+
             {/* modules */}
             {MODULES.map((m, i) => (
               <CircuitModule key={m.id} m={m} delay={0.3 + i * 0.08} />
             ))}
-            <EdgeConnector />
+            <EdgeConnectors />
             <TopHeader />
-
-            {/* inline parts */}
-            <g className="hero-part-in" style={{ animationDelay: "1.6s" }}>
-              {built.parts.map((p, i) => (
-                <InlineComponent key={i} {...p} />
-              ))}
-            </g>
-
-            {/* vias */}
-            <g className="hero-part-in" style={{ animationDelay: "1.5s" }}>
-              {built.vias.map((v, i) => (
-                <g key={i}>
-                  <circle cx={v.x} cy={v.y} r={4} fill="none" stroke="#3a3a3a" strokeWidth={0.8} />
-                  <circle cx={v.x} cy={v.y} r={2.5} fill="#0a0a0a" stroke="#5a5a5a" strokeWidth={0.8} />
-                </g>
-              ))}
-            </g>
+            <SilkLabelLayer />
 
             {/* subtle signal pulses on selected traces */}
             {pulses.map((t, i) => (
@@ -909,14 +1358,13 @@ function CircuitHero() {
               </g>
             ))}
 
-            {/* inspection robot — hidden on mobile */}
-            <InspectionRobot hide={isMobile} />
           </g>
 
           {/* signal trace + lamp (above text mask so always visible) */}
-          <g>
+          <g style={{ pointerEvents: "none" }}>
             <path
-              d={SIGNAL_D}
+              data-signal-route="base"
+              d={signalD}
               fill="none"
               stroke="#3a3a3a"
               strokeOpacity={0.5}
@@ -928,7 +1376,8 @@ function CircuitHero() {
               style={{ animationDelay: "1.5s" }}
             />
             <path
-              d={SIGNAL_D}
+              data-signal-route="active"
+              d={signalD}
               fill="none"
               stroke="#fbbf24"
               strokeOpacity={signaling || lampOn ? 1 : 0}
@@ -946,138 +1395,30 @@ function CircuitHero() {
                 pointerEvents: "none",
               }}
             />
-            <g className="hero-part-in" style={{ animationDelay: "1.7s" }}>
-              <circle cx={BUTTON_PAD.x} cy={800} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-              <circle cx={LAMP_PIN.x} cy={800} r={3.2} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.8} />
-            </g>
             {signaling && pulseId > 0 && (
               <g key={`dis-${pulseId}`} style={{ pointerEvents: "none" }}>
                 <circle r={3.4} fill="#fff4d6">
-                  <animateMotion dur={`${SIGNAL_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={SIGNAL_D} />
+                  <animateMotion dur={`${SIGNAL_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={signalD} />
                 </circle>
                 <circle r={8} fill="rgba(251,191,36,0.45)">
-                  <animateMotion dur={`${SIGNAL_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={SIGNAL_D} />
+                  <animateMotion dur={`${SIGNAL_DUR_MS / 1000}s`} repeatCount="1" fill="freeze" path={signalD} />
                 </circle>
               </g>
             )}
             <g className="hero-part-in" style={{ animationDelay: "1.6s" }}>
-              <StatusLamp on={lampOn} />
+              <StatusLamp lamp={lamp} on={lampOn} />
             </g>
           </g>
 
-          {/* hardware switch module */}
-          <g className="hero-part-in" style={{ animationDelay: "1.8s" }}>
-            <line x1={BUTTON_PAD.x} y1={650} x2={BUTTON_PAD.x} y2={BUTTON_PAD.y} stroke="#3a3a3a" strokeWidth={1.2} />
-            <circle cx={BUTTON_PAD.x} cy={BUTTON_PAD.y} r={3.5} fill="#0a0a0a" stroke="#4a4a4a" strokeWidth={0.9} />
-            <foreignObject
-              x={BUTTON_PAD.x - 110}
-              y={555}
-              width={220}
-              height={140}
-              style={{ overflow: "visible", pointerEvents: "auto" }}
-            >
-              <div
-                role="button"
-                tabIndex={0}
-                aria-label="Click me"
-                aria-pressed={lampOn}
-                onClick={triggerSignal}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); triggerSignal(); } }}
-                onMouseEnter={() => setHovering(true)}
-                onMouseLeave={() => setHovering(false)}
-                onFocus={() => setHovering(true)}
-                onBlur={() => setHovering(false)}
-                style={{
-                  position: "relative", width: "100%", height: "100%",
-                  display: "flex", flexDirection: "column",
-                  alignItems: "center", justifyContent: "flex-end",
-                  paddingBottom: 18, boxSizing: "border-box",
-                  cursor: "pointer", outline: "none",
-                }}
-              >
-                <div
-                  style={{
-                    width: 140, height: 40,
-                    background: "linear-gradient(180deg, #131313 0%, #0a0a0a 100%)",
-                    border: "1px solid #2c2c2c", borderRadius: 3,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    position: "relative",
-                    boxShadow: hovering || signaling || lampOn
-                      ? "0 0 0 1px rgba(251,191,36,0.4), 0 0 16px rgba(251,191,36,0.3)"
-                      : undefined,
-                    transition: "box-shadow 200ms ease",
-                  }}
-                >
-                  {[{top:4,left:4},{top:4,right:4},{bottom:4,left:4},{bottom:4,right:4}].map((p,i)=>(
-                    <span key={i} style={{ position:"absolute", width:3, height:3, borderRadius:999, background:"#1a1a1a", border:"0.5px solid #333", ...p}} />
-                  ))}
-                  <span
-                    style={{
-                      fontFamily: "JetBrains Mono, ui-monospace, monospace",
-                      fontSize: 11, letterSpacing: "0.24em", paddingLeft: "0.24em",
-                      textTransform: "uppercase",
-                      color: lampOn || signaling ? "#fbbf24" : hovering ? "#e8d28a" : "#9a9a9a",
-                      transition: "color 200ms ease",
-                    }}
-                  >
-                    Click me :)
-                  </span>
-                </div>
-                <div
-                  style={{
-                    position: "absolute", top: 36, left: "50%",
-                    transform: "translateX(-50%)",
-                    width: 76, height: 50,
-                    display: "flex", alignItems: "flex-end", justifyContent: "center",
-                    pointerEvents: "none",
-                  }}
-                >
-                  <span
-                    style={{
-                      position: "absolute", left: "50%", bottom: 0,
-                      transform: "translateX(-50%)", width: 64, height: 9,
-                      borderRadius: "2px 2px 1px 1px",
-                      background: "linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%)",
-                      border: "1px solid #2c2c2c", borderBottom: "none",
-                    }}
-                  />
-                  <div
-                    style={{
-                      position: "relative", width: 48, height: 14,
-                      marginBottom: 6, borderRadius: 3,
-                      background: "linear-gradient(180deg, #5a0e0e 0%, #3a0707 60%, #1c0303 100%)",
-                      boxShadow: pressed
-                        ? "0 1px 0 rgba(0,0,0,0.85), inset 0 2px 3px rgba(0,0,0,0.55)"
-                        : hovering
-                          ? "0 4px 6px rgba(0,0,0,0.6), 0 0 0 1px rgba(251,191,36,0.55), 0 0 18px rgba(251,191,36,0.45)"
-                          : "0 2px 3px rgba(0,0,0,0.6)",
-                      transform: (hovering && !pressed) ? "translateY(-2px)" : pressed ? "translateY(1px)" : "translateY(0)",
-                      transition: "transform 120ms ease, box-shadow 200ms ease",
-                      overflow: "hidden",
-                      animation: !hovering && !pressed ? "hwBtnIdle 2.4s ease-in-out infinite" : undefined,
-                    }}
-                  >
-                    <style>{`
-                      @keyframes hwBtnIdle {
-                        0%, 100% { transform: translateY(0); }
-                        50%      { transform: translateY(-2px); }
-                      }
-                    `}</style>
-                    <span
-                      style={{
-                        position: "absolute", left: 2, right: 2, top: 2, bottom: 3,
-                        borderRadius: 2,
-                        background: "linear-gradient(180deg, #ff5a5a 0%, #e02a2a 45%, #a51414 100%)",
-                        boxShadow: pressed
-                          ? "inset 0 2px 3px rgba(0,0,0,0.5)"
-                          : "inset 0 -2px 3px rgba(0,0,0,0.45), inset 0 1px 1px rgba(255,255,255,0.22)",
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </foreignObject>
-          </g>
+          <SwitchModule
+            pad={buttonPad}
+            hovering={hovering}
+            pressed={pressed}
+            signaling={signaling}
+            lampOn={lampOn}
+            onTrigger={triggerSignal}
+            onHoverChange={setHovering}
+          />
         </svg>
       </div>
 
@@ -1093,9 +1434,9 @@ function CircuitHero() {
 
 
 
-const SERIAL_INLINE_GLB = "https://files.catbox.moe/tgly0l.glb";
-const SERIAL_TEST_INLINE_GLB = "https://files.catbox.moe/dpd9ku.glb";
-const THRUSTER_INLINE_GLB = "https://files.catbox.moe/x54j79.glb";
+const SERIAL_INLINE_GLB = serialGlbSrc;
+const SERIAL_TEST_INLINE_GLB = serialTestGlbSrc;
+const THRUSTER_INLINE_GLB = thrusterGlbSrc;
 
 function useMouseSpin(defaultSpeed = 20) {
   const ref = useRef<HTMLElement | null>(null);
@@ -1104,46 +1445,46 @@ function useMouseSpin(defaultSpeed = 20) {
     if (!el) return;
     let currentSpeed = defaultSpeed;
     let rafId = 0;
+    let lastX: number | null = null;
+    let lastTime = 0;
+    let lastPushTime = 0;
     const setSpeed = (s: number) => {
       currentSpeed = s;
       el.setAttribute("rotation-per-second", `${s}deg`);
     };
+    const clamp = (n: number, min: number, max: number) =>
+      Math.max(min, Math.min(max, n));
+    const easeBack = () => {
+      const elapsed = performance.now() - lastPushTime;
+      const decay = elapsed > 120 ? 0.08 : 0.025;
+      const next = currentSpeed + (defaultSpeed - currentSpeed) * decay;
+      setSpeed(Math.abs(next - defaultSpeed) < 0.15 ? defaultSpeed : next);
+      rafId = requestAnimationFrame(easeBack);
+    };
     setSpeed(defaultSpeed);
-    const onMove = (e: MouseEvent) => {
-      if (rafId) {
-        cancelAnimationFrame(rafId);
-        rafId = 0;
+    rafId = requestAnimationFrame(easeBack);
+    const onMove = (e: PointerEvent) => {
+      const now = performance.now();
+      if (lastX !== null && lastTime) {
+        const dt = Math.max(16, now - lastTime);
+        const velocity = ((e.clientX - lastX) / dt) * 1000;
+        setSpeed(clamp(currentSpeed + velocity * 0.18, -120, 160));
       }
-      const r = el.getBoundingClientRect();
-      const x = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
-      const speed = -60 + x * 180;
-      setSpeed(speed);
+      lastX = e.clientX;
+      lastTime = now;
+      lastPushTime = now;
     };
     const onLeave = () => {
-      if (rafId) cancelAnimationFrame(rafId);
-      const startSpeed = currentSpeed;
-      const startTime = performance.now();
-      const duration = 1500;
-      const tick = (now: number) => {
-        const t = Math.min(1, (now - startTime) / duration);
-        // easeOutCubic
-        const eased = 1 - Math.pow(1 - t, 3);
-        const s = startSpeed + (defaultSpeed - startSpeed) * eased;
-        setSpeed(s);
-        if (t < 1) {
-          rafId = requestAnimationFrame(tick);
-        } else {
-          rafId = 0;
-        }
-      };
-      rafId = requestAnimationFrame(tick);
+      lastX = null;
+      lastTime = 0;
+      lastPushTime = performance.now();
     };
-    el.addEventListener("mousemove", onMove);
-    el.addEventListener("mouseleave", onLeave);
+    el.addEventListener("pointermove", onMove);
+    el.addEventListener("pointerleave", onLeave);
     return () => {
       if (rafId) cancelAnimationFrame(rafId);
-      el.removeEventListener("mousemove", onMove);
-      el.removeEventListener("mouseleave", onLeave);
+      el.removeEventListener("pointermove", onMove);
+      el.removeEventListener("pointerleave", onLeave);
     };
   }, [defaultSpeed]);
   return ref;
@@ -1159,7 +1500,6 @@ function InlineSerialModel({
   idleElevation?: number;
   cameraOrbit?: string;
 }) {
-  const ref = useMouseSpin(20);
   return (
     <div
       className={embedded ? "h-full" : "col-span-12 mt-4"}
@@ -1169,19 +1509,14 @@ function InlineSerialModel({
         className={embedded ? "overflow-hidden h-full" : "overflow-hidden border border-border"}
         style={{ backgroundColor: "#111", width: "100%", height: embedded ? 450 : 300 }}
       >
-        <model-viewer
-          ref={ref as unknown as React.Ref<HTMLElement>}
+        <ModelPreview
           src={src}
           alt="Serial Board 3D model"
-          camera-controls
-          auto-rotate
-          auto-rotate-delay={0}
-          rotation-per-second="20deg"
-          camera-orbit={cameraOrbit}
-          interaction-prompt="none"
-          loading="eager"
-          reveal="auto"
-            style={{ width: "100%", height: "100%", backgroundColor: "#111", transform: "translateY(8%)" } as React.CSSProperties}
+          height="100%"
+          cameraOrbit={cameraOrbit}
+          rotationPerSecond="20deg"
+          transform="translateY(8%)"
+          fallbackLabel="3D model missing"
         />
       </div>
     </div>
@@ -1217,12 +1552,210 @@ function PcbDivider() {
   );
 }
 
+function MissingImageBox({
+  label = "Image missing",
+  className = "",
+  style,
+}: {
+  label?: string;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <div
+      className={`flex items-center justify-center border border-border bg-secondary/40 text-center ${className}`}
+      style={style}
+      data-image-fallback
+    >
+      <div className="px-4 font-mono text-[10px] uppercase tracking-[0.25em] text-ink-faint">
+        {label}
+      </div>
+    </div>
+  );
+}
+
+function SafeImage({
+  src,
+  alt,
+  className = "",
+  style,
+  fit = "cover",
+  fallbackLabel = "Image missing",
+  loading = "lazy",
+}: {
+  src?: string;
+  alt: string;
+  className?: string;
+  style?: React.CSSProperties;
+  fit?: React.CSSProperties["objectFit"];
+  fallbackLabel?: string;
+  loading?: "eager" | "lazy";
+}) {
+  const [failed, setFailed] = useState(false);
+
+  if (!src || failed) {
+    return (
+      <MissingImageBox
+        label={fallbackLabel}
+        className={className}
+        style={style}
+      />
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={className}
+      style={{ objectFit: fit, ...style }}
+      loading={loading}
+      decoding="async"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
+function ModelPreview({
+  src,
+  alt,
+  height,
+  cameraOrbit = "35deg 70deg 105%",
+  rotationPerSecond = "20deg",
+  transform = "translateY(8%)",
+  fallbackLabel = "3D model missing",
+}: {
+  src?: string;
+  alt: string;
+  height: number | string;
+  cameraOrbit?: string;
+  rotationPerSecond?: string;
+  transform?: string;
+  fallbackLabel?: string;
+}) {
+  const ref = useMouseSpin(Number.parseFloat(rotationPerSecond) || 20);
+  const modelSrc = localModelSrc(src);
+  const [status, setStatus] = useState<"loading" | "ready" | "error">(
+    modelSrc ? "loading" : "error",
+  );
+
+  useEffect(() => {
+    setStatus(modelSrc ? "loading" : "error");
+    if (!modelSrc) return;
+    const el = ref.current as (HTMLElement & {
+      loaded?: boolean;
+      modelIsVisible?: boolean;
+      src?: string;
+      alt?: string;
+    }) | null;
+    if (!el) return;
+
+    el.setAttribute("src", modelSrc);
+    el.src = modelSrc;
+    el.setAttribute("alt", alt);
+    el.alt = alt;
+
+    const markReady = () => {
+      if (el.getAttribute("src") || el.src) setStatus("ready");
+    };
+    const markError = () => setStatus("error");
+    const handleProgress = (event: Event) => {
+      const progress = (event as CustomEvent<{ totalProgress?: number }>).detail
+        ?.totalProgress;
+      if (typeof progress === "number" && progress >= 0.995) {
+        markReady();
+      }
+    };
+    const handleVisibility = (event: Event) => {
+      const visible = (event as CustomEvent<{ visible?: boolean }>).detail
+        ?.visible;
+      if (visible !== false) markReady();
+    };
+
+    el.addEventListener("load", markReady);
+    el.addEventListener("model-visibility", handleVisibility);
+    el.addEventListener("progress", handleProgress);
+    el.addEventListener("error", markError);
+
+    const readyCheck = window.setTimeout(() => {
+      if (el.loaded || el.modelIsVisible) markReady();
+    }, 250);
+
+    return () => {
+      window.clearTimeout(readyCheck);
+      el.removeEventListener("load", markReady);
+      el.removeEventListener("model-visibility", handleVisibility);
+      el.removeEventListener("progress", handleProgress);
+      el.removeEventListener("error", markError);
+    };
+  }, [alt, modelSrc, ref]);
+
+  return (
+    <div
+      className="relative h-full w-full overflow-hidden"
+      style={{ height, backgroundColor: "#111" }}
+      onClick={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+      onPointerMove={(e) => e.stopPropagation()}
+      onWheel={(e) => e.stopPropagation()}
+    >
+      {modelSrc && status !== "error" ? (
+        <model-viewer
+          ref={ref as unknown as React.Ref<HTMLElement>}
+          src={modelSrc}
+          alt={alt}
+          camera-controls
+          auto-rotate
+          auto-rotate-delay={0}
+          rotation-per-second={rotationPerSecond}
+          camera-orbit={cameraOrbit}
+          interaction-prompt="none"
+          loading="eager"
+          reveal="auto"
+          onLoad={() => setStatus("ready")}
+          onError={() => setStatus("error")}
+          style={{
+            width: "100%",
+            height: "100%",
+            backgroundColor: "#111",
+            "--poster-color": "#111",
+            cursor: "grab",
+            pointerEvents: "auto",
+            touchAction: "none",
+            transform,
+          } as React.CSSProperties}
+        />
+      ) : null}
+      {status !== "ready" ? (
+        <MissingImageBox
+          label={status === "error" ? fallbackLabel : "Loading 3D preview"}
+          className="pointer-events-none absolute inset-0 border-0 bg-[#111]"
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function PcbOverviewPreview() {
+  return (
+    <ModelPreview
+      src={SERIAL_INLINE_GLB}
+      alt="Serial Board 3D model preview"
+      height="100%"
+      cameraOrbit="35deg 70deg 145%"
+      rotationPerSecond="18deg"
+      transform="translateY(8%)"
+      fallbackLabel="3D PCB render missing"
+    />
+  );
+}
+
 function SideRail() {
   const [active, setActive] = useState("01");
   useEffect(() => {
     const ids: Array<[string, string]> = [
-      ["work", "01"],
-      ["about", "02"],
+      ["about", "01"],
+      ["work", "02"],
       ["experience", "03"],
       ["contact", "04"],
     ];
@@ -1267,8 +1800,29 @@ function SectionHeader({ index, title, kicker }: { index: string; title: string;
 }
 
 function Work() {
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+
+    const requestedCategory = new URLSearchParams(window.location.search).get("work");
+    return requestedCategory && CATEGORIES.some((category) => category.id === requestedCategory)
+      ? requestedCategory
+      : null;
+  });
   const active = selected ? CATEGORIES.find((c) => c.id === selected) ?? null : null;
+
+  useEffect(() => {
+    const requestedCategory = new URLSearchParams(window.location.search).get("work");
+    if (requestedCategory && CATEGORIES.some((category) => category.id === requestedCategory)) {
+      setSelected(requestedCategory);
+    }
+  }, []);
+
+  const showOverview = () => {
+    setSelected(null);
+    if (window.location.search.includes("work=")) {
+      window.history.replaceState(null, "", withBase("/#work"));
+    }
+  };
 
   const cards = [
     {
@@ -1280,10 +1834,10 @@ function Work() {
     },
     {
       id: "02",
-      label: "02 / PERSONAL",
-      title: "Personal Projects",
-      desc: "Side projects and experiments outside of work.",
-      preview: "code" as const,
+      label: "02 / SIDE PROJECTS",
+      title: "Fun Side Projects + FPGA Work",
+      desc: "FPGA music, embedded displays, CAD enclosures, and hardware builds outside the main PCB board work.",
+      preview: "star" as const,
     },
     {
       id: "03",
@@ -1296,7 +1850,7 @@ function Work() {
 
   return (
     <section id="work" className="mx-auto max-w-6xl px-6 py-28 sm:px-10 sm:py-40">
-      <SectionHeader index="01" kicker="Selected Work" title="Things I've built." />
+      <SectionHeader index="03" kicker="Selected Work" title="Things I've built." />
 
       <div className="mt-16">
         <AnimatePresence mode="wait">
@@ -1310,10 +1864,17 @@ function Work() {
               className="grid gap-6 md:grid-cols-3"
             >
               {cards.map((card, i) => (
-                <motion.button
+                <motion.div
                   key={card.id}
-                  type="button"
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setSelected(card.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelected(card.id);
+                    }
+                  }}
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.35, delay: i * 0.08, ease: "easeOut" }}
@@ -1326,31 +1887,18 @@ function Work() {
                     style={{ height: 200, background: "#111" }}
                   >
                     {card.preview === "pcb" ? (
-                      <model-viewer
-                        src={SERIAL_INLINE_GLB}
-                        alt="PCB preview"
-                        auto-rotate
-                        auto-rotate-delay={0}
-                        rotation-per-second="22deg"
-                        interaction-prompt="none"
-                        loading="eager"
-                        reveal="auto"
-                        camera-orbit="35deg 70deg 110%"
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          backgroundColor: "#111",
-                          pointerEvents: "none",
-                          transform: "translateY(6%)",
-                        } as React.CSSProperties}
-                      />
-                    ) : card.preview === "code" ? (
-                      <div className="flex h-full w-full items-center justify-center">
-                        <Terminal
-                          className="text-mark/70 transition-transform duration-500 group-hover:scale-110"
-                          size={64}
-                          strokeWidth={1.25}
+                      <PcbOverviewPreview />
+                    ) : card.preview === "star" ? (
+                      <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
+                        <img
+                          src={IMAGE_ASSETS.pepperGhostPrototype}
+                          alt="Pepper's Ghost planetarium display with floating star map"
+                          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
+                        <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/20 to-background/45" />
+                        <div className="absolute bottom-4 left-4 font-mono text-[10px] uppercase tracking-[0.28em] text-foreground">
+                          Floating Star Display
+                        </div>
                       </div>
                     ) : (
                       <div className="flex h-full w-full items-center justify-center">
@@ -1377,7 +1925,7 @@ function Work() {
                       </span>
                     </div>
                   </div>
-                </motion.button>
+                </motion.div>
               ))}
             </motion.div>
           ) : (
@@ -1391,7 +1939,7 @@ function Work() {
               <div className="relative mb-8 flex flex-wrap items-center justify-center gap-3">
                 <button
                   type="button"
-                  onClick={() => setSelected(null)}
+                  onClick={showOverview}
                   className="inline-flex items-center gap-2 rounded-sm border border-rule px-3 py-2 font-mono text-[11px] uppercase tracking-[0.25em] text-ink-dim transition-all hover:border-mark hover:text-mark sm:absolute sm:left-0"
                 >
                   <span>←</span>
@@ -1442,8 +1990,6 @@ function Work() {
 }
 
 function CategoryBlock({ category: c }: { category: Category }) {
-  const [openId, setOpenId] = useState<string | null>(null);
-  const openProject = c.projects.find((p) => p.id === openId) ?? null;
   return (
     <div>
       <div className="flex flex-col items-center text-center">
@@ -1497,17 +2043,13 @@ function CategoryBlock({ category: c }: { category: Category }) {
                       style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", height: 450 }}
                     >
                       {!p.comingSoon ? (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOpenId(p.id);
-                          }}
+                        <a
+                          href={projectPath(p)}
                           className="absolute left-4 top-4 z-10 inline-flex items-center gap-2 rounded-sm border-2 border-rule bg-background/80 px-4 py-2 font-mono text-xs uppercase tracking-[0.25em] text-foreground backdrop-blur transition-all hover:border-mark hover:bg-mark/10 hover:text-mark"
                         >
                           <span>View details</span>
                           <span>→</span>
-                        </button>
+                        </a>
                       ) : null}
                       <InlineSerialModel embedded src={SERIAL_INLINE_GLB} cameraOrbit="35deg 70deg 105%" />
                     </div>
@@ -1515,7 +2057,7 @@ function CategoryBlock({ category: c }: { category: Category }) {
                       <ProjectRow
                         project={p}
                         categoryId={c.id}
-                        onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
+                        detailsHref={p.comingSoon ? undefined : projectPath(p)}
                         bare
                         hideViewDetails
                       />
@@ -1525,9 +2067,7 @@ function CategoryBlock({ category: c }: { category: Category }) {
                     <SubProjectRow
                       project={testBoard}
                       categoryId={c.id}
-                      onOpen={
-                        testBoard.comingSoon ? undefined : () => setOpenId(testBoard.id)
-                      }
+                      detailsHref={testBoard.comingSoon ? undefined : projectPath(testBoard)}
                       modelSrc={SERIAL_TEST_INLINE_GLB}
                     />
                   ) : null}
@@ -1547,17 +2087,13 @@ function CategoryBlock({ category: c }: { category: Category }) {
                       style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", height: 450 }}
                     >
                       {!p.comingSoon ? (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOpenId(p.id);
-                          }}
+                        <a
+                          href={projectPath(p)}
                           className="absolute left-4 top-4 z-10 inline-flex items-center gap-2 rounded-sm border-2 border-rule bg-background/80 px-4 py-2 font-mono text-xs uppercase tracking-[0.25em] text-foreground backdrop-blur transition-all hover:border-mark hover:bg-mark/10 hover:text-mark"
                         >
                           <span>View details</span>
                           <span>→</span>
-                        </button>
+                        </a>
                       ) : null}
                       <InlineSerialModel embedded src={THRUSTER_INLINE_GLB} idleElevation={15} cameraOrbit="-120deg 80deg 105%" />
                     </div>
@@ -1565,7 +2101,7 @@ function CategoryBlock({ category: c }: { category: Category }) {
                       <ProjectRow
                         project={p}
                         categoryId={c.id}
-                        onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
+                        detailsHref={p.comingSoon ? undefined : projectPath(p)}
                         bare
                         hideViewDetails
                       />
@@ -1576,7 +2112,7 @@ function CategoryBlock({ category: c }: { category: Category }) {
                 <ProjectRow
                   project={p}
                   categoryId={c.id}
-                  onOpen={p.comingSoon ? undefined : () => setOpenId(p.id)}
+                  detailsHref={p.comingSoon ? undefined : projectPath(p)}
                 />
               )}
             </Reveal>
@@ -1584,16 +2120,6 @@ function CategoryBlock({ category: c }: { category: Category }) {
         })}
       </ul>
       )}
-      <Sheet open={!!openProject} onOpenChange={(o) => !o && setOpenId(null)}>
-        <SheetContent
-          side="right"
-          className="w-full overflow-y-auto sm:max-w-2xl"
-        >
-          {openProject ? (
-            <ProjectDetails project={openProject} categoryId={c.id} />
-          ) : null}
-        </SheetContent>
-      </Sheet>
     </div>
   );
 }
@@ -1601,39 +2127,95 @@ function CategoryBlock({ category: c }: { category: Category }) {
 function ProjectRow({
   project: p,
   categoryId,
-  onOpen,
+  detailsHref,
   bare = false,
   hideViewDetails = false,
 }: {
   project: Project;
   categoryId: string;
-  onOpen?: () => void;
+  detailsHref?: string;
   bare?: boolean;
   hideViewDetails?: boolean;
 }) {
-  const clickable = !!onOpen;
+  const preview = !bare ? PROJECT_PREVIEWS[p.slug] : undefined;
+  const previewSrc = preview?.src;
+
+  if (preview && previewSrc) {
+    return (
+      <article
+        className={`group grid grid-cols-12 items-center gap-6 py-10 transition-colors ${
+          detailsHref ? "hover:bg-secondary/40 -mx-4 rounded-sm px-4 transition-transform duration-200 hover:scale-[1.01]" : ""
+        }`}
+      >
+        <div className="col-span-12 font-mono text-xs uppercase tracking-[0.25em] text-ink-faint sm:col-span-2">
+          {categoryId}.{p.id}
+          {p.year ? <> / {p.year}</> : null}
+        </div>
+
+        <div className="col-span-12 grid gap-6 lg:col-span-10 lg:grid-cols-[minmax(0,0.62fr)_minmax(300px,0.38fr)] lg:items-center">
+          <div className="min-w-0">
+            <h4 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+              {p.name}
+            </h4>
+            {p.bullets && p.bullets.length > 0 ? (
+              <ul className="mt-3 max-w-3xl space-y-1.5 text-base leading-relaxed text-ink-dim">
+                {p.bullets.map((b) => (
+                  <li key={b} className="flex gap-2">
+                    <span className="text-ink-faint">—</span>
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-3 max-w-3xl text-base leading-relaxed text-ink-dim">{p.tagline}</p>
+            )}
+            {p.stack.length > 0 ? (
+              <div className="mt-5 flex flex-wrap gap-1.5">
+                {p.stack.map((s) => (
+                  <span key={s} className="tag-pill">{s}</span>
+                ))}
+              </div>
+            ) : null}
+            {detailsHref ? (
+              <a
+                href={detailsHref}
+                className="mt-6 inline-flex items-center gap-2.5 rounded-sm border-2 border-rule bg-secondary/40 px-6 py-3 font-mono text-sm uppercase tracking-[0.25em] text-foreground transition-all hover:border-mark hover:bg-mark/10 hover:text-mark"
+              >
+                <span>View details</span>
+                <span className="transition-transform group-hover:translate-x-0.5">→</span>
+              </a>
+            ) : null}
+          </div>
+
+          <a
+            href={detailsHref}
+            className="group/preview relative block aspect-[4/3] w-full overflow-hidden border border-border bg-secondary/20 transition-colors hover:border-mark/70"
+            aria-label={`View ${p.name}`}
+          >
+            <img
+              src={previewSrc}
+              alt={preview.alt}
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover/preview:scale-105"
+            />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/75 via-transparent to-transparent" />
+            <div className="absolute bottom-3 left-3 font-mono text-[10px] uppercase tracking-[0.24em] text-foreground">
+              {preview.label}
+            </div>
+          </a>
+        </div>
+      </article>
+    );
+  }
+
   return (
     <article
-      onClick={onOpen}
-      role={clickable ? "button" : undefined}
-      tabIndex={clickable ? 0 : undefined}
-      onKeyDown={
-        clickable
-          ? (e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onOpen?.();
-              }
-            }
-          : undefined
-      }
       className={`group transition-colors ${
         bare
           ? "flex flex-col gap-2 py-3 px-4"
           : "grid grid-cols-12 items-baseline gap-6 py-10"
       } ${
         p.comingSoon ? "opacity-50" : ""
-      } ${clickable ? (bare ? "cursor-pointer" : "cursor-pointer hover:bg-secondary/40 -mx-4 px-4 rounded-sm transition-transform duration-200 hover:scale-[1.02]") : ""}`}
+      } ${detailsHref ? (bare ? "" : "hover:bg-secondary/40 -mx-4 px-4 rounded-sm transition-transform duration-200 hover:scale-[1.02]") : ""}`}
     >
       <div className={`font-mono uppercase tracking-[0.25em] text-ink-faint ${bare ? "text-[10px]" : "col-span-12 text-xs sm:col-span-2"}`}>
         {categoryId}.{p.id}
@@ -1667,24 +2249,37 @@ function ProjectRow({
             ))}
           </div>
         ) : null}
-        {clickable && !hideViewDetails ? (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpen?.();
-            }}
+        {detailsHref && !hideViewDetails ? (
+          <a
+            href={detailsHref}
             className={`inline-flex items-center rounded-sm border-2 border-rule bg-secondary/40 font-mono uppercase tracking-[0.25em] text-foreground transition-all hover:border-mark hover:bg-mark/10 hover:text-mark ${bare ? "mt-2 gap-1.5 px-3 py-1.5 text-[10px]" : "mt-6 gap-2.5 px-6 py-3 text-sm"}`}
           >
             <span>View details</span>
             <span className="transition-transform group-hover:translate-x-0.5">→</span>
-          </button>
+          </a>
         ) : null}
       </div>
       <div
-        className={`flex flex-wrap text-sm ${bare ? "gap-3" : "col-span-12 gap-6 sm:col-span-3 sm:justify-end"}`}
+        className={`flex flex-wrap text-sm ${bare ? "gap-3" : "col-span-12 gap-4 sm:col-span-3 sm:justify-end"}`}
         onClick={(e) => e.stopPropagation()}
       >
+        {previewSrc ? (
+          <a
+            href={detailsHref}
+            className="group/preview relative block aspect-[4/3] w-full max-w-[280px] overflow-hidden border border-border bg-secondary/20 transition-colors hover:border-mark/70"
+            aria-label={`View ${p.name}`}
+          >
+            <img
+              src={previewSrc}
+              alt="DE0-CV FPGA music player hardware preview"
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover/preview:scale-105"
+            />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent" />
+            <div className="absolute bottom-2 left-2 font-mono text-[9px] uppercase tracking-[0.22em] text-foreground">
+              Hardware Preview
+            </div>
+          </a>
+        ) : null}
         {p.links?.map((l) => (
           <a
             key={l.href}
@@ -1704,9 +2299,9 @@ function ProjectRow({
         {!p.links?.length && !p.comingSoon ? (
           <span className="text-ink-faint">
             {categoryId === "02"
-              ? "— Cornell ECE Research"
+              ? "— Personal project"
               : categoryId === "03"
-                ? "— Personal project"
+                ? "— Research"
                 : ""}
           </span>
         ) : null}
@@ -1718,15 +2313,14 @@ function ProjectRow({
 function SubProjectRow({
   project: p,
   categoryId,
-  onOpen,
+  detailsHref,
   modelSrc,
 }: {
   project: Project;
   categoryId: string;
-  onOpen?: () => void;
+  detailsHref?: string;
   modelSrc: string;
 }) {
-  const clickable = !!onOpen;
   return (
     <div
       style={{
@@ -1735,20 +2329,7 @@ function SubProjectRow({
       className="flex flex-col"
     >
       <div
-        onClick={onOpen}
-        role={clickable ? "button" : undefined}
-        tabIndex={clickable ? 0 : undefined}
-        onKeyDown={
-          clickable
-            ? (e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  onOpen?.();
-                }
-              }
-            : undefined
-        }
-        className={`w-full px-4 py-3 ${clickable ? "cursor-pointer" : ""}`}
+        className="w-full px-4 py-3"
       >
         <div className="font-mono text-[9px] uppercase tracking-[0.28em] text-ink-faint">
           ↳ Sub-project &nbsp;·&nbsp; {categoryId}.{p.id}
@@ -1765,31 +2346,24 @@ function SubProjectRow({
         style={{ borderTop: "1px solid rgba(255,255,255,0.06)", height: 280 }}
         onClick={(e) => e.stopPropagation()}
       >
-        {clickable ? (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpen?.();
-            }}
+        {detailsHref ? (
+          <a
+            href={detailsHref}
             className="absolute left-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-sm border-2 border-rule bg-background/80 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-foreground backdrop-blur transition-all hover:border-mark hover:bg-mark/10 hover:text-mark"
           >
             <span>View details</span>
             <span>→</span>
-          </button>
+          </a>
         ) : null}
         <div style={{ width: "100%", height: "100%" }} className="overflow-hidden">
-          <model-viewer
+          <ModelPreview
             src={modelSrc}
             alt={`${p.name} 3D model`}
-            camera-controls
-            auto-rotate
-            auto-rotate-delay={0}
-            rotation-per-second="20deg"
-            interaction-prompt="none"
-            loading="eager"
-            reveal="auto"
-            style={{ width: "100%", height: "100%", backgroundColor: "transparent", transform: "translateY(8%)" } as React.CSSProperties}
+            height="100%"
+            cameraOrbit="35deg 70deg 105%"
+            rotationPerSecond="20deg"
+            transform="translateY(8%)"
+            fallbackLabel="3D model missing"
           />
         </div>
       </div>
@@ -1808,6 +2382,7 @@ function ProjectDetails({
   const isThruster =
     p.name === "High-Power Thruster Control Board" ||
     p.name.startsWith("Thruster Board");
+  const isFpgaMusicPlayer = p.name === "FPGA Music Player";
 
   return (
     <div className="flex flex-col gap-6">
@@ -1839,8 +2414,8 @@ function ProjectDetails({
           <SerialBoardGallery />
           <FabricatedBoard
             name="Serial Board"
-            front={serialFabFrontAsset.url}
-            back={serialFabBackAsset.url}
+            front={IMAGE_ASSETS.serialFabFront}
+            back={IMAGE_ASSETS.serialFabBack}
           />
         </>
       ) : null}
@@ -1849,9 +2424,54 @@ function ProjectDetails({
           <ThrusterBoardGallery />
           <FabricatedBoard
             name="Thruster Board"
-            front={thrusterFabFrontAsset.url}
-            back={thrusterFabBackAsset.url}
+            front={IMAGE_ASSETS.thrusterFabFront}
+            back={IMAGE_ASSETS.thrusterFabBack}
           />
+        </>
+      ) : null}
+      {isFpgaMusicPlayer ? (
+        <>
+          <div className="overflow-hidden rounded-md border border-border bg-secondary/10">
+            <div className="border-b border-border px-4 py-3 font-mono text-[10px] uppercase tracking-[0.25em] text-ink-faint">
+              Hardware Demo
+            </div>
+            <video
+              className="aspect-video w-full bg-background object-cover"
+              controls
+              playsInline
+              preload="metadata"
+              poster={IMAGE_ASSETS.fpgaMusicPlayerDemo}
+              aria-label="DE0-CV FPGA music player hardware demo"
+            >
+              <source src={FPGA_HARDWARE_VIDEO_SRC} type="video/quicktime" />
+              <a className="text-mark underline" href={FPGA_HARDWARE_VIDEO_SRC}>
+                View the hardware demo video
+              </a>
+            </video>
+          </div>
+
+          <div className="overflow-hidden rounded-md border border-border bg-secondary/10">
+            <div className="border-b border-border px-4 py-3 font-mono text-[10px] uppercase tracking-[0.25em] text-ink-faint">
+              Interactive Browser Demo
+            </div>
+            <iframe
+              src={FPGA_DEMO_URL}
+              title="FPGA Music Player interactive browser demo"
+              className="h-[520px] w-full border-0 bg-[#111315]"
+              loading="lazy"
+            />
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            {FPGA_PROJECT_NOTES.map(([label, copy]) => (
+              <div key={label} className="rounded-md border border-border bg-secondary/10 p-4">
+                <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-mark">
+                  {label}
+                </div>
+                <p className="mt-2 text-xs leading-relaxed text-ink-dim">{copy}</p>
+              </div>
+            ))}
+          </div>
         </>
       ) : null}
 
@@ -1883,33 +2503,27 @@ function ProjectDetails({
 }
 
 function GalleryImage({ src, alt }: { src: string; alt: string }) {
-  if (!src) {
-    return (
-      <div className="flex aspect-[16/10] items-center justify-center rounded-md border border-border bg-secondary/60 font-mono text-xs uppercase tracking-[0.25em] text-ink-faint">
-        [ Image coming soon ]
-      </div>
-    );
-  }
   return (
-    <img
+    <SafeImage
       src={src}
       alt={alt}
       className="aspect-[16/10] w-full rounded-md border border-border object-cover"
+      fallbackLabel="Image missing"
     />
   );
 }
 
 function SerialBoardGallery() {
   const images = [
-    { id: "layout", label: "2D Layout", src: serialLayoutAsset.url, alt: "Serial Board 2D PCB schematic layout" },
-    { id: "front", label: "3D Front", src: serialFrontAsset.url, alt: "Serial Board 3D front render" },
-    { id: "back", label: "3D Back", src: serialBackAsset.url, alt: "Serial Board 3D back render" },
+    { id: "layout", label: "2D Layout", src: IMAGE_ASSETS.serialLayout, alt: "Serial Board 2D PCB schematic layout" },
+    { id: "front", label: "3D Front", src: IMAGE_ASSETS.serialFront, alt: "Serial Board 3D front render" },
+    { id: "back", label: "3D Back", src: IMAGE_ASSETS.serialBack, alt: "Serial Board 3D back render" },
   ];
 
   return <BoardGallery images={images} />;
 }
 
-function FabricatedBoard({ name, front, back }: { name: string; front: string; back: string }) {
+function FabricatedBoard({ name, front, back }: { name: string; front?: string; back?: string }) {
   return (
     <div className="mt-2">
       <div className="font-mono text-[11px] uppercase tracking-[0.25em] text-ink-faint">
@@ -1925,10 +2539,11 @@ function FabricatedBoard({ name, front, back }: { name: string; front: string; b
             className="relative aspect-[4/3] overflow-hidden rounded-md border border-border"
             style={{ backgroundColor: "#1a1a1a" }}
           >
-            <img
+            <SafeImage
               src={img.src}
               alt={`${name} fabricated and soldered, ${img.label.toLowerCase()}`}
               className="absolute inset-0 h-full w-full object-cover"
+              fallbackLabel="Image missing"
             />
             <div className="absolute bottom-2 left-2 rounded bg-black/60 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.2em] text-white">
               {img.label}
@@ -1940,16 +2555,18 @@ function FabricatedBoard({ name, front, back }: { name: string; front: string; b
   );
 }
 
-function BoardGallery({ images }: { images: { id: string; label: string; src: string; alt: string }[] }) {
+function BoardGallery({ images }: { images: { id: string; label: string; src?: string; alt: string }[] }) {
   const [active, setActive] = useState(images[0].id);
   const current = images.find((i) => i.id === active) ?? images[0];
   return (
     <div className="w-full">
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md border border-border" style={{ backgroundColor: "#1a1a1a" }}>
-        <img
+        <SafeImage
           src={current.src}
           alt={current.alt}
           className="absolute inset-0 h-full w-full object-contain"
+          fit="contain"
+          fallbackLabel="Image missing"
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/40" />
         <div className="absolute inset-x-0 bottom-0 p-4">
@@ -1972,7 +2589,12 @@ function BoardGallery({ images }: { images: { id: string; label: string; src: st
             }`}
             style={{ backgroundColor: "#1a1a1a" }}
           >
-            <img src={img.src} alt={img.alt} className="absolute inset-0 h-full w-full object-cover" />
+            <SafeImage
+              src={img.src}
+              alt={img.alt}
+              className="absolute inset-0 h-full w-full object-cover"
+              fallbackLabel="Image missing"
+            />
             <div className="absolute inset-0 bg-black/40" />
             <div className="absolute inset-x-0 bottom-0 p-1.5 font-mono text-[9px] uppercase tracking-[0.2em] text-foreground">
               {img.label}
@@ -1986,19 +2608,21 @@ function BoardGallery({ images }: { images: { id: string; label: string; src: st
 
 function ThrusterBoardGallery() {
   const images = [
-    { id: "layout", label: "2D Layout", src: thrusterLayoutAsset.url, alt: "Thruster Board 2D PCB schematic layout" },
-    { id: "front", label: "3D Front", src: thrusterFrontAsset.url, alt: "Thruster Board 3D front render" },
-    { id: "back", label: "3D Back", src: thrusterBackAsset.url, alt: "Thruster Board 3D back render" },
+    { id: "layout", label: "2D Layout", src: IMAGE_ASSETS.thrusterLayout, alt: "Thruster Board 2D PCB schematic layout" },
+    { id: "front", label: "3D Front", src: IMAGE_ASSETS.thrusterFront, alt: "Thruster Board 3D front render" },
+    { id: "back", label: "3D Back", src: IMAGE_ASSETS.thrusterBack, alt: "Thruster Board 3D back render" },
   ];
   const [active, setActive] = useState(images[0].id);
   const current = images.find((i) => i.id === active) ?? images[0];
   return (
     <div className="w-full">
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md border border-border" style={{ backgroundColor: "#1a1a1a" }}>
-        <img
+        <SafeImage
           src={current.src}
           alt={current.alt}
           className="absolute inset-0 h-full w-full object-contain"
+          fit="contain"
+          fallbackLabel="Image missing"
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/40" />
         <div className="absolute inset-x-0 bottom-0 p-4">
@@ -2021,7 +2645,12 @@ function ThrusterBoardGallery() {
             }`}
             style={{ backgroundColor: "#1a1a1a" }}
           >
-            <img src={img.src} alt={img.alt} className="absolute inset-0 h-full w-full object-cover" />
+            <SafeImage
+              src={img.src}
+              alt={img.alt}
+              className="absolute inset-0 h-full w-full object-cover"
+              fallbackLabel="Image missing"
+            />
             <div className="absolute inset-0 bg-black/40" />
             <div className="absolute inset-x-0 bottom-0 p-1.5 font-mono text-[9px] uppercase tracking-[0.2em] text-foreground">
               {img.label}
@@ -2034,87 +2663,39 @@ function ThrusterBoardGallery() {
 }
 
 function SerialViewer() {
-  const ref = useMouseSpin(20);
   return (
     <div
       className="relative overflow-hidden rounded-md border border-border"
       style={{ backgroundColor: "#1a1a1a" }}
     >
-      {serialGlbSrc ? (
-        <model-viewer
-          ref={ref as unknown as React.Ref<HTMLElement>}
-          src={serialGlbSrc}
-          alt="Serial Board 3D model"
-          camera-controls
-          auto-rotate
-          auto-rotate-delay={0}
-          rotation-per-second="20deg"
-          interaction-prompt="none"
-          shadow-intensity="1"
-          loading="eager"
-          reveal="auto"
-          style={{
-            width: "100%",
-            height: "400px",
-            backgroundColor: "#1a1a1a",
-            "--poster-color": "#1a1a1a",
-          } as React.CSSProperties}
-        >
-          <div
-            slot="progress-bar"
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-          >
-            <div className="size-8 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />
-          </div>
-        </model-viewer>
-      ) : (
-        <div className="flex h-[400px] items-center justify-center font-mono text-xs uppercase tracking-[0.25em] text-white/40">
-          [ 3D model coming soon ]
-        </div>
-      )}
+      <ModelPreview
+        src={serialGlbSrc}
+        alt="Serial Board 3D model"
+        height={400}
+        cameraOrbit="35deg 70deg 105%"
+        rotationPerSecond="20deg"
+        transform="translateY(6%)"
+        fallbackLabel="3D model missing"
+      />
     </div>
   );
 }
 
 function ThrusterViewer() {
-  const ref = useMouseSpin(20);
   return (
     <div
       className="relative overflow-hidden rounded-md border border-border"
       style={{ backgroundColor: "#1a1a1a" }}
     >
-      {thrusterGlbSrc ? (
-        <model-viewer
-          ref={ref as unknown as React.Ref<HTMLElement>}
-          src={thrusterGlbSrc}
-          alt="Thruster Board 3D model"
-          camera-controls
-          auto-rotate
-          auto-rotate-delay={0}
-          rotation-per-second="20deg"
-          interaction-prompt="none"
-          shadow-intensity="1"
-          loading="eager"
-          reveal="auto"
-          style={{
-            width: "100%",
-            height: "400px",
-            backgroundColor: "#1a1a1a",
-            "--poster-color": "#1a1a1a",
-          } as React.CSSProperties}
-        >
-          <div
-            slot="progress-bar"
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-          >
-            <div className="size-8 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />
-          </div>
-        </model-viewer>
-      ) : (
-        <div className="flex h-[400px] items-center justify-center font-mono text-xs uppercase tracking-[0.25em] text-white/40">
-          [ 3D model coming soon ]
-        </div>
-      )}
+      <ModelPreview
+        src={thrusterGlbSrc}
+        alt="Thruster Board 3D model"
+        height={400}
+        cameraOrbit="-120deg 80deg 105%"
+        rotationPerSecond="20deg"
+        transform="translateY(6%)"
+        fallbackLabel="3D model missing"
+      />
     </div>
   );
 }
@@ -2123,43 +2704,116 @@ function About() {
   return (
     <section
       id="about"
-      className="relative mx-auto max-w-6xl px-6 py-24 sm:px-10 sm:py-32"
+      className="relative mx-auto max-w-7xl px-6 py-24 sm:px-10 sm:py-32"
     >
       <SectionHeader index="02" kicker="About" title="About Me." />
-      <div className="mt-16 grid gap-10 md:grid-cols-12 md:gap-14">
-        <div className="md:col-span-5">
-          <div className="mx-auto w-full max-w-[440px] md:max-w-none">
-            <img
-              src={headshotAsset.url}
-              alt="Ani Velaga"
-              className="block h-auto w-full border border-border object-cover"
-              style={{ aspectRatio: "4 / 5" }}
-              loading="lazy"
-            />
+
+      <div className="mt-10 grid gap-7 md:grid-cols-2 md:items-start md:gap-9 lg:grid-cols-[minmax(300px,0.9fr)_minmax(380px,1fr)_minmax(320px,0.9fr)] lg:items-stretch lg:gap-10 xl:grid-cols-[minmax(320px,0.9fr)_minmax(380px,1fr)_minmax(340px,0.9fr)] xl:gap-12">
+        <div className="order-1 md:order-1 lg:order-2 lg:h-full">
+          <figure className="mx-auto w-full max-w-[460px] lg:h-full lg:max-w-none">
+            <div className="aspect-[3/4] border border-border bg-secondary/20 p-1.5 lg:h-full lg:aspect-auto">
+              <SafeImage
+                src={IMAGE_ASSETS.headshot}
+                alt="Ani Velaga"
+                className="block h-full w-full object-cover"
+                style={{ objectPosition: "center 35%" }}
+                fit="cover"
+                fallbackLabel="Headshot missing"
+                loading="eager"
+              />
+            </div>
+          </figure>
+        </div>
+
+        <div className="order-2 md:order-2 lg:order-1 lg:pr-2">
+          <div className="h-full border border-border bg-secondary/10 p-5 sm:p-6 lg:flex lg:flex-col lg:justify-center">
+            <div className="max-w-[34rem] space-y-3 font-mono text-[0.82rem] leading-[1.58] tracking-[0.02em] text-ink-dim sm:text-[0.86rem] sm:leading-[1.6] lg:max-w-none xl:text-[0.88rem]">
+              <p>
+                I&rsquo;m an Electrical and Computer Engineering student at Cornell interested in
+                computer systems across layers, bridging PCB design, embedded firmware, FPGAs,
+                and ASICs to the networking and software infrastructure behind LLM inference.
+              </p>
+              <p>
+                My focus is computer networking and inference optimization: how hardware/software
+                co-design, system architecture, and data movement influence performance. Through
+                Cornell AUV, Broadcom, and ByteDance, I&rsquo;ve worked across board-level design,
+                Verilog, hardware bring-up, and inference-system simulation to understand these
+                systems from the ground up.
+              </p>
+            </div>
           </div>
         </div>
-        <div className="md:col-span-7">
-          <p className="text-base leading-relaxed text-ink-dim sm:text-lg">
-            I'm an electrical and computer engineering student at Cornell, currently on
-            CUAUV — Cornell's autonomous underwater vehicle team. I design production PCBs in
-            Altium Designer: 4-layer stackups, differential pair routing, ESD protection,
-            high-speed USB. The submarine goes in real water, so the boards have to work.
-          </p>
-          <p className="mt-6 text-base leading-relaxed text-ink-dim sm:text-lg">
-            My work runs from board-level hardware through the networking stack up into LLM
-            inference systems. I care about the full path: what the silicon is doing, how data
-            moves between nodes, and where inference bottlenecks actually live. I'm looking for
-            roles where that end-to-end view matters.
-          </p>
-          <div className="mt-10">
-            <div className="font-mono text-xs uppercase tracking-[0.28em] text-ink-faint">
-              Skills
+
+        <div className="order-3 md:col-span-2 lg:order-3 lg:col-span-1">
+          <div className="h-full border border-border bg-secondary/10 p-5 sm:p-6 lg:flex lg:flex-col">
+            <div className="font-mono text-[0.82rem] uppercase tracking-[0.3em] text-ink-faint">
+              Core Skills
             </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {SKILLS.map((s) => (
-                <span key={s} className="tag-pill">{s}</span>
+            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:flex lg:flex-1 lg:flex-col lg:gap-5">
+              {ABOUT_SKILL_GROUPS.map((group) => (
+                <div key={group.label}>
+                  <div className="flex items-center gap-2.5">
+                    <div className="shrink-0 font-mono text-[9px] uppercase tracking-[0.25em] text-ink-faint">
+                      {group.label}
+                    </div>
+                    <div className="h-px flex-1 bg-border" />
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-x-2 gap-y-1.5">
+                    {group.skills.map((skill) => (
+                      <span
+                        key={skill}
+                        className="inline-flex border border-border/55 bg-secondary/10 px-2 py-1 font-mono text-[9px] uppercase tracking-[0.12em] text-ink-dim"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
+            <svg
+              className="mt-6 hidden h-24 w-full text-ink-faint opacity-40 sm:block lg:mt-auto"
+              viewBox="0 0 340 96"
+              role="presentation"
+              aria-hidden="true"
+            >
+              <defs>
+                <linearGradient id="gpuLinkSignal" x1="0" x2="1" y1="0" y2="0">
+                  <stop offset="0%" stopColor="#777" stopOpacity="0.12" />
+                  <stop offset="50%" stopColor="#d3ad55" stopOpacity="0.5" />
+                  <stop offset="100%" stopColor="#777" stopOpacity="0.12" />
+                </linearGradient>
+              </defs>
+              <g fill="none" stroke="currentColor" strokeWidth="1">
+                <rect x="28" y="24" width="100" height="48" rx="4" fill="#101010" />
+                <rect x="212" y="24" width="100" height="48" rx="4" fill="#101010" />
+                {Array.from({ length: 7 }).map((_, i) => (
+                  <g key={`gpu-left-pad-${i}`}>
+                    <rect x={40 + i * 11} y="17" width="5" height="7" rx="1" fill="currentColor" stroke="none" />
+                    <rect x={40 + i * 11} y="72" width="5" height="7" rx="1" fill="currentColor" stroke="none" />
+                    <rect x={224 + i * 11} y="17" width="5" height="7" rx="1" fill="currentColor" stroke="none" />
+                    <rect x={224 + i * 11} y="72" width="5" height="7" rx="1" fill="currentColor" stroke="none" />
+                  </g>
+                ))}
+                <path d="M 128 36 H 158 V 28 H 182 V 36 H 212" />
+                <path d="M 128 48 H 212" />
+                <path d="M 128 60 H 158 V 68 H 182 V 60 H 212" />
+                <path d="M 14 48 H 28 M 312 48 H 326" />
+                <circle cx="14" cy="48" r="3" fill="#0b0b0b" />
+                <circle cx="326" cy="48" r="3" fill="#0b0b0b" />
+              </g>
+              <path d="M 128 48 H 212" fill="none" stroke="url(#gpuLinkSignal)" strokeWidth="1.5" strokeLinecap="round" />
+              <g fill="currentColor" opacity="0.42">
+                <rect x="54" y="38" width="10" height="4" rx="1" />
+                <rect x="72" y="38" width="10" height="4" rx="1" />
+                <rect x="54" y="52" width="10" height="4" rx="1" />
+                <rect x="72" y="52" width="10" height="4" rx="1" />
+                <rect x="238" y="38" width="10" height="4" rx="1" />
+                <rect x="256" y="38" width="10" height="4" rx="1" />
+                <rect x="238" y="52" width="10" height="4" rx="1" />
+                <rect x="256" y="52" width="10" height="4" rx="1" />
+              </g>
+            </svg>
           </div>
         </div>
       </div>
@@ -2169,20 +2823,98 @@ function About() {
 
 function Experience() {
   return (
-    <section id="experience" className="mx-auto max-w-6xl px-6 py-28 sm:px-10 sm:py-40">
-      <SectionHeader index="03" kicker="Experience" title="Where I've worked." />
-      <ol className="mt-20 border-t border-border">
+    <section id="experience" className="mx-auto max-w-6xl px-6 py-24 sm:px-10 sm:py-32">
+      <SectionHeader index="04" kicker="Experience" title="Where I've worked." />
+      <ol className="mt-14 space-y-0">
         {EXPERIENCE.map((e, i) => (
           <Reveal as="li" key={i} delay={i * 70}>
-            <div className="grid grid-cols-12 gap-4 border-b border-border py-8 sm:py-10">
-              <div className="col-span-12 font-mono text-xs uppercase tracking-[0.25em] text-ink-faint sm:col-span-3">
-                {e.when}
-              </div>
-              <div className="col-span-12 sm:col-span-9">
-                <div className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-                  {e.role} <span className="text-ink-dim">— {e.org}</span>
+            <div className="grid grid-cols-[54px_minmax(0,1fr)] gap-5 border-b border-border/80 py-6 sm:grid-cols-[72px_minmax(0,1fr)] sm:gap-7 sm:py-7">
+              <div className="relative flex justify-center">
+                {i < EXPERIENCE.length - 1 ? (
+                  <svg
+                    className="pointer-events-none absolute left-1/2 top-[54px] h-[calc(100%+0.25rem)] w-20 -translate-x-1/2 text-border"
+                    viewBox="0 0 80 200"
+                    preserveAspectRatio="none"
+                    aria-hidden="true"
+                  >
+                    {i === 0 ? (
+                      <>
+                        <path d="M 30 0 V 18 H 34 V 184 H 30 V 200" fill="none" stroke="currentColor" strokeWidth="1.3" opacity="0.56" vectorEffect="non-scaling-stroke" />
+                        <path d="M 38 0 V 184 H 38 V 200" fill="none" stroke="currentColor" strokeWidth="1.2" opacity="0.44" vectorEffect="non-scaling-stroke" />
+                        <path d="M 54 0 V 18 H 46 V 184 H 46 V 200" fill="none" stroke="currentColor" strokeWidth="1.1" opacity="0.34" vectorEffect="non-scaling-stroke" />
+                      </>
+                    ) : i === 1 ? (
+                      <>
+                        <path d="M 22 0 V 20 H 34 V 184 H 30 V 200" fill="none" stroke="currentColor" strokeWidth="1.3" opacity="0.54" vectorEffect="non-scaling-stroke" />
+                        <path d="M 38 0 V 20 H 38 V 184 H 46 V 200" fill="none" stroke="currentColor" strokeWidth="1.2" opacity="0.42" vectorEffect="non-scaling-stroke" />
+                        <path d="M 54 0 V 20 H 42 V 184 H 54 V 200" fill="none" stroke="currentColor" strokeWidth="1.1" opacity="0.34" vectorEffect="non-scaling-stroke" />
+                      </>
+                    ) : (
+                      <>
+                        <path d="M 30 0 V 22 H 38 V 184 H 22 V 200" fill="none" stroke="currentColor" strokeWidth="1.3" opacity="0.54" vectorEffect="non-scaling-stroke" />
+                        <path d="M 38 0 V 22 H 42 V 184 H 38 V 200" fill="none" stroke="currentColor" strokeWidth="1.2" opacity="0.42" vectorEffect="non-scaling-stroke" />
+                        <path d="M 54 0 V 22 H 46 V 184 H 54 V 200" fill="none" stroke="currentColor" strokeWidth="1.1" opacity="0.34" vectorEffect="non-scaling-stroke" />
+                      </>
+                    )}
+                  </svg>
+                ) : null}
+                <div className="relative z-10 flex size-12 items-center justify-center border border-border bg-[#101010] p-1 shadow-[0_0_0_1px_rgba(255,255,255,0.08)] sm:size-14">
+                  <div className="pointer-events-none absolute -left-[7px] top-2 flex flex-col gap-1">
+                    {Array.from({ length: 5 }).map((_, padIndex) => (
+                      <span key={`left-pad-${padIndex}`} className="h-1 w-2 border border-border/70 bg-[#151515]" />
+                    ))}
+                  </div>
+                  <div className="pointer-events-none absolute -right-[7px] top-2 flex flex-col gap-1">
+                    {Array.from({ length: 5 }).map((_, padIndex) => (
+                      <span key={`right-pad-${padIndex}`} className="h-1 w-2 border border-border/70 bg-[#151515]" />
+                    ))}
+                  </div>
+                  <div className="pointer-events-none absolute -top-[7px] left-2 flex gap-1">
+                    {Array.from({ length: 5 }).map((_, padIndex) => (
+                      <span key={`top-pad-${padIndex}`} className="h-2 w-1 border border-border/70 bg-[#151515]" />
+                    ))}
+                  </div>
+                  <div className="pointer-events-none absolute -bottom-[7px] left-2 flex gap-1">
+                    {Array.from({ length: 5 }).map((_, padIndex) => (
+                      <span key={`bottom-pad-${padIndex}`} className="h-2 w-1 border border-border/70 bg-[#151515]" />
+                    ))}
+                  </div>
+                  {e.org === "Broadcom" ? (
+                    <svg
+                      className="pointer-events-none absolute left-1/2 top-[calc(100%+7px)] h-12 w-14 -translate-x-1/2 text-border"
+                      viewBox="0 0 56 48"
+                      aria-hidden="true"
+                    >
+                      <path d="M 28 0 V 18" fill="none" stroke="currentColor" strokeWidth="1.3" opacity="0.58" vectorEffect="non-scaling-stroke" />
+                      <path d="M 18 18 H 38 M 21 24 H 35 M 24 30 H 32" fill="none" stroke="currentColor" strokeWidth="1.3" opacity="0.58" strokeLinecap="square" vectorEffect="non-scaling-stroke" />
+                    </svg>
+                  ) : null}
+                  <div className="flex h-full w-full items-center justify-center border border-white/85 bg-white p-1.5">
+                    <SafeImage
+                      src={EXPERIENCE_LOGOS[e.org]}
+                      alt={`${e.org} logo`}
+                      className="h-full w-full object-contain"
+                      fit="contain"
+                      fallbackLabel={e.org.slice(0, 2).toUpperCase()}
+                      loading="eager"
+                    />
+                  </div>
+                  {e.when.includes("Present") ? (
+                    <span className="absolute -right-1 -top-1 size-3 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.55)]" />
+                  ) : null}
                 </div>
-                <p className="mt-2 max-w-2xl text-base leading-relaxed text-ink-dim">{e.note}</p>
+              </div>
+              <div className="min-w-0 pb-2">
+                <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-ink-faint sm:text-[11px]">
+                  {e.when}
+                </div>
+                <h3 className="mt-2 font-display text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                  {e.role}
+                </h3>
+                <div className="mt-1 text-sm text-ink-dim sm:text-base">{e.org}</div>
+                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink-dim sm:text-[0.95rem]">
+                  {e.note}
+                </p>
               </div>
             </div>
           </Reveal>
@@ -2194,13 +2926,13 @@ function Experience() {
 
 function Contact() {
   const links = [
-    { k: "Email", v: "ani@velaga.dev", href: "mailto:ani@velaga.dev" },
-    { k: "GitHub", v: "github.com/anivelaga", href: "https://github.com/anivelaga" },
-    { k: "LinkedIn", v: "linkedin.com/in/anivelaga", href: "https://linkedin.com/in/anivelaga" },
+    { k: "Email", v: "atv33@cornell.edu", href: "mailto:atv33@cornell.edu", icon: Mail },
+    { k: "GitHub", v: "github.com/atv33", href: "https://github.com/atv33", icon: Github },
+    { k: "LinkedIn", v: "linkedin.com/in/ani-vel", href: "https://www.linkedin.com/in/ani-vel/", icon: Linkedin },
   ];
   return (
     <section id="contact" className="mx-auto max-w-6xl px-6 py-28 sm:px-10 sm:py-40">
-      <SectionHeader index="04" kicker="Get in touch" title="Let's talk." />
+      <SectionHeader index="05" kicker="Get in touch" title="Let's talk." />
       <div className="mt-20 grid gap-10 sm:grid-cols-12">
         <p className="sm:col-span-5 text-lg leading-relaxed text-ink-dim">
           Open to full-time roles and research positions in hardware engineering, embedded
@@ -2208,25 +2940,32 @@ function Contact() {
           hardware-software boundary. Email is the fastest way to reach me.
         </p>
         <ul className="sm:col-span-7 sm:pl-12">
-          {links.map((l, i) => (
-            <li
-              key={l.k}
-              className={`grid grid-cols-12 items-baseline gap-4 py-6 ${i > 0 ? "border-t border-border" : "border-t border-border"}`}
-            >
-              <span className="col-span-4 font-mono text-xs uppercase tracking-[0.28em] text-ink-faint sm:col-span-3">
-                {l.k}
-              </span>
-              <a
-                href={l.href}
-                className="group col-span-8 inline-flex items-baseline gap-2 font-display text-2xl font-bold tracking-tight transition hover:text-mark sm:col-span-9 sm:text-3xl"
-              >
-                <span className="underline decoration-rule underline-offset-[6px] group-hover:decoration-mark">
-                  {l.v}
+          {links.map((l) => {
+            const Icon = l.icon;
+            const isExternal = l.href.startsWith("http");
+
+            return (
+              <li key={l.k} className="grid grid-cols-12 items-center gap-4 border-t border-border py-6">
+                <span className="col-span-12 flex items-center gap-3 font-mono text-xs uppercase tracking-[0.28em] text-ink-faint sm:col-span-3">
+                  <span className="flex size-8 shrink-0 items-center justify-center border border-border bg-secondary/20 text-ink-dim transition-colors group-hover:text-mark">
+                    <Icon size={15} strokeWidth={1.7} />
+                  </span>
+                  <span>{l.k}</span>
                 </span>
-                <span className="text-base">↗</span>
-              </a>
-            </li>
-          ))}
+                <a
+                  href={l.href}
+                  target={isExternal ? "_blank" : undefined}
+                  rel={isExternal ? "noreferrer" : undefined}
+                  className="group col-span-12 inline-flex min-w-0 items-center gap-2 font-display text-2xl font-bold tracking-tight transition hover:text-mark sm:col-span-9 sm:text-3xl"
+                >
+                  <span className="min-w-0 break-words underline decoration-rule underline-offset-[6px] group-hover:decoration-mark">
+                    {l.v}
+                  </span>
+                  <ExternalLink className="shrink-0" size={20} strokeWidth={2.1} />
+                </a>
+              </li>
+            );
+          })}
         </ul>
       </div>
     </section>

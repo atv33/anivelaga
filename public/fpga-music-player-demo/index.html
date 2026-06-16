@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FPGA Music Player</title>
+    <link rel="stylesheet" href="styles.css?v=1" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="bench">
+        <div class="board">
+          <img src="assets/demo-frame.png" alt="DE0-CV FPGA board running a SystemVerilog music player" />
+          <div class="display" aria-label="seven segment display">
+            <span id="display-song">0</span>
+            <span id="display-step">00</span>
+            <span id="display-note">-</span>
+          </div>
+        </div>
+
+        <div class="console">
+          <div class="identity">
+            <p class="eyebrow">SystemVerilog FPGA</p>
+            <h1>FPGA Music Player</h1>
+            <p class="summary">A synthesizable FPGA music sequencer for a DE0-CV board, with square-wave note generation, switch-selected songs, and a piezo buzzer output.</p>
+          </div>
+
+          <div class="controls" aria-label="demo controls">
+            <label>
+              Song
+              <select id="song-select">
+                <option value="0">0 - Mary Had a Little Lamb</option>
+                <option value="1">1 - Scale</option>
+                <option value="2">2 - G3 Scope Check</option>
+                <option value="3">3 - Chime</option>
+              </select>
+            </label>
+
+            <label>
+              Tempo
+              <input id="tempo" type="range" min="120" max="360" value="240" step="10" />
+              <span id="tempo-readout">240 bpm</span>
+            </label>
+
+            <div class="button-row">
+              <button id="play" type="button">Start</button>
+              <button id="stop" type="button">Stop</button>
+            </div>
+          </div>
+
+          <div class="meters" aria-label="live measurement display">
+            <div>
+              <span class="meter-label">Note</span>
+              <strong id="note-readout">REST</strong>
+            </div>
+            <div>
+              <span class="meter-label">Frequency</span>
+              <strong id="freq-readout">0.00 Hz</strong>
+            </div>
+            <div>
+              <span class="meter-label">Step</span>
+              <strong id="step-readout">0</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="scope">
+        <canvas id="waveform" width="1200" height="280" aria-label="square wave visualization"></canvas>
+      </section>
+
+      <section class="sequence" aria-label="song sequence">
+        <div class="sequence-header">
+          <span>Song ROM</span>
+          <span id="sequence-count">0 notes</span>
+        </div>
+        <div id="sequence-grid" class="sequence-grid"></div>
+      </section>
+    </main>
+
+    <script src="app.js?v=1"></script>
+  </body>
+</html>

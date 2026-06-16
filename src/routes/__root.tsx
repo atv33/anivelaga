@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { withBase } from "../lib/siteBase";
 
 function NotFoundComponent() {
   return (
@@ -61,7 +62,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             Try again
           </button>
           <a
-            href="/"
+            href={withBase("/")}
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
             Go home
@@ -97,7 +98,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     scripts: [
       {
         type: "module",
-        src: "https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js",
+        src: withBase("/vendor/model-viewer.min.js"),
       },
     ],
   }),
