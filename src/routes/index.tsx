@@ -2834,28 +2834,28 @@ function Experience() {
               <div className="relative flex justify-center">
                 {i < EXPERIENCE.length - 1 ? (
                   <svg
-                    className="pointer-events-none absolute left-1/2 top-[54px] h-[calc(100%+0.25rem)] w-20 -translate-x-1/2 text-border"
+                    className="pointer-events-none absolute left-1/2 top-[55px] h-[calc(100%+0.25rem)] w-20 -translate-x-1/2 text-border sm:top-[62px]"
                     viewBox="0 0 80 200"
                     preserveAspectRatio="none"
                     aria-hidden="true"
                   >
                     {i === 0 ? (
                       <>
-                        <path d="M 30 0 V 18 H 34 V 184 H 30 V 200" fill="none" stroke="currentColor" strokeWidth="1.3" opacity="0.56" vectorEffect="non-scaling-stroke" />
-                        <path d="M 38 0 V 184 H 38 V 200" fill="none" stroke="currentColor" strokeWidth="1.2" opacity="0.44" vectorEffect="non-scaling-stroke" />
-                        <path d="M 54 0 V 18 H 46 V 184 H 46 V 200" fill="none" stroke="currentColor" strokeWidth="1.1" opacity="0.34" vectorEffect="non-scaling-stroke" />
+                        <path d="M 24 0 V 16 H 32 V 184 H 24 V 200" fill="none" stroke="currentColor" strokeWidth="1.3" opacity="0.56" vectorEffect="non-scaling-stroke" />
+                        <path d="M 40 0 V 184 H 40 V 200" fill="none" stroke="currentColor" strokeWidth="1.2" opacity="0.44" vectorEffect="non-scaling-stroke" />
+                        <path d="M 56 0 V 16 H 48 V 184 H 56 V 200" fill="none" stroke="currentColor" strokeWidth="1.1" opacity="0.34" vectorEffect="non-scaling-stroke" />
                       </>
                     ) : i === 1 ? (
                       <>
-                        <path d="M 22 0 V 20 H 34 V 184 H 30 V 200" fill="none" stroke="currentColor" strokeWidth="1.3" opacity="0.54" vectorEffect="non-scaling-stroke" />
-                        <path d="M 38 0 V 20 H 38 V 184 H 46 V 200" fill="none" stroke="currentColor" strokeWidth="1.2" opacity="0.42" vectorEffect="non-scaling-stroke" />
-                        <path d="M 54 0 V 20 H 42 V 184 H 54 V 200" fill="none" stroke="currentColor" strokeWidth="1.1" opacity="0.34" vectorEffect="non-scaling-stroke" />
+                        <path d="M 24 0 V 18 H 32 V 184 H 24 V 200" fill="none" stroke="currentColor" strokeWidth="1.3" opacity="0.54" vectorEffect="non-scaling-stroke" />
+                        <path d="M 40 0 V 18 H 40 V 184 H 48 V 200" fill="none" stroke="currentColor" strokeWidth="1.2" opacity="0.42" vectorEffect="non-scaling-stroke" />
+                        <path d="M 56 0 V 18 H 48 V 184 H 56 V 200" fill="none" stroke="currentColor" strokeWidth="1.1" opacity="0.34" vectorEffect="non-scaling-stroke" />
                       </>
                     ) : (
                       <>
-                        <path d="M 30 0 V 22 H 38 V 184 H 22 V 200" fill="none" stroke="currentColor" strokeWidth="1.3" opacity="0.54" vectorEffect="non-scaling-stroke" />
-                        <path d="M 38 0 V 22 H 42 V 184 H 38 V 200" fill="none" stroke="currentColor" strokeWidth="1.2" opacity="0.42" vectorEffect="non-scaling-stroke" />
-                        <path d="M 54 0 V 22 H 46 V 184 H 54 V 200" fill="none" stroke="currentColor" strokeWidth="1.1" opacity="0.34" vectorEffect="non-scaling-stroke" />
+                        <path d="M 24 0 V 20 H 40 V 184 H 24 V 200" fill="none" stroke="currentColor" strokeWidth="1.3" opacity="0.54" vectorEffect="non-scaling-stroke" />
+                        <path d="M 40 0 V 20 H 48 V 184 H 40 V 200" fill="none" stroke="currentColor" strokeWidth="1.2" opacity="0.42" vectorEffect="non-scaling-stroke" />
+                        <path d="M 56 0 V 20 H 48 V 184 H 56 V 200" fill="none" stroke="currentColor" strokeWidth="1.1" opacity="0.34" vectorEffect="non-scaling-stroke" />
                       </>
                     )}
                   </svg>
@@ -2871,12 +2871,12 @@ function Experience() {
                       <span key={`right-pad-${padIndex}`} className="h-1 w-2 border border-border/70 bg-[#151515]" />
                     ))}
                   </div>
-                  <div className="pointer-events-none absolute -top-[7px] left-2 flex gap-1">
+                  <div className="pointer-events-none absolute -top-[7px] left-1/2 flex -translate-x-1/2 gap-1">
                     {Array.from({ length: 5 }).map((_, padIndex) => (
                       <span key={`top-pad-${padIndex}`} className="h-2 w-1 border border-border/70 bg-[#151515]" />
                     ))}
                   </div>
-                  <div className="pointer-events-none absolute -bottom-[7px] left-2 flex gap-1">
+                  <div className="pointer-events-none absolute -bottom-[7px] left-1/2 flex -translate-x-1/2 gap-1">
                     {Array.from({ length: 5 }).map((_, padIndex) => (
                       <span key={`bottom-pad-${padIndex}`} className="h-2 w-1 border border-border/70 bg-[#151515]" />
                     ))}
