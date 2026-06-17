@@ -675,7 +675,7 @@ function SafeImage({
 
 function RelatedProjects({ currentSlug }: { currentSlug: string }) {
   const related = CATEGORIES.flatMap((category) => category.projects)
-    .filter((project) => project.slug !== currentSlug)
+    .filter((project) => project.slug !== currentSlug && project.slug !== "serial-test-board")
     .slice(0, 3);
 
   return (

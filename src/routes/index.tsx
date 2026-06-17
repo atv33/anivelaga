@@ -2126,18 +2126,20 @@ function ProjectDetailsCta({
   href,
   className = "",
   compact = false,
+  noPulse = false,
 }: {
   href: string;
   className?: string;
   compact?: boolean;
+  noPulse?: boolean;
 }) {
   return (
     <a
       href={href}
-      className={`work-card-cta group/details relative inline-flex items-center justify-between overflow-hidden rounded-sm border border-border bg-background/55 font-mono uppercase text-foreground transition-all duration-300 hover:-translate-y-1 hover:border-mark/80 hover:bg-mark/10 hover:text-mark ${compact ? "px-3 py-2 text-[10px] tracking-[0.24em]" : "px-5 py-3 text-xs tracking-[0.28em]"} ${className}`}
+      className={`${noPulse ? "" : "work-card-cta"} group/details relative inline-flex items-center justify-between overflow-hidden rounded-sm border border-border bg-background/55 font-mono uppercase text-foreground transition-all duration-300 hover:-translate-y-1 hover:border-mark/80 hover:bg-mark/10 hover:text-mark ${compact ? "px-3 py-2 text-[10px] tracking-[0.24em]" : "px-5 py-3 text-xs tracking-[0.28em]"} ${className}`}
     >
       <span className="relative z-10">View details</span>
-      <span className={`work-card-cta-arrow relative z-10 flex items-center justify-center border border-border bg-secondary/40 leading-none transition-all duration-300 group-hover:translate-x-1 group-hover:border-mark/70 group-hover:bg-mark/15 group-hover/details:translate-x-1 group-hover/details:border-mark/70 group-hover/details:bg-mark/15 ${compact ? "h-6 w-6 text-sm" : "h-7 w-7 text-base"}`}>
+      <span className={`${noPulse ? "" : "work-card-cta-arrow"} relative z-10 flex items-center justify-center border border-border bg-secondary/40 leading-none transition-all duration-300 group-hover:translate-x-1 group-hover:border-mark/70 group-hover:bg-mark/15 group-hover/details:translate-x-1 group-hover/details:border-mark/70 group-hover/details:bg-mark/15 ${compact ? "h-6 w-6 text-sm" : "h-7 w-7 text-base"}`}>
         →
       </span>
     </a>
@@ -2363,6 +2365,7 @@ function SubProjectRow({
             href={detailsHref}
             className="absolute left-3 top-3 z-10 w-[min(240px,calc(100%-1.5rem))] backdrop-blur"
             compact
+            noPulse={p.slug === "serial-test-board"}
           />
         ) : null}
         <div style={{ width: "100%", height: "100%" }} className="overflow-hidden">
