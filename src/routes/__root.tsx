@@ -4,12 +4,14 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useLocation,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import { trackPageView } from "../lib/analytics";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { withBase } from "../lib/siteBase";
 
@@ -136,6 +138,11 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const location = useLocation();
+
+  useEffect(() => {
+    trackPageView(`${location.pathname}${location.searchStr}`);
+  }, [location.pathname, location.searchStr]);
 
   return (
     <QueryClientProvider client={queryClient}>
