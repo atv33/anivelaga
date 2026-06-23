@@ -1,4 +1,5 @@
-const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID as string | undefined;
+export const GA_MEASUREMENT_ID =
+  (import.meta.env.VITE_GA_MEASUREMENT_ID as string | undefined) ?? "G-DCC4198G8J";
 
 declare global {
   interface Window {
@@ -14,6 +15,11 @@ export const analyticsEnabled = Boolean(GA_MEASUREMENT_ID);
 export function initAnalytics() {
   if (!GA_MEASUREMENT_ID || initialized || typeof window === "undefined") return;
 
+  if (window.gtag) {
+    initialized = true;
+    return;
+  }
+
   window.dataLayer = window.dataLayer ?? [];
   window.gtag = window.gtag ?? function gtag(...args: unknown[]) {
     window.dataLayer?.push(args);
@@ -25,9 +31,7 @@ export function initAnalytics() {
   document.head.appendChild(script);
 
   window.gtag("js", new Date());
-  window.gtag("config", GA_MEASUREMENT_ID, {
-    send_page_view: false,
-  });
+  window.gtag("config", GA_MEASUREMENT_ID);
 
   initialized = true;
 }

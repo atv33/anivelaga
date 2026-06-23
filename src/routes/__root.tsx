@@ -8,7 +8,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { trackPageView } from "../lib/analytics";
@@ -139,8 +139,14 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const location = useLocation();
+  const hasInitialPageView = useRef(false);
 
   useEffect(() => {
+    if (!hasInitialPageView.current) {
+      hasInitialPageView.current = true;
+      return;
+    }
+
     trackPageView(`${location.pathname}${location.searchStr}`);
   }, [location.pathname, location.searchStr]);
 
